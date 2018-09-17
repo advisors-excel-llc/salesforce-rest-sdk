@@ -8,31 +8,22 @@
 
 namespace AE\SalesforceRestSdk\Rest\Composite;
 
-use AE\SalesforceRestSdk\Model\SObject;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
+use AE\SalesforceRestSdk\Rest\AbstractClient;
 use GuzzleHttp\Client;
 use JMS\Serializer\SerializerInterface;
 
-class CompositeClient
+class CompositeClient extends AbstractClient
 {
     public const VERSION = 'v43.0';
 
     public const BASE_PATH = '/services/data/'.self::VERSION.'/composite/sobjects';
-    /**
-     * @var Client
-     */
-    private $client;
-
-    /**
-     * @var SerializerInterface
-     */
-    private $serializer;
 
     public function __construct(Client $client, SerializerInterface $serializer)
     {
         $this->client     = $client;
         $this->serializer = $serializer;
     }
-
 
     /**
      * @param CompositeRequestInterface $request
@@ -49,12 +40,9 @@ class CompositeClient
             ]
         );
 
-        $body = (string)$response->getBody();
+        $this->throwErrorIfInvalidResponseCode($response);
 
-        if ($response->getStatusCode() === 400) {
-            $error = $this->serializer->deserialize($body, 'array', 'json');
-            throw new \RuntimeException("{$error['errorCode']}: {$error['message']}");
-        }
+        $body = (string)$response->getBody();
 
         return $this->serializer->deserialize(
             $body,
@@ -68,7 +56,7 @@ class CompositeClient
      * @param array $ids
      * @param array $fields
      *
-     * @return array|SObject[]
+     * @return array|CompositeSObject[]
      */
     public function read(string $sObjectType, array $ids, array $fields = ['id']): array
     {
@@ -82,9 +70,11 @@ class CompositeClient
             ]
         );
 
+        $this->throwErrorIfInvalidResponseCode($response);
+
         return $this->serializer->deserialize(
             $response->getBody(),
-            'array<'.SObject::class.'>',
+            'array<'.CompositeSObject::class.'>',
             'json'
         );
     }
@@ -104,12 +94,9 @@ class CompositeClient
             ]
         );
 
-        $body = (string)$response->getBody();
+        $this->throwErrorIfInvalidResponseCode($response);
 
-        if ($response->getStatusCode() === 400) {
-            $error = $this->serializer->deserialize($body, 'array', 'json');
-            throw new \RuntimeException("{$error['errorCode']}: {$error['message']}");
-        }
+        $body = (string)$response->getBody();
 
         return $this->serializer->deserialize(
             $body,

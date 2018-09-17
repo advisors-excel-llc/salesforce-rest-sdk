@@ -9,7 +9,7 @@
 namespace AE\SalesforceRestSdk\Bayeux\Transport;
 
 use AE\SalesforceRestSdk\Bayeux\Message;
-use AE\SalesforceRestSdk\Serializer\SObjectSerializeHandler;
+use AE\SalesforceRestSdk\Serializer\SObjectHandler;
 use JMS\Serializer\Expression\ExpressionEvaluator;
 use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\Naming\IdenticalPropertyNamingStrategy;
@@ -103,7 +103,7 @@ abstract class AbstractClientTransport
                 ->addDefaultSerializationVisitors()
                 ->configureHandlers(
                     function (HandlerRegistry $handler) {
-                        $handler->registerSubscribingHandler(new SObjectSerializeHandler());
+                        $handler->registerSubscribingHandler(new SObjectHandler());
                     }
                 )
         ;

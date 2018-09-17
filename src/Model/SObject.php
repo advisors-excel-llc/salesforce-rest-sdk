@@ -28,12 +28,10 @@ class SObject
      * @var array
      * @Serializer\Type("array")
      */
-    private $fields = [];
+    protected $fields = [];
 
-    public function __construct(string $type = 'sobject', array $fields = [])
+    public function __construct(array $fields = [])
     {
-        $this->attributes['type'] = $type;
-
         if (!empty($fields)) {
             foreach ($fields as $field => $value) {
                 $this->$field = $value;
@@ -48,37 +46,7 @@ class SObject
      */
     protected static function normalizeFieldName($name): string
     {
-        if ($name !== "id") {
-            $name = ucwords($name);
-        } elseif ($name === 'Id') {
-            $name = 'id';
-        }
-
-        return $name;
-    }
-
-    public function getType(): string
-    {
-        return $this->attributes['type'];
-    }
-
-    public function setType(string $type): SObject
-    {
-        $this->attributes['type'] = $type;
-
-        return $this;
-    }
-
-    public function getUrl(): ?string
-    {
-        return array_key_exists('url', $this->attributes) ? $this->attributes['url'] : null;
-    }
-
-    public function setUrl(?string $url): SObject
-    {
-        $this->attributes['url'] = $url;
-
-        return $this;
+        return ucwords($name);
     }
 
     public function setFields(array $fields): SObject
@@ -97,26 +65,12 @@ class SObject
 
     public function __set($name, $value)
     {
-        if ('type' === $name) {
-            $this->setType($value);
-        } elseif ('url' === $name) {
-            $this->setUrl($value);
-        } else {
-            $name = self::normalizeFieldName($name);
-            $this->fields[$name] = $value;
-        }
+        $name = self::normalizeFieldName($name);
+        $this->fields[$name] = $value;
     }
 
     public function __get($name)
     {
-        if ('type' === $name) {
-            return $this->getType();
-        }
-
-        if ('url' === $name) {
-            return $this->getUrl();
-        }
-
         $name = self::normalizeFieldName($name);
 
         return array_key_exists($name, $this->fields) ? $this->fields[$name] : null;

@@ -9,8 +9,11 @@
 namespace AE\SalesforceRestSdk\Rest;
 
 use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
+use AE\SalesforceRestSdk\Model\Rest\Limits;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
-use AE\SalesforceRestSdk\Serializer\SObjectSerializeHandler;
+use AE\SalesforceRestSdk\Serializer\CompositeSObjectHandler;
+use AE\SalesforceRestSdk\Serializer\SObjectHandler;
+use Doctrine\Common\Collections\ArrayCollection;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -20,8 +23,10 @@ use JMS\Serializer\SerializerBuilder;
 use JMS\Serializer\SerializerInterface;
 use Psr\Http\Message\RequestInterface;
 
-class Client
+class Client extends AbstractClient
 {
+    public const VERSION = "43.0";
+
     /**
      * @var string
      */
@@ -33,27 +38,23 @@ class Client
     protected $authProvider;
 
     /**
-     * @var GuzzleClient
-     */
-    protected $httpClient;
-
-    /**
-     * @var SerializerInterface
-     */
-    protected $serializer;
-
-    /**
      * @var CompositeClient
      */
     protected $compositeClient;
+
+    /**
+     * @var \AE\SalesforceRestSdk\Rest\SObject\Client
+     */
+    protected $sObjectClient;
 
     public function __construct(string $baseUrl, AuthProviderInterface $provider)
     {
         $this->baseUrl         = $baseUrl;
         $this->authProvider    = $provider;
-        $this->httpClient      = $this->createHttpClient($baseUrl);
+        $this->client          = $this->createHttpClient($baseUrl);
         $this->serializer      = $this->createSerializer();
-        $this->compositeClient = new CompositeClient($this->httpClient, $this->serializer);
+        $this->compositeClient = new CompositeClient($this->client, $this->serializer);
+        $this->sObjectClient   = new SObject\Client($this->client, $this->serializer);
     }
 
     /**
@@ -77,7 +78,7 @@ class Client
      */
     public function getHttpClient(): GuzzleClient
     {
-        return $this->httpClient;
+        return $this->client;
     }
 
     /**
@@ -94,6 +95,35 @@ class Client
     public function getCompositeClient(): CompositeClient
     {
         return $this->compositeClient;
+    }
+
+    /**
+     * @return SObject\Client
+     */
+    public function getSObjectClient(): SObject\Client
+    {
+        return $this->sObjectClient;
+    }
+
+    /**
+     * @throws \RuntimeException
+     * @return Limits
+     */
+    public function limits(): Limits
+    {
+        $response = $this->client->get(
+            '/services/data/v'.self::VERSION.'/limits/'
+        );
+
+        $this->throwErrorIfInvalidResponseCode($response);
+
+        $body = (string)$response->getBody();
+
+        return $this->serializer->deserialize(
+            $body,
+            Limits::class,
+            'json'
+        );
     }
 
     protected function createHttpClient(string $url): GuzzleClient
@@ -132,7 +162,8 @@ class Client
                 ->addDefaultSerializationVisitors()
                 ->configureHandlers(
                     function (HandlerRegistry $handler) {
-                        $handler->registerSubscribingHandler(new SObjectSerializeHandler());
+                        $handler->registerSubscribingHandler(new SObjectHandler());
+                        $handler->registerSubscribingHandler(new CompositeSObjectHandler());
                     }
                 )
         ;

@@ -9,10 +9,10 @@
 namespace AE\SalesforceRestSdk\Tests\Composite\Client;
 
 use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use AE\SalesforceRestSdk\Rest\Client;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeRequest;
-use AE\SalesforceRestSdk\Model\SObject;
 use PHPUnit\Framework\TestCase;
 
 class CompositeClientTest extends TestCase
@@ -40,10 +40,10 @@ class CompositeClientTest extends TestCase
 
     public function testCreate()
     {
-        $account       = new SObject('Account');
+        $account       = new CompositeSObject('Account');
         $account->Name = "Composite Test Account";
 
-        $contact            = new SObject('Contact');
+        $contact            = new CompositeSObject('Contact');
         $contact->FirstName = "Composite";
         $contact->LastName  = "Test Contact";
 
@@ -111,8 +111,8 @@ class CompositeClientTest extends TestCase
      */
     public function testUpdate(array $ids)
     {
-        $account = new SObject('Account', ['id' => $ids['account'], 'Name' => 'Composite Test Update']);
-        $contact = new SObject('Contact', ['id' => $ids['contact'], 'LastName' => 'Test Update']);
+        $account = new CompositeSObject('Account', ['id' => $ids['account'], 'Name' => 'Composite Test Update']);
+        $contact = new CompositeSObject('Contact', ['id' => $ids['contact'], 'LastName' => 'Test Update']);
 
         $responses = $this->client->update(
             new CompositeRequest(
@@ -142,8 +142,8 @@ class CompositeClientTest extends TestCase
         $responses = $this->client->delete(
             new CompositeRequest(
                 [
-                    new SObject('Account', ['id' => $ids['account']]),
-                    new SObject('Contact', ['id' => $ids['contact']]),
+                    new CompositeSObject('Account', ['id' => $ids['account']]),
+                    new CompositeSObject('Contact', ['id' => $ids['contact']]),
                 ]
             )
         );

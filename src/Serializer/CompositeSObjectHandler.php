@@ -2,36 +2,34 @@
 /**
  * Created by PhpStorm.
  * User: alex.boyce
- * Date: 9/13/18
- * Time: 1:30 PM
+ * Date: 9/17/18
+ * Time: 6:13 PM
  */
 
 namespace AE\SalesforceRestSdk\Serializer;
 
-use AE\SalesforceRestSdk\Model\SObject;
-use JMS\Serializer\Accessor\AccessorStrategyInterface;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use JMS\Serializer\Context;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Handler\SubscribingHandlerInterface;
 use JMS\Serializer\JsonDeserializationVisitor;
 use JMS\Serializer\JsonSerializationVisitor;
-use JMS\Serializer\Metadata\PropertyMetadata;
 
-class SObjectSerializeHandler implements SubscribingHandlerInterface
+class CompositeSObjectHandler implements SubscribingHandlerInterface
 {
     public static function getSubscribingMethods()
     {
         return [
             [
-                'type'   => SObject::class,
+                'type'   => CompositeSObject::class,
                 'format' => 'json',
             ],
         ];
     }
 
-    public function serializeSObjectTojson(
+    public function serializeCompositeSObjectTojson(
         JsonSerializationVisitor $visitor,
-        SObject $sobject,
+        CompositeSObject $sobject,
         array $type,
         Context $context
     ): array {
@@ -52,13 +50,13 @@ class SObjectSerializeHandler implements SubscribingHandlerInterface
         return $object;
     }
 
-    public function deserializeSObjectFromjson(
+    public function deserializeCompositeSObjectFromjson(
         JsonDeserializationVisitor $visitor,
         array $data,
         array $type,
         DeserializationContext $context
     ) {
-        $sobject = new SObject();
+        $sobject = new CompositeSObject();
 
         if (array_key_exists('attributes', $data)) {
             if (array_key_exists('type', $data['attributes'])) {
@@ -72,32 +70,6 @@ class SObjectSerializeHandler implements SubscribingHandlerInterface
 
         foreach ($data as $field => $value) {
             $sobject->$field = $value;
-        }
-
-        $current = $visitor->getCurrentObject();
-
-        if (null === $current || $current instanceof SObject) {
-            $visitor->setCurrentObject($sobject);
-        } else {
-            $refl         = new \ReflectionClass(get_class($visitor));
-            $accessorProp = $refl->getProperty('accessor');
-            $accessorProp->setAccessible(true);
-            /** @var AccessorStrategyInterface $accessor */
-            $accessor = $accessorProp->getValue($visitor);
-
-            $paths    = $context->getCurrentPath();
-            $property = array_pop($paths);
-
-            /** @var PropertyMetadata $metadata */
-            $metadata = $context->getMetadataFactory()
-                                ->getMetadataForClass(get_class($current))
-                                ->propertyMetadata[$property];
-
-            $accessor->setValue(
-                $current,
-                $sobject,
-                $metadata
-            );
         }
 
         return $sobject;
