@@ -80,11 +80,26 @@ class BayeuxClientTest extends TestCase
                     $this->assertNotNull($data);
                     $sobject = $data->getSobject();
                     $this->assertNotNull($sobject);
+                    $this->assertNotNull($sobject->Id);
                     $this->assertEquals($name, $sobject->Name);
 
                     if (!$this->client->isDisconnected()) {
                         $this->client->disconnect();
                     }
+
+                    $client   = new Client(['base_uri' => getenv('SF_URL')]);
+                    $response = $client->delete(
+                        'services/data/v43.0/sobjects/Account/'.$sobject->Id,
+                        [
+                            'headers' => [
+                                'Content-Type'  => 'application/json',
+                                'Accept'        => 'application/json',
+                                'Authorization' => $this->client->getAuthProvider()->authorize(),
+                            ],
+                        ]
+                    );
+
+                    $this->assertEquals(204, $response->getStatusCode());
                 }
             )
         );
