@@ -1,0 +1,34 @@
+{
+    "name": "ae/salesforce-rest-sdk",
+    "description": "An SDK for the Salesforce Rest API",
+    "type": "library",
+    "require": {
+        "php": "^7.1",
+        "guzzlehttp/guzzle": "^6.3",
+        "jms/serializer": "^1.13",
+        "ramsey/uuid": "^3.8",
+        "doctrine/collections": "^1.5",
+        "symfony/expression-language": "^4.1"
+    },
+    "license": "IST",
+    "authors": [
+        {
+            "name": "Alex Boyce",
+            "email": "alex.boyce@advisorsexcel.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "AE\\SalesforceRestSdk\\": ["src/"]
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AE\\SalesforceRestSdk\\Tests\\": ["Tests/"]
+        }
+    },
+    "minimum-stability": "stable",
+    "require-dev": {
+        "phpunit/phpunit": "^7.3"
+    }
+}

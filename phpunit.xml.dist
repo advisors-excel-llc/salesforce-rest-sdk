@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpunit bootstrap="Tests/autoload.php"
+         colors="true"
+         verbose="true"
+         stopOnFailure="false">
+    <php>
+        <env name="SF_URL" value="URL_OF_SALESFORCE" />
+        <env name="SF_LOGIN_URL" value="https://test.salesforce.com" />
+        <env name="SF_USER" value="YOUR_APP_USERNAME" />
+        <env name="SF_PASS" value="YOUR_APP_PASS_W_TOKEN" />
+        <env name="SF_CLIENT_ID" value="YOUR_APP_ID" />
+        <env name="SF_CLIENT_SECRET" value="YOUR_APP_SECRET" />
+    </php>
+    <testsuites>
+        <testsuite name="Test Suite">
+            <directory>Tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
