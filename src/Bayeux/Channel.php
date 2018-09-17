@@ -38,6 +38,15 @@ class Channel implements ChannelInterface
 
     public function notifyMessageListeners(Message $message)
     {
+        // Attempt to set the SObject type
+        if (!$this->isMeta() && null !== $message->getData()) {
+            $data = $message->getData();
+
+            if (null !== $data->getSobject() && null !== $data->getEvent()->getType()) {
+                $data->getSobject()->setType($data->getEvent()->getType());
+            }
+        }
+
         /** @var ConsumerInterface[] $subscribers */
         $subscribers = $this->subscribers->getValues();
 
