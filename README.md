@@ -108,8 +108,8 @@ $client = new BayeuxClient(
 ```
 
 ### Subscribe to a PushTopic
-[Reference: Create a PushTopic](https://developer.salesforce.com/docs/atlas.en-us.api_streaming.meta/api_streaming/create_a_pushtopic.htm)
-[Reference: Supported PushTopic Queries](https://developer.salesforce.com/docs/atlas.en-us.api_streaming.meta/api_streaming/supported_soql.htm)
+* [Reference: Create a PushTopic](https://developer.salesforce.com/docs/atlas.en-us.api_streaming.meta/api_streaming/create_a_pushtopic.htm)
+* [Reference: Supported PushTopic Queries](https://developer.salesforce.com/docs/atlas.en-us.api_streaming.meta/api_streaming/supported_soql.htm)
 
 You can create a new PushTopic using the Rest Client above. The topic only needs created once in a Salesforce Org. All custom objects are supported
 by the Streaming API, however, not all standard objects supported.
