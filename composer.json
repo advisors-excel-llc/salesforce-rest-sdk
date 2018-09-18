@@ -10,7 +10,7 @@
         "doctrine/collections": "^1.5",
         "symfony/expression-language": "^4.1"
     },
-    "license": "IST",
+    "license": "proprietary",
     "authors": [
         {
             "name": "Alex Boyce",
