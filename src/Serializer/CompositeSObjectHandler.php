@@ -38,6 +38,9 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
         ];
 
         foreach ($sobject->getFields() as $field => $value) {
+            if (null === $value) {
+                continue;
+            }
             $object[$field] = $value;
         }
 

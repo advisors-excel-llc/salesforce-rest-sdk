@@ -26,7 +26,7 @@ class Client extends AbstractClient
 {
     public const VERSION = "43.0";
 
-    public const BASE_URI = "services/data/v".self::VERSION."/sobjects/";
+    public const BASE_URI = "services/data/v".self::VERSION."/";
 
     public function __construct(GuzzleClient $client, SerializerInterface $serializer)
     {
@@ -42,7 +42,7 @@ class Client extends AbstractClient
     public function info(string $sObjectType): BasicInfo
     {
         $response = $this->client->get(
-            self::BASE_URI.$sObjectType
+            self::BASE_URI.'sobjects/'.$sObjectType
         );
 
         $this->throwErrorIfInvalidResponseCode($response);
@@ -64,7 +64,7 @@ class Client extends AbstractClient
     public function describe(string $sObjectType): DescribeSObject
     {
         $response = $this->client->get(
-            self::BASE_URI.$sObjectType.'/describe'
+            self::BASE_URI.'sobjects/'.$sObjectType.'/describe'
         );
 
         $this->throwErrorIfInvalidResponseCode($response);
@@ -84,7 +84,7 @@ class Client extends AbstractClient
     public function describeGlobal(): GlobalDescribe
     {
         $response = $this->client->get(
-            self::BASE_URI
+            self::BASE_URI.'sobjects/'
         );
 
         $this->throwErrorIfInvalidResponseCode($response);
@@ -108,7 +108,7 @@ class Client extends AbstractClient
     public function get(string $sObjectType, string $id, array $fields = ['Id']): SObject
     {
         $response = $this->client->get(
-            self::BASE_URI.$sObjectType.'/'.$id,
+            self::BASE_URI.'sobjects/'.$sObjectType.'/'.$id,
             [
                 'query' => [
                     'fields' => implode(",", $fields),
@@ -144,7 +144,7 @@ class Client extends AbstractClient
         $end->setTimezone(new \DateTimeZone("UTC"));
 
         $response = $this->client->get(
-            self::BASE_URI.$sObjectType,
+            self::BASE_URI.'sobjects/'.$sObjectType,
             [
                 'query' => [
                     'start' => $start->format(\DateTime::ISO8601),
@@ -181,7 +181,7 @@ class Client extends AbstractClient
         $end->setTimezone(new \DateTimeZone("UTC"));
 
         $response = $this->client->get(
-            self::BASE_URI.$sObjectType,
+            self::BASE_URI.'sobjects/'.$sObjectType,
             [
                 'query' => [
                     'start' => $start->format(\DateTime::ISO8601),
@@ -205,12 +205,15 @@ class Client extends AbstractClient
      * @param string $SObjectType
      * @param SObject $SObject
      *
-     * @return SObject
+     * @return bool
      */
-    public function persist(string $SObjectType, SObject $SObject): SObject
+    public function persist(string $SObjectType, SObject $SObject): bool
     {
-        $method = null !== $SObject->Id ? 'patch' : 'post';
-        $url    = self::BASE_URI.$SObjectType.(null !== $SObject->Id ? '/'.$SObject->Id : '');
+        $method        = null !== $SObject->Id ? 'patch' : 'post';
+        $id            = $SObject->Id;
+        $url           = self::BASE_URI.'sobjects/'.$SObjectType.(null !== $id ? '/'.$id : '');
+        $SObject->Id   = null;
+        $SObject->Type = null;
 
         /** @var ResponseInterface $response */
         $response = $this->client->$method(
@@ -220,7 +223,7 @@ class Client extends AbstractClient
             ]
         );
 
-        $this->throwErrorIfInvalidResponseCode($response, $method === "patch" ? 204 : 200);
+        $this->throwErrorIfInvalidResponseCode($response, $method === "patch" ? 204 : 201);
 
         if ($method === 'post') {
             /** @var CreateResponse $body */
@@ -242,9 +245,13 @@ class Client extends AbstractClient
 
                 throw new \RuntimeException($error);
             }
+        } else {
+            $SObject->Id = $id;
         }
 
-        return $SObject;
+        $SObject->Type = $SObjectType;
+
+        return true;
     }
 
     public function remove(string $SObjectType, SObject $SObject)
@@ -254,7 +261,7 @@ class Client extends AbstractClient
         }
 
         $response = $this->client->delete(
-            self::BASE_URI.$SObjectType.'/'.$SObject->Id
+            self::BASE_URI.'sobjects/'.$SObjectType.'/'.$SObject->Id
         );
 
         $this->throwErrorIfInvalidResponseCode($response, 204);
@@ -277,7 +284,7 @@ class Client extends AbstractClient
             );
         } else {
             $response = $this->client->get(
-                self::BASE_URI.'/query/'.
+                self::BASE_URI.'query/',
                 [
                     'query' => [
                         'q' => $query,
@@ -304,7 +311,7 @@ class Client extends AbstractClient
         }
 
         $response = $this->client->get(
-            self::BASE_URI.'/queryAll/',
+            self::BASE_URI.'queryAll/',
             [
                 'query' => [
                     'q' => $query,
@@ -331,7 +338,7 @@ class Client extends AbstractClient
     public function search(string $query): SearchResult
     {
         $response = $this->client->get(
-            self::BASE_URI.'/search/',
+            self::BASE_URI.'search/',
             [
                 'query' => [
                     'q' => $query,

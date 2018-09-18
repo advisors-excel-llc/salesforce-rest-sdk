@@ -200,7 +200,7 @@ class DescribeSObject
 
     /**
      * @var array|SupportedScope[]
-     * @Serializer\Type("array<AE\SalesforceRestSdk\Model\Metadata\SupportedScope>")
+     * @Serializer\Type("array<AE\SalesforceRestSdk\Model\Rest\Metadata\SupportedScope>")
      */
     private $supportedScopes = [];
 

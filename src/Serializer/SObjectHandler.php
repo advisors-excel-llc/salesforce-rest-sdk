@@ -35,6 +35,9 @@ class SObjectHandler implements SubscribingHandlerInterface
     ): array {
 
         foreach ($sobject->getFields() as $field => $value) {
+            if (null === $value) {
+                continue;
+            }
             $object[$field] = $value;
         }
 

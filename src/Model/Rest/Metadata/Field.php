@@ -38,7 +38,7 @@ class Field
 
     /**
      * @var int
-     * @Serializer\Type("int')
+     * @Serializer\Type("int")
      */
     private $byteLength = 0;
 
