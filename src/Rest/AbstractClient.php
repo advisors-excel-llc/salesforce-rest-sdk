@@ -26,13 +26,21 @@ abstract class AbstractClient
     /**
      * @param ResponseInterface $response
      * @param int $expectedStatusCode
+     *
      * @throws \RuntimeException
      */
     protected function throwErrorIfInvalidResponseCode(ResponseInterface $response, int $expectedStatusCode = 200)
     {
         if ($response->getStatusCode() !== $expectedStatusCode) {
-            $errors = $this->serializer->deserialize($response->getBody(), 'array', 'json');
-            throw new \RuntimeException("{$errors[0]['errorCode']}: {$errors[0]['message']}");
+            $body = (string)$response->getBody();
+            if (strlen($body) > 0) {
+                $errors = $this->serializer->deserialize($body, 'array', 'json');
+                throw new \RuntimeException("{$errors[0]['errorCode']}: {$errors[0]['message']}");
+            } else {
+                throw new \RuntimeException(
+                    "Received Status Code {$response->getStatusCode()}, expected $expectedStatusCode"
+                );
+            }
         }
     }
 }

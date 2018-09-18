@@ -6,14 +6,14 @@
  * Time: 5:30 PM
  */
 
-namespace AE\SalesforceRestSdk\Rest\Composite;
+namespace AE\SalesforceRestSdk\Model\Rest;
 
 use JMS\Serializer\Annotation as Serializer;
 
 /**
  * Class RequestError
  *
- * @package AE\SalesforceRestSdk\Composite\Model
+ * @package AE\SalesforceRestSdk\Model\Rest
  * @Serializer\ExclusionPolicy("NONE")
  */
 class RequestError
