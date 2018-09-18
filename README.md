@@ -172,10 +172,17 @@ $client->start();
 ```
 
 > The `$client->start();` is a blocking call and no code after it will execute
-> until an error occurs in the client, causing it to disconnect. For instance,
-> the client must reconnect to the streaming server within 40 seconds after each
+> until an error occurs in the client, causing it to disconnect.
+> 
+> For instance, the client must reconnect to the streaming server within 40 seconds after each
 > notification is received. If it fails to do so, it will attempt to re-handshake
 > to create a new connection. If that fails, then the client will disconnect,
 > which will allow the rest of the script to execute.
 >
 > It's recommended that the streaming client be run in it's own thread
+
+## Future Additions
+
+* Tooling API
+* Metadata API
+* Bulk API
