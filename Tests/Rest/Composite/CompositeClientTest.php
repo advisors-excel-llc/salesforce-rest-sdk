@@ -190,17 +190,21 @@ class CompositeClientTest extends TestCase
                     ]
                 )
             )
+            ->query(
+                "QueryForAccount",
+                "SELECT Id, Name FROM Account WHERE Name = 'Wicked Cool Thang 1'"
+            )
             ->deleteSObject(
                 "DeleteFirstThang",
                 "Account",
-                $builder->reference("GetFirstThang")->field("Id")
+                $builder->reference("QueryForAccount")->field("records[0].Id")
             )
         ;
 
         $request = $builder->build();
 
         $response = $this->client->sendCompositeRequest($request);
-        $this->assertEquals(4, count($response->getCompositeResponse()));
+        $this->assertEquals(5, count($response->getCompositeResponse()));
 
         $create = $response->findResultByReferenceId("FirstCreate");
         $this->assertNotNull($create);
@@ -218,6 +222,13 @@ class CompositeClientTest extends TestCase
         $update = $response->findResultByReferenceId("UpdateFirstThang");
         $this->assertNotNull($update);
         $this->assertEquals(204, $update->getHttpStatusCode());
+
+        $query = $response->findResultByReferenceId("QueryForAccount");
+        $this->assertNotNull($query);
+        $this->assertEquals(200, $query->getHttpStatusCode());
+        $this->assertTrue($query->getBody()->isDone());
+        $this->assertEquals(1, $query->getBody()->getTotalSize());
+        $this->assertEquals(1, count($query->getBody()->getRecords()));
 
         $delete = $response->findResultByReferenceId("DeleteFirstThang");
         $this->assertNotNull($delete);
