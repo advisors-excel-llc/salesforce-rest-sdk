@@ -12,7 +12,7 @@ use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use AE\SalesforceRestSdk\Rest\Client;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
-use AE\SalesforceRestSdk\Rest\Composite\CompositeRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequest;
 use PHPUnit\Framework\TestCase;
 
 class CompositeClientTest extends TestCase
@@ -47,7 +47,7 @@ class CompositeClientTest extends TestCase
         $contact->FirstName = "Composite";
         $contact->LastName  = "Test Contact";
 
-        $request = new CompositeRequest(
+        $request = new CollectionRequest(
             [
                 $account,
                 $contact,
@@ -115,7 +115,7 @@ class CompositeClientTest extends TestCase
         $contact = new CompositeSObject('Contact', ['id' => $ids['contact'], 'LastName' => 'Test Update']);
 
         $responses = $this->client->update(
-            new CompositeRequest(
+            new CollectionRequest(
                 [
                     $account,
                     $contact,
@@ -140,7 +140,7 @@ class CompositeClientTest extends TestCase
     public function testDelete(array $ids)
     {
         $responses = $this->client->delete(
-            new CompositeRequest(
+            new CollectionRequest(
                 [
                     new CompositeSObject('Account', ['id' => $ids['account']]),
                     new CompositeSObject('Contact', ['id' => $ids['contact']]),

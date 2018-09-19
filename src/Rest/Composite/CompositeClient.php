@@ -8,6 +8,10 @@
 
 namespace AE\SalesforceRestSdk\Rest\Composite;
 
+use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequestInterface;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionResponse;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeResponse;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use AE\SalesforceRestSdk\Rest\AbstractClient;
 use GuzzleHttp\Client;
@@ -15,9 +19,9 @@ use JMS\Serializer\SerializerInterface;
 
 class CompositeClient extends AbstractClient
 {
-    public const VERSION = 'v43.0';
+    public const VERSION = '43.0';
 
-    public const BASE_PATH = '/services/data/'.self::VERSION.'/composite/sobjects';
+    public const BASE_PATH = '/services/data/v'.self::VERSION.'/composite';
 
     public function __construct(Client $client, SerializerInterface $serializer)
     {
@@ -26,15 +30,15 @@ class CompositeClient extends AbstractClient
     }
 
     /**
-     * @param CompositeRequestInterface $request
+     * @param CollectionRequestInterface $request
      *
-     * @return CompositeResponse[]
+     * @return CollectionResponse[]
      */
-    public function create(CompositeRequestInterface $request): array
+    public function create(CollectionRequestInterface $request): array
     {
         $requestBody = $this->serializer->serialize($request, 'json');
         $response    = $this->client->post(
-            self::BASE_PATH,
+            self::BASE_PATH.'/sobjects',
             [
                 'body' => $requestBody,
             ]
@@ -46,7 +50,7 @@ class CompositeClient extends AbstractClient
 
         return $this->serializer->deserialize(
             $body,
-            'array<'.CompositeResponse::class.'>',
+            'array<'.CollectionResponse::class.'>',
             'json'
         );
     }
@@ -61,10 +65,10 @@ class CompositeClient extends AbstractClient
     public function read(string $sObjectType, array $ids, array $fields = ['id']): array
     {
         $response = $this->client->get(
-            self::BASE_PATH.'/'.$sObjectType,
+            self::BASE_PATH.'/sobjects/'.$sObjectType,
             [
                 'query' => [
-                    'ids'    => implode($ids),
+                    'ids'    => implode(",", $ids),
                     'fields' => implode(",", $fields),
                 ],
             ]
@@ -80,15 +84,15 @@ class CompositeClient extends AbstractClient
     }
 
     /**
-     * @param CompositeRequestInterface $request
+     * @param CollectionRequestInterface $request
      *
-     * @return CompositeResponse[]
+     * @return CollectionResponse[]
      */
-    public function update(CompositeRequestInterface $request): array
+    public function update(CollectionRequestInterface $request): array
     {
         $requestBody = $this->serializer->serialize($request, 'json');
         $response    = $this->client->patch(
-            self::BASE_PATH,
+            self::BASE_PATH.'/sobjects',
             [
                 'body' => $requestBody,
             ]
@@ -100,17 +104,17 @@ class CompositeClient extends AbstractClient
 
         return $this->serializer->deserialize(
             $body,
-            'array<'.CompositeResponse::class.'>',
+            'array<'.CollectionResponse::class.'>',
             'json'
         );
     }
 
     /**
-     * @param CompositeRequestInterface $request
+     * @param CollectionRequestInterface $request
      *
-     * @return CompositeResponse[]
+     * @return CollectionResponse[]
      */
-    public function delete(CompositeRequestInterface $request): array
+    public function delete(CollectionRequestInterface $request): array
     {
         $ids = [];
 
@@ -121,7 +125,7 @@ class CompositeClient extends AbstractClient
         }
 
         $response = $this->client->delete(
-            self::BASE_PATH,
+            self::BASE_PATH.'/sobjects',
             [
                 'query' => [
                     'allOrNone' => $request->isAllOrNone() ? "true" : "false",
@@ -132,9 +136,30 @@ class CompositeClient extends AbstractClient
 
         return $this->serializer->deserialize(
             $response->getBody(),
-            'array<'.CompositeResponse::class.'>',
+            'array<'.CollectionResponse::class.'>',
             'json'
         );
+    }
+
+    public function sendCompositeRequest(CompositeRequest $request)
+    {
+        $response = $this->client->post(
+            self::BASE_PATH,
+            [
+                'body' => $this->serializer->serialize($request, 'json')
+            ]
+        );
+
+        $this->throwErrorIfInvalidResponseCode($response);
+
+        $body = (string) $response->getBody();
+        $compositeResponse = $this->serializer->deserialize(
+            $body,
+            CompositeResponse::class,
+            'json'
+        );
+
+        // TODO: process responses to generate correct body
     }
 
     public function batch()
