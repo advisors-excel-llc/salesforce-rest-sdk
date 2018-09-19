@@ -79,7 +79,7 @@ class UpdateSubRequest extends PatchSubRequest implements SObjectSubRequestInter
             throw new \RuntimeException("The UpdateSubRequest is incomplete.");
         }
 
-        $this->url = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/'.$this->sObjectId;
+        $this->url = Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/'.$this->sObjectId;
     }
 
     /**

@@ -30,6 +30,6 @@ class DescribeGlobalSubRequest extends GetSubRequest implements DescribeGlobalSu
      */
     public function preSerialize()
     {
-        $this->url = Client::BASE_URI;
+        $this->url = Client::BASE_PATH;
     }
 }

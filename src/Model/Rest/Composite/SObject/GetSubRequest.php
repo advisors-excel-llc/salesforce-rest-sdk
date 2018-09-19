@@ -84,8 +84,13 @@ class GetSubRequest extends BaseSubRequest implements ReferenceableInterface, SO
             throw new \RuntimeException("The GetSubRequest is incomplete.");
         }
 
-        $this->url = '/services/data/v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/'.$this->sObjectId.'?fields='
-            .implode(",", $this->fields);
+        $this->url = '/services/data/v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/'.$this->sObjectId.'?'
+            .http_build_query(
+                [
+                    'fields' => implode(",", $this->fields)
+                ]
+            )
+        ;
     }
 
     public function reference(string $fieldName): ?string

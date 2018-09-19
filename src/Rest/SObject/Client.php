@@ -26,7 +26,7 @@ class Client extends AbstractClient
 {
     public const VERSION = "43.0";
 
-    public const BASE_URI = "services/data/v".self::VERSION."/";
+    public const BASE_PATH = "services/data/v".self::VERSION."/";
 
     public function __construct(GuzzleClient $client, SerializerInterface $serializer)
     {
@@ -42,7 +42,7 @@ class Client extends AbstractClient
     public function info(string $sObjectType): BasicInfo
     {
         $response = $this->client->get(
-            self::BASE_URI.'sobjects/'.$sObjectType
+            self::BASE_PATH.'sobjects/'.$sObjectType
         );
 
         $this->throwErrorIfInvalidResponseCode($response);
@@ -64,7 +64,7 @@ class Client extends AbstractClient
     public function describe(string $sObjectType): DescribeSObject
     {
         $response = $this->client->get(
-            self::BASE_URI.'sobjects/'.$sObjectType.'/describe'
+            self::BASE_PATH.'sobjects/'.$sObjectType.'/describe'
         );
 
         $this->throwErrorIfInvalidResponseCode($response);
@@ -84,7 +84,7 @@ class Client extends AbstractClient
     public function describeGlobal(): GlobalDescribe
     {
         $response = $this->client->get(
-            self::BASE_URI.'sobjects/'
+            self::BASE_PATH.'sobjects/'
         );
 
         $this->throwErrorIfInvalidResponseCode($response);
@@ -108,7 +108,7 @@ class Client extends AbstractClient
     public function get(string $sObjectType, string $id, array $fields = ['Id']): SObject
     {
         $response = $this->client->get(
-            self::BASE_URI.'sobjects/'.$sObjectType.'/'.$id,
+            self::BASE_PATH.'sobjects/'.$sObjectType.'/'.$id,
             [
                 'query' => [
                     'fields' => implode(",", $fields),
@@ -144,7 +144,7 @@ class Client extends AbstractClient
         $end->setTimezone(new \DateTimeZone("UTC"));
 
         $response = $this->client->get(
-            self::BASE_URI.'sobjects/'.$sObjectType,
+            self::BASE_PATH.'sobjects/'.$sObjectType,
             [
                 'query' => [
                     'start' => $start->format(\DateTime::ISO8601),
@@ -181,7 +181,7 @@ class Client extends AbstractClient
         $end->setTimezone(new \DateTimeZone("UTC"));
 
         $response = $this->client->get(
-            self::BASE_URI.'sobjects/'.$sObjectType,
+            self::BASE_PATH.'sobjects/'.$sObjectType,
             [
                 'query' => [
                     'start' => $start->format(\DateTime::ISO8601),
@@ -211,7 +211,7 @@ class Client extends AbstractClient
     {
         $method        = null !== $SObject->Id ? 'patch' : 'post';
         $id            = $SObject->Id;
-        $url           = self::BASE_URI.'sobjects/'.$SObjectType.(null !== $id ? '/'.$id : '');
+        $url           = self::BASE_PATH.'sobjects/'.$SObjectType.(null !== $id ? '/'.$id : '');
         $SObject->Id   = null;
         $SObject->Type = null;
 
@@ -261,7 +261,7 @@ class Client extends AbstractClient
         }
 
         $response = $this->client->delete(
-            self::BASE_URI.'sobjects/'.$SObjectType.'/'.$SObject->Id
+            self::BASE_PATH.'sobjects/'.$SObjectType.'/'.$SObject->Id
         );
 
         $this->throwErrorIfInvalidResponseCode($response, 204);
@@ -284,7 +284,7 @@ class Client extends AbstractClient
             );
         } else {
             $response = $this->client->get(
-                self::BASE_URI.'query/',
+                self::BASE_PATH.'query/',
                 [
                     'query' => [
                         'q' => $query,
@@ -311,7 +311,7 @@ class Client extends AbstractClient
         }
 
         $response = $this->client->get(
-            self::BASE_URI.'queryAll/',
+            self::BASE_PATH.'queryAll/',
             [
                 'query' => [
                     'q' => $query,
@@ -338,7 +338,7 @@ class Client extends AbstractClient
     public function search(string $query): SearchResult
     {
         $response = $this->client->get(
-            self::BASE_URI.'search/',
+            self::BASE_PATH.'search/',
             [
                 'query' => [
                     'q' => $query,

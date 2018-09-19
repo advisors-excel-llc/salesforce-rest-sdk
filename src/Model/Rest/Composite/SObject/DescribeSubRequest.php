@@ -53,6 +53,6 @@ class DescribeSubRequest extends GetSubRequest implements DescribeSubRequestInte
      */
     public function preSerialize()
     {
-        $this->url = Client::BASE_URI.$this->sObjectType.'/describe';
+        $this->url = Client::BASE_PATH.$this->sObjectType.'/describe';
     }
 }

@@ -57,7 +57,7 @@ class CreateSubRequest extends PostSubRequest implements ReferenceableInterface,
             throw new \RuntimeException("No SObjectType has been set.");
         }
 
-        $this->url = '/services/data/v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/';
+        $this->url = Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/';
     }
 
     public function reference(string $fieldName): ?string

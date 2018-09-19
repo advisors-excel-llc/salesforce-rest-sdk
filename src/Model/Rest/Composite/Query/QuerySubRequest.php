@@ -54,7 +54,7 @@ class QuerySubRequest extends GetSubRequest implements QuerySubRequestInterface
         if ($this->query instanceof QueryResult && null !== $this->query->getNextRecordsUrl()) {
             $this->url = $this->query->getNextRecordsUrl();
         } elseif (is_string($this->query)) {
-            $this->url = '/services/data/v'.Client::VERSION.'/query/?q='.$this->query;
+            $this->url = Client::BASE_PATH.'query/?'.http_build_query(['q' => $this->query]);
         } else {
             throw new \RuntimeException("INVALID REQUEST: Unable to build the sub request with the given query.");
         }
