@@ -6,7 +6,7 @@
  * Time: 10:25 AM
  */
 
-namespace AE\SalesforceRestSdk\Tests\Composite\Client;
+namespace AE\SalesforceRestSdk\Tests\Composite;
 
 use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;

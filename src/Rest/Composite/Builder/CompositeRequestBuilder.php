@@ -51,9 +51,9 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
     /**
      * @param string $referenceId
      *
-     * @return RequestBuilderInterface
+     * @return CompositeRequestBuilder
      */
-    public function limits(string $referenceId): RequestBuilderInterface
+    public function limits(string $referenceId): CompositeRequestBuilder
     {
         return $this->addSubRequest(new LimitSubRequest($referenceId));
     }
@@ -64,9 +64,9 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
      * @param string $referenceId
      * @param string|QueryResult $query
      *
-     * @return RequestBuilderInterface
+     * @return CompositeRequestBuilder
      */
-    public function query(string $referenceId, $query): RequestBuilderInterface
+    public function query(string $referenceId, $query): CompositeRequestBuilder
     {
         return $this->addSubRequest(new QuerySubRequest($query, $referenceId));
     }
@@ -75,21 +75,21 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
      * @param string $referenceId
      * @param string|QueryResult $query
      *
-     * @return RequestBuilderInterface
+     * @return CompositeRequestBuilder
      */
-    public function queryAll(string $referenceId, $query): RequestBuilderInterface
+    public function queryAll(string $referenceId, $query): CompositeRequestBuilder
     {
         return $this->addSubRequest(new QueryAllSubRequest($query, $referenceId));
     }
 
     // SOBJECT
 
-    public function describe(string $referenceId, string $sObjectType): RequestBuilderInterface
+    public function describe(string $referenceId, string $sObjectType): CompositeRequestBuilder
     {
         return $this->addSubRequest(new DescribeSubRequest($sObjectType, $referenceId));
     }
 
-    public function describeGlobal(string $referenceId)
+    public function describeGlobal(string $referenceId): CompositeRequestBuilder
     {
         return $this->addSubRequest(new DescribeGlobalSubRequest($referenceId));
     }
@@ -99,7 +99,7 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
         string $sObjectType,
         string $sObjectId,
         array $fields = ["Id"]
-    ): RequestBuilderInterface {
+    ): CompositeRequestBuilder {
         $request = new GetSubRequest($sObjectType, $sObjectId, $fields, $referenceId);
 
         $this->addSubRequest($request);
@@ -107,7 +107,7 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
         return $this;
     }
 
-    public function createSObject(string $referenceId, string $sObjectType, SObject $sObject): RequestBuilderInterface
+    public function createSObject(string $referenceId, string $sObjectType, SObject $sObject): CompositeRequestBuilder
     {
         $request = new CreateSubRequest($sObjectType, $referenceId);
         $request->setBody($sObject);
@@ -115,7 +115,7 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
         return $this->addSubRequest($request);
     }
 
-    public function updateSObject(string $referenceId, string $sObjectType, SObject $sObject): RequestBuilderInterface
+    public function updateSObject(string $referenceId, string $sObjectType, SObject $sObject): CompositeRequestBuilder
     {
         if (null === $sObject->Id) {
             throw new \RuntimeException(
@@ -126,7 +126,7 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
         return $this->addSubRequest(new UpdateSubRequest($sObjectType, $sObject, $referenceId));
     }
 
-    public function deleteSObject(string $referenceId, string $sObjectType, string $sObjectId): RequestBuilderInterface
+    public function deleteSObject(string $referenceId, string $sObjectType, string $sObjectId): CompositeRequestBuilder
     {
         return $this->addSubRequest(new DeleteSubRequest($sObjectType, $sObjectId, $referenceId));
     }
@@ -138,7 +138,7 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
         string $sObjectType,
         array $ids,
         array $fields = ["Id"]
-    ): RequestBuilderInterface {
+    ): CompositeRequestBuilder {
         return $this->addSubRequest(
             new ReadSubRequest($sObjectType, $ids, $fields, $referenceId)
         );
@@ -147,7 +147,7 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
     public function createSObjectCollection(
         string $referenceId,
         CollectionRequestInterface $request
-    ): RequestBuilderInterface {
+    ): CompositeRequestBuilder {
         return $this->addSubRequest(
             new \AE\SalesforceRestSdk\Model\Rest\Composite\SObject\Collection\CreateSubRequest(
                 $request,
@@ -159,7 +159,7 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
     public function updateSObjectCollection(
         string $referenceId,
         CollectionRequestInterface $request
-    ): RequestBuilderInterface {
+    ): CompositeRequestBuilder {
         return $this->addSubRequest(
             new \AE\SalesforceRestSdk\Model\Rest\Composite\SObject\Collection\UpdateSubRequest(
                 $request,
@@ -171,7 +171,7 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
     public function deleteSObjectCollection(
         string $referenceId,
         CollectionRequestInterface $request
-    ): RequestBuilderInterface {
+    ): CompositeRequestBuilder {
         return $this->addSubRequest(
             new \AE\SalesforceRestSdk\Model\Rest\Composite\SObject\Collection\DeleteSubRequest(
                 $request,
@@ -182,7 +182,7 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
 
     // REGULAR STUFF
 
-    public function addSubRequest(SubRequest $subRequest): RequestBuilderInterface
+    public function addSubRequest(SubRequest $subRequest): CompositeRequestBuilder
     {
         $this->requests->set($subRequest->getReferenceId(), $subRequest);
 
@@ -252,7 +252,7 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
 
         $request = new CompositeRequest();
         $request->setAllOrNone($allOrNone);
-        $request->setCompositeRequest($this->requests->toArray());
+        $request->setCompositeRequest($this->requests->getValues());
 
         return $request;
     }

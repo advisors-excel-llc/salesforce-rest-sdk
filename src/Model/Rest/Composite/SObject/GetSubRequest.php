@@ -110,4 +110,28 @@ class GetSubRequest extends BaseSubRequest implements ReferenceableInterface, SO
     {
         return $this->sObjectType;
     }
+
+    /**
+     * @return string
+     */
+    public function getSObjectId(): string
+    {
+        return $this->sObjectId;
+    }
+
+    /**
+     * @return array
+     */
+    public function getFields(): array
+    {
+        return $this->fields;
+    }
+
+    /**
+     * @param array $fields
+     */
+    public function setFields(array $fields): void
+    {
+        $this->fields = $fields;
+    }
 }
