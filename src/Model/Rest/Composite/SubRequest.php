@@ -43,7 +43,7 @@ abstract class SubRequest
 
     /**
      * @var ArrayCollection
-     * @Serializer\Type("ArrayCollection")
+     * @Serializer\Type("ArrayCollection<string, string>")
      */
     protected $httpHeaders;
 

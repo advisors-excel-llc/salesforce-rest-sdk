@@ -54,7 +54,7 @@ class DeleteSubRequest extends BaseSubRequest implements SObjectSubRequestInterf
             throw new \RuntimeException("DeleteSubRequest is incomplete.");
         }
 
-        $this->url = Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/'.$this->sObjectId;
+        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/'.$this->sObjectId;
     }
 
     /**

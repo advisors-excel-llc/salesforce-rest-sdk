@@ -22,7 +22,13 @@ class QuerySubRequest extends GetSubRequest implements QuerySubRequestInterface
      */
     protected $query;
 
-    public function __construct(string $query, ?string $referenceId = null)
+    /**
+     * QuerySubRequest constructor.
+     *
+     * @param string|QueryResult $query
+     * @param null|string $referenceId
+     */
+    public function __construct($query, ?string $referenceId = null)
     {
         parent::__construct($referenceId);
         $this->query = $query;
@@ -47,6 +53,18 @@ class QuerySubRequest extends GetSubRequest implements QuerySubRequestInterface
     }
 
     /**
+     * @param QueryResult|string $query
+     *
+     * @return QuerySubRequest
+     */
+    public function setQuery($query)
+    {
+        $this->query = $query;
+
+        return $this;
+    }
+
+    /**
      * @Serializer\PreSerialize()
      */
     public function preSerialize()
@@ -54,7 +72,7 @@ class QuerySubRequest extends GetSubRequest implements QuerySubRequestInterface
         if ($this->query instanceof QueryResult && null !== $this->query->getNextRecordsUrl()) {
             $this->url = $this->query->getNextRecordsUrl();
         } elseif (is_string($this->query)) {
-            $this->url = Client::BASE_PATH.'query/?'.http_build_query(['q' => $this->query]);
+            $this->url = '/'.Client::BASE_PATH.'query/?'.http_build_query(['q' => $this->query]);
         } else {
             throw new \RuntimeException("INVALID REQUEST: Unable to build the sub request with the given query.");
         }

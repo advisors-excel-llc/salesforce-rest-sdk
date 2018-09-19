@@ -10,7 +10,9 @@ namespace AE\SalesforceRestSdk\Tests\Composite;
 
 use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
+use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\Client;
+use AE\SalesforceRestSdk\Rest\Composite\Builder\CompositeRequestBuilder;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequest;
 use PHPUnit\Framework\TestCase;
@@ -153,5 +155,72 @@ class CompositeClientTest extends TestCase
         $this->assertTrue($responses[1]->isSuccess());
         $this->assertEquals($ids['account'], $responses[0]->getId());
         $this->assertEquals($ids['contact'], $responses[1]->getId());
+    }
+
+    public function testCompositeRequest()
+    {
+        $builder = new CompositeRequestBuilder();
+
+        $builder
+            ->createSObject(
+                "FirstCreate",
+                "Account",
+                new SObject(
+                    [
+                        "Name" => "Wicked Cool Thang",
+                    ]
+                )
+            )
+            ->getSObject(
+                "GetFirstThang",
+                "Account",
+                $builder->reference("FirstCreate")->field("id"),
+                [
+                    "Id",
+                    "Name",
+                ]
+            )
+            ->updateSObject(
+                "UpdateFirstThang",
+                "Account",
+                new SObject(
+                    [
+                        "Id"   => $builder->reference("FirstCreate")->field("id"),
+                        "Name" => $builder->reference("GetFirstThang")->field("Name").' 1',
+                    ]
+                )
+            )
+            ->deleteSObject(
+                "DeleteFirstThang",
+                "Account",
+                $builder->reference("GetFirstThang")->field("Id")
+            )
+        ;
+
+        $request = $builder->build();
+
+        $response = $this->client->sendCompositeRequest($request);
+        $this->assertEquals(4, count($response->getCompositeResponse()));
+
+        $create = $response->findResultByReferenceId("FirstCreate");
+        $this->assertNotNull($create);
+        $this->assertEquals(201, $create->getHttpStatusCode());
+        $this->assertNotNull($create->getBody());
+        $this->assertNotNull($create->getBody()->getId());
+
+        $get = $response->findResultByReferenceId("GetFirstThang");
+        $this->assertNotNull($get);
+        $this->assertEquals(200, $get->getHttpStatusCode());
+        $this->assertNotNull($get->getBody());
+        $this->assertNotNull($get->getBody()->Id);
+        $this->assertNotNull($get->getBody()->Name);
+
+        $update = $response->findResultByReferenceId("UpdateFirstThang");
+        $this->assertNotNull($update);
+        $this->assertEquals(204, $update->getHttpStatusCode());
+
+        $delete = $response->findResultByReferenceId("DeleteFirstThang");
+        $this->assertNotNull($delete);
+        $this->assertEquals(204, $update->getHttpStatusCode());
     }
 }

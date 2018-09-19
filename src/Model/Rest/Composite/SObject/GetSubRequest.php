@@ -129,9 +129,13 @@ class GetSubRequest extends BaseSubRequest implements ReferenceableInterface, SO
 
     /**
      * @param array $fields
+     *
+     * @return $this
      */
-    public function setFields(array $fields): void
+    public function setFields(array $fields): self
     {
         $this->fields = $fields;
+
+        return $this;
     }
 }

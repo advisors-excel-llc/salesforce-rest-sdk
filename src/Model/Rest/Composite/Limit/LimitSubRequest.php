@@ -11,10 +11,11 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite\Limit;
 use AE\SalesforceRestSdk\Model\Rest\Composite\GetSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
 use AE\SalesforceRestSdk\Rest\Client;
-use JMS\Serializer\Annotation as Serializer;
 
 class LimitSubRequest extends GetSubRequest implements LimitSubRequestInterface
 {
+    protected $url = '/services/data/v'.Client::VERSION.'/limits/';
+
     final public function setBody($body): SubRequest
     {
         return $this;
@@ -23,13 +24,5 @@ class LimitSubRequest extends GetSubRequest implements LimitSubRequestInterface
     final public function setUrl(string $url): SubRequest
     {
         return $this;
-    }
-
-    /**
-     * @Serializer\PreSerialize()
-     */
-    public function preSerialize()
-    {
-        $this->url = '/services/data/v'.Client::VERSION.'/limits/';
     }
 }

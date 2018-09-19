@@ -13,6 +13,27 @@ use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionResponse;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeResponse;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
+use AE\SalesforceRestSdk\Model\Rest\Composite\Limit\LimitSubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\Query\QuerySubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\BasicInfoSubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\Collection\CompositeCollectionSubRequestInterface;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\CreateSubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\DescribeGlobalSubRequestInterface;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\DescribeSubRequestInterface;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\GetDeletedSubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\GetSubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\GetUpdatedSubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\SObjectSubRequestInterface;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
+use AE\SalesforceRestSdk\Model\Rest\CreateResponse;
+use AE\SalesforceRestSdk\Model\Rest\DeletedResponse;
+use AE\SalesforceRestSdk\Model\Rest\Limits;
+use AE\SalesforceRestSdk\Model\Rest\Metadata\BasicInfo;
+use AE\SalesforceRestSdk\Model\Rest\Metadata\DescribeSObject;
+use AE\SalesforceRestSdk\Model\Rest\Metadata\GlobalDescribe;
+use AE\SalesforceRestSdk\Model\Rest\QueryResult;
+use AE\SalesforceRestSdk\Model\Rest\UpdatedResponse;
+use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\AbstractClient;
 use GuzzleHttp\Client;
 use JMS\Serializer\SerializerInterface;
@@ -146,20 +167,65 @@ class CompositeClient extends AbstractClient
         $response = $this->client->post(
             self::BASE_PATH,
             [
-                'body' => $this->serializer->serialize($request, 'json')
+                'body' => $this->serializer->serialize($request, 'json'),
             ]
         );
 
         $this->throwErrorIfInvalidResponseCode($response);
 
-        $body = (string) $response->getBody();
+        $body = (string)$response->getBody();
+        /** @var CompositeResponse $compositeResponse */
         $compositeResponse = $this->serializer->deserialize(
             $body,
             CompositeResponse::class,
             'json'
         );
 
-        // TODO: process responses to generate correct body
+        foreach ($compositeResponse->getCompositeResponse() as $index => $result) {
+            if (null !== $result->getBody()) {
+                // For every response, there had to be a request
+                $req  = $request->findSubRequestByReferenceId($result->getReferenceId());
+                $type = $this->getDeserializationType($req);
+                $body = $this->serializer->serialize($result->getBody(), 'json');
+
+                $result->setBody(
+                    $this->serializer->deserialize(
+                        $body,
+                        $type,
+                        'json'
+                    )
+                );
+            }
+        }
+
+        return $compositeResponse;
+    }
+
+    protected function getDeserializationType(SubRequest $request): string
+    {
+        if ($request instanceof LimitSubRequest) {
+            return Limits::class;
+        } elseif ($request instanceof QuerySubRequest) {
+            return QueryResult::class;
+        } elseif ($request instanceof BasicInfoSubRequest) {
+            return BasicInfo::class;
+        } elseif ($request instanceof DescribeGlobalSubRequestInterface) {
+            return GlobalDescribe::class;
+        } elseif ($request instanceof DescribeSubRequestInterface) {
+            return DescribeSObject::class;
+        } elseif ($request instanceof CreateSubRequest) {
+            return CreateResponse::class;
+        } elseif ($request instanceof GetUpdatedSubRequest) {
+            return UpdatedResponse::class;
+        } elseif ($request instanceof GetDeletedSubRequest) {
+            return DeletedResponse::class;
+        } elseif ($request instanceof GetSubRequest) {
+            return SObject::class;
+        } elseif ($request instanceof CompositeCollectionSubRequestInterface) {
+            return 'array<'.CollectionResponse::class.'>';
+        }
+
+        return 'array';
     }
 
     public function batch()

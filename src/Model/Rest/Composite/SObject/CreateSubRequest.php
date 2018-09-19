@@ -17,6 +17,10 @@ use JMS\Serializer\Annotation as Serializer;
 
 class CreateSubRequest extends PostSubRequest implements ReferenceableInterface, SObjectSubRequestInterface
 {
+    /**
+     * @var string
+     * @Serializer\Exclude()
+     */
     private $sObjectType;
 
     public function __construct(string $sObjectType, ?string $referenceId = null)
@@ -57,7 +61,7 @@ class CreateSubRequest extends PostSubRequest implements ReferenceableInterface,
             throw new \RuntimeException("No SObjectType has been set.");
         }
 
-        $this->url = Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/';
+        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/';
     }
 
     public function reference(string $fieldName): ?string

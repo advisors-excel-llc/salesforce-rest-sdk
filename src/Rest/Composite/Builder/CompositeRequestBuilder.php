@@ -13,15 +13,18 @@ use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Limit\LimitSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Query\QueryAllSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Query\QuerySubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\BasicInfoSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\Collection\CompositeCollectionSubRequestInterface;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\Collection\ReadSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\CreateSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\DeleteSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\DescribeGlobalSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\DescribeSubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\GetDeletedSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\GetSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Query\QuerySubRequestInterface;
 use AE\SalesforceRestSdk\Model\Rest\Composite\ReferenceableInterface;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\GetUpdatedSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\UpdateSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
 use AE\SalesforceRestSdk\Model\Rest\QueryResult;
@@ -42,7 +45,7 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
 
     public function __construct()
     {
-        $this->requests = new ArrayCollection();
+        $this->requests   = new ArrayCollection();
         $this->references = new ArrayCollection();
     }
 
@@ -84,6 +87,11 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
 
     // SOBJECT
 
+    public function info(string $referenceId, string $sObjectType): CompositeRequestBuilder
+    {
+        return $this->addSubRequest(new BasicInfoSubRequest($sObjectType, $referenceId));
+    }
+
     public function describe(string $referenceId, string $sObjectType): CompositeRequestBuilder
     {
         return $this->addSubRequest(new DescribeSubRequest($sObjectType, $referenceId));
@@ -105,6 +113,33 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
         $this->addSubRequest($request);
 
         return $this;
+    }
+
+    public function getUpdated(
+        string $referenceId,
+        string $sObjectType,
+        \DateTime $start,
+        ?\DateTime $end = null
+    ): CompositeRequestBuilder {
+        return $this->addSubRequest(
+            new GetUpdatedSubRequest($sObjectType, $start, $end, $referenceId)
+        );
+    }
+
+    public function getDeleted(
+        string $referenceId,
+        string $sObjectType,
+        \DateTime $start,
+        ?\DateTime $end
+    ): CompositeRequestBuilder {
+        return $this->addSubRequest(
+            new GetDeletedSubRequest(
+                $sObjectType,
+                $start,
+                $end,
+                $referenceId
+            )
+        );
     }
 
     public function createSObject(string $referenceId, string $sObjectType, SObject $sObject): CompositeRequestBuilder

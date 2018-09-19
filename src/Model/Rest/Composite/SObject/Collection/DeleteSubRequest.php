@@ -62,7 +62,7 @@ class DeleteSubRequest extends BaseSubRequest implements CompositeCollectionSubR
             throw new \RuntimeException("Cannot make a delete collection request without IDs.");
         }
 
-        $this->url = CompositeClient::BASE_PATH.'/sobjects?'.http_build_query(
+        $this->url = '/'.CompositeClient::BASE_PATH.'/sobjects?'.http_build_query(
             [
                 'allOrNone' => $this->body->isAllOrNone() ? "true" : "false",
                 'ids'       => implode(",", $ids),

@@ -37,4 +37,20 @@ class CompositeResponse
 
         return $this;
     }
+
+    /**
+     * @param string $referenceId
+     *
+     * @return SubRequestResult|null
+     */
+    public function findResultByReferenceId(string $referenceId): ?SubRequestResult
+    {
+        foreach ($this->compositeResponse as $result) {
+            if ($result->getReferenceId() === $referenceId) {
+                return $result;
+            }
+        }
+
+        return null;
+    }
 }

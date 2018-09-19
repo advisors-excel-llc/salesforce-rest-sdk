@@ -69,4 +69,20 @@ class CompositeRequest
 
         return $this;
     }
+
+    /**
+     * @param string $referenceId
+     *
+     * @return SubRequest|null
+     */
+    public function findSubRequestByReferenceId(string $referenceId): ?SubRequest
+    {
+        foreach ($this->compositeRequest as $subRequest) {
+            if ($subRequest->getReferenceId() === $referenceId) {
+                return $subRequest;
+            }
+        }
+
+        return null;
+    }
 }

@@ -12,7 +12,6 @@ use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequestInterface;
 use AE\SalesforceRestSdk\Model\Rest\Composite\PostSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
-use JMS\Serializer\Annotation as Serializer;
 
 class CreateSubRequest extends PostSubRequest implements CompositeCollectionSubRequestInterface
 {
@@ -21,6 +20,7 @@ class CreateSubRequest extends PostSubRequest implements CompositeCollectionSubR
         parent::__construct($referenceId);
 
         $this->setBody($request);
+        $this->url = '/'.CompositeClient::BASE_PATH.'/sobjects';
     }
 
     final public function setBody($body): SubRequest
@@ -35,13 +35,5 @@ class CreateSubRequest extends PostSubRequest implements CompositeCollectionSubR
     final public function setUrl(string $url): SubRequest
     {
         return $this;
-    }
-
-    /**
-     * @Serializer\PreSerialize()
-     */
-    public function preSerialize()
-    {
-        $this->url = CompositeClient::BASE_PATH.'/sobjects';
     }
 }
