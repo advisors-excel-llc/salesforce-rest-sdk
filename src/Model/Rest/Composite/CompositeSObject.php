@@ -54,7 +54,7 @@ class CompositeSObject extends SObject
         return $this->attributes['type'];
     }
 
-    public function setType(string $type): SObject
+    public function setType(string $type): CompositeSObject
     {
         $this->attributes['type'] = $type;
 
@@ -66,19 +66,41 @@ class CompositeSObject extends SObject
         return array_key_exists('url', $this->attributes) ? $this->attributes['url'] : null;
     }
 
-    public function setUrl(?string $url): SObject
+    public function setUrl(?string $url): CompositeSObject
     {
         $this->attributes['url'] = $url;
 
         return $this;
     }
 
+    public function setReferenceId(string $refId): CompositeSObject
+    {
+        $this->attributes["referenceId"] = $refId;
+
+        return $this;
+    }
+
+    public function getReferenceId(): ?string
+    {
+        return array_key_exists("referenceId", $this->attributes) ? $this->attributes["referenceId"] : null;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAttributes(): array
+    {
+        return $this->attributes;
+    }
+
     public function __set($name, $value)
     {
-        if ('type' === $name) {
+        if ('type' === strtolower($name)) {
             $this->setType($value);
-        } elseif ('url' === $name) {
+        } elseif ('url' === strtolower($name)) {
             $this->setUrl($value);
+        } elseif ("referenceid" === strtolower($name)) {
+            $this->setReferenceId($value);
         } else {
             parent::__set($name, $value);
         }
@@ -86,12 +108,16 @@ class CompositeSObject extends SObject
 
     public function __get($name)
     {
-        if ('type' === $name) {
+        if ('type' === strtolower($name)) {
             return $this->getType();
         }
 
-        if ('url' === $name) {
+        if ('url' === strtolower($name)) {
             return $this->getUrl();
+        }
+
+        if ('referenceid' === strtolower($name)) {
+            return $this->getReferenceId();
         }
 
         return parent::__get($name);

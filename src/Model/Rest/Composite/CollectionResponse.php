@@ -38,6 +38,12 @@ class CollectionResponse extends CreateResponse
     private $fields = [];
 
     /**
+     * @var string|null
+     * @Serializer\Type("string")
+     */
+    private $referenceId;
+
+    /**
      * @return array|null
      */
     public function getWarnings(): ?array
@@ -113,6 +119,26 @@ class CollectionResponse extends CreateResponse
     public function setFields(array $fields): CollectionResponse
     {
         $this->fields = $fields;
+
+        return $this;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getReferenceId(): ?string
+    {
+        return $this->referenceId;
+    }
+
+    /**
+     * @param null|string $referenceId
+     *
+     * @return CollectionResponse
+     */
+    public function setReferenceId(?string $referenceId): CollectionResponse
+    {
+        $this->referenceId = $referenceId;
 
         return $this;
     }

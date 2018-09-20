@@ -10,9 +10,11 @@ namespace AE\SalesforceRestSdk\Rest\Composite;
 
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequestInterface;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionResponse;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeCollection;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeResponse;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeTreeResponse;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Query\QuerySubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\BasicInfoSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\Collection\CompositeCollectionSubRequestInterface;
@@ -221,6 +223,32 @@ class CompositeClient extends AbstractClient
         }
 
         return 'array';
+    }
+
+    /**
+     * @param string $sObjectType
+     * @param CompositeCollection $collection
+     *
+     * @return CompositeTreeResponse
+     */
+    public function tree(string $sObjectType, CompositeCollection $collection): CompositeTreeResponse
+    {
+        $response = $this->client->post(
+            self::BASE_PATH.'/tree/'.$sObjectType,
+            [
+                'body' => $this->serializer->serialize($collection, 'json'),
+            ]
+        );
+
+        $this->throwErrorIfInvalidResponseCode($response, 201);
+
+        $body = (string)$response->getBody();
+
+        return $this->serializer->deserialize(
+            $body,
+            CompositeTreeResponse::class,
+            'json'
+        );
     }
 
     public function batch()

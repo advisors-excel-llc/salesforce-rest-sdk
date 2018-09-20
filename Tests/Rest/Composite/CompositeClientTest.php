@@ -10,6 +10,7 @@ namespace AE\SalesforceRestSdk\Tests\Composite;
 
 use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionResponse;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeCollection;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\Client;
@@ -404,5 +405,46 @@ class CompositeClientTest extends TestCase
         $deleteContact = $response->findResultByReferenceId("deleteContact");
         $this->assertNotNull($deleteContact);
         $this->assertEquals(204, $deleteContact->getHttpStatusCode());
+    }
+
+    public function testTree()
+    {
+        $tree = new CompositeCollection([
+            new CompositeSObject(
+                "Account",
+                [
+                    "referenceId" => "account1",
+                    "Name" => "Composite Tree Account",
+                    "Contacts" => new CompositeCollection(
+                        [
+                            new CompositeSObject(
+                                "Contact",
+                                [
+                                    "referenceId" => "contact1",
+                                    "FirstName" => "Composite",
+                                    "LastName" => "Tree Contact"
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]);
+
+        $response = $this->client->tree("Account", $tree);
+
+        $this->assertFalse($response->isHasErrors());
+        $results = $response->getResults();
+        $this->assertCount(2, $results);
+        $this->assertEquals("account1", $results[0]->getReferenceId());
+        $this->assertNotNull($results[0]->getId());
+        $this->assertEquals("contact1", $results[1]->getReferenceId());
+        $this->assertNotNull($results[1]->getId());
+
+        // A Good Programmer always cleans up after themselves
+        $this->client->delete(new CollectionRequest([
+            new CompositeSObject("Account", ["Id" => $results[0]->getId()]),
+            new CompositeSObject("Contact", ["Id" => $results[1]->getId()]),
+        ]));
     }
 }

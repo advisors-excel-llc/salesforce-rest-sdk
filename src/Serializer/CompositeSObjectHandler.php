@@ -8,6 +8,7 @@
 
 namespace AE\SalesforceRestSdk\Serializer;
 
+use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeCollection;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use JMS\Serializer\Context;
 use JMS\Serializer\DeserializationContext;
@@ -34,14 +35,23 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
         Context $context
     ): array {
         $object = [
-            'attributes' => ['type' => $sobject->getType()],
+            'attributes' => $sobject->getAttributes(),
         ];
 
         foreach ($sobject->getFields() as $field => $value) {
             if (null === $value) {
                 continue;
             }
-            $object[$field] = $value;
+            if ($value instanceof CompositeCollection) {
+                $object[$field] = $visitor->getNavigator()->accept(
+                    $value,
+                    ['name' => CompositeCollection::class],
+                    $context
+                )
+                ;
+            } else {
+                $object[$field] = $value;
+            }
         }
 
         if (null === $visitor->getRoot()) {
@@ -69,10 +79,24 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
             if (array_key_exists('url', $data['attributes'])) {
                 $sobject->setUrl($data['attributes']['url']);
             }
+
+            if (array_key_exists('referenceId', $data['attributes'])) {
+                $sobject->setReferenceId($data['attributes']['referenceId']);
+            }
         }
 
         foreach ($data as $field => $value) {
-            $sobject->$field = $value;
+            if (is_array($value) && array_key_exists('hasErrors', $value) && array_key_exists('records', $value)
+                && is_array($value['records'])) {
+                $sobject->$field = $visitor->getNavigator()->accept(
+                    $value,
+                    ['name' => CompositeCollection::class],
+                    $context
+                )
+                ;
+            } else {
+                $sobject->$field = $value;
+            }
         }
 
         return $sobject;
