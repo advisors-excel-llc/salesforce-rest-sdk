@@ -20,7 +20,7 @@ class UpdateSubRequest extends PatchSubRequest implements CompositeCollectionSub
         parent::__construct($referenceId);
 
         $this->setBody($reference);
-        $this->url = '/'.CompositeClient::BASE_PATH.'/sobjects';
+        $this->url = CompositeClient::BASE_PATH.'/sobjects';
     }
 
     final public function setBody($body): SubRequest

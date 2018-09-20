@@ -9,6 +9,7 @@
 namespace AE\SalesforceRestSdk\Tests\Composite;
 
 use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionResponse;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\Client;
@@ -269,5 +270,139 @@ class CompositeClientTest extends TestCase
         $this->assertNotNull($deleted);
         $this->assertEquals(200, $deleted->getHttpStatusCode());
         $this->assertNotEmpty($deleted->getBody()->getDeletedRecords());
+    }
+
+    // It's not like this couldn't be rolled into the previous test, but that thing was getting huge
+    public function testCompositeCollectionRequest()
+    {
+        $builder = new CompositeRequestBuilder();
+
+        $builder
+            ->createSObjectCollection(
+                "create",
+                new CollectionRequest(
+                    [
+                        new CompositeSObject("Account", ["Name" => "Composite Test Account"]),
+                        new CompositeSObject(
+                            "Contact",
+                            [
+                                "FirstName"  => "Composite",
+                                "LastName"   => "Contact",
+                            ]
+                        ),
+                    ]
+                )
+            )
+            // Sadly, you can't use references in getSObjectCollections
+            ->getSObject(
+                "getAccount",
+                "Account",
+                $builder->reference("create")->field("id", 0),
+                ["Id", "Name"]
+            )
+            ->getSObject(
+                "getContact",
+                "Contact",
+                $builder->reference("create")->field("id", 1),
+                ["Id", "Name", "FirstName", "LastName"]
+            )
+            ->updateSObjectCollection(
+                "update",
+                new CollectionRequest(
+                    [
+                        new CompositeSObject(
+                            "Account",
+                            [
+                                "Id"   => $builder->reference("create")->field("id", 0),
+                                "Name" => $builder->reference("getAccount")->field("Name").' 1',
+                            ]
+                        ),
+                        new CompositeSObject(
+                            "Contact",
+                            [
+                                "Id"   => $builder->reference("create")->field("id", 1),
+                                "FirstName" => $builder->reference("getContact")->field("LastName"),
+                                "LastName" => $builder->reference("getContact")->field("FirstName"),
+                            ]
+                        )
+                    ]
+                )
+            )
+            ->deleteSObjectCollection(
+                "delete",
+                new CollectionRequest(
+                    [
+                        new CompositeSObject(
+                            "Account",
+                            [
+                                "Id" => $builder->reference("create")->field("id", 0)
+                            ]
+                        ),
+                        new CompositeSObject(
+                            "Contact",
+                            [
+                                "Id" => $builder->reference("create")->field("id", 1)
+                            ]
+                        )
+                    ]
+                )
+            )
+            ->deleteSObject("deleteAccount", "Account", $builder->reference("create")->field("id", 0))
+            ->deleteSObject("deleteContact", "Contact", $builder->reference("create")->field("id", 1))
+        ;
+
+        $response = $this->client->sendCompositeRequest($builder->build());
+
+        $this->assertCount(7, $response->getCompositeResponse());
+
+        $create = $response->findResultByReferenceId("create");
+        $this->assertNotNull($create);
+        $this->assertEquals(200, $create->getHttpStatusCode());
+        $this->assertCount(2, $create->getBody());
+        /** @var CollectionResponse[] $records */
+        $records = $create->getBody();
+        $this->assertTrue($records[0]->isSuccess());
+        $this->assertTrue($records[1]->isSuccess());
+
+        $getAccounts = $response->findResultByReferenceId("getAccount");
+        $this->assertNotNull($getAccounts);
+        $this->assertEquals(200, $getAccounts->getHttpStatusCode());
+        /** @var SObject $account */
+        $account = $getAccounts->getBody();
+        $this->assertEquals("Composite Test Account", $account->Name);
+
+        $getContacts = $response->findResultByReferenceId("getContact");
+        $this->assertNotNull($getContacts);
+        $this->assertEquals(200, $getContacts->getHttpStatusCode());
+        /** @var SObject $contact */
+        $contact = $getContacts->getBody();
+        $this->assertEquals("Composite", $contact->FirstName);
+        $this->assertEquals("Contact", $contact->LastName);
+
+        $update = $response->findResultByReferenceId("update");
+        $this->assertNotNull($update);
+        $this->assertEquals(200, $update->getHttpStatusCode());
+        /** @var CollectionResponse[] $updated */
+        $updated = $update->getBody();
+        $this->assertTrue($updated[0]->isSuccess());
+        $this->assertTrue($updated[1]->isSuccess());
+
+        $delete = $response->findResultByReferenceId("delete");
+        $this->assertNotNull($delete);
+        $this->assertEquals(200, $delete->getHttpStatusCode());
+        /** @var CollectionResponse[] $deleted */
+        $deleted = $delete->getBody();
+        $this->assertCount(2, $deleted);
+        // Can't use references in delete requests either. What good are these things?
+        $this->assertFalse($deleted[0]->isSuccess());
+        $this->assertFalse($deleted[1]->isSuccess());
+
+        $deleteAccount = $response->findResultByReferenceId("deleteAccount");
+        $this->assertNotNull($deleteAccount);
+        $this->assertEquals(204, $deleteAccount->getHttpStatusCode());
+
+        $deleteContact = $response->findResultByReferenceId("deleteContact");
+        $this->assertNotNull($deleteContact);
+        $this->assertEquals(204, $deleteContact->getHttpStatusCode());
     }
 }

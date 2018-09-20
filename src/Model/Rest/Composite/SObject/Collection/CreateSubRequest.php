@@ -20,7 +20,7 @@ class CreateSubRequest extends PostSubRequest implements CompositeCollectionSubR
         parent::__construct($referenceId);
 
         $this->setBody($request);
-        $this->url = '/'.CompositeClient::BASE_PATH.'/sobjects';
+        $this->url = CompositeClient::BASE_PATH.'/sobjects';
     }
 
     final public function setBody($body): SubRequest

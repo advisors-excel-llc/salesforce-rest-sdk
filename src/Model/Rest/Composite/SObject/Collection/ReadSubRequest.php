@@ -113,7 +113,7 @@ class ReadSubRequest extends GetSubRequest implements CompositeCollectionSubRequ
             throw new \RuntimeException("Cannot Get a Collection without any IDs");
         }
 
-        $this->url = '/'.CompositeClient::BASE_PATH.'/'.$this->sObjectType.'?'.http_build_query(
+        $this->url = CompositeClient::BASE_PATH.'/sobjects/'.$this->sObjectType.'?'.http_build_query(
             [
                 'ids'    => implode(",", $this->ids),
                 'fields' => implode(",", $this->fields),

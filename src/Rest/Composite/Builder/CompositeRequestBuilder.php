@@ -226,6 +226,11 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
         return null;
     }
 
+    /**
+     * @param string $referenceId
+     *
+     * @return Reference|ArrayReference
+     */
     public function reference(string $referenceId): Reference
     {
         if ($this->references->containsKey($referenceId)) {
