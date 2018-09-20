@@ -25,8 +25,8 @@ class UpdatedResponse
     private $ids = [];
 
     /**
-     * @var \DateTime
-     * @Serializer\Type("datetime")
+     * @var \DateTimeImmutable
+     * @Serializer\Type("DateTimeImmutable<'Y-m-d\TH:i:s.uO', 'UTC'>")
      */
     private $latestDateCovered;
 
@@ -51,19 +51,19 @@ class UpdatedResponse
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTimeImmutable
      */
-    public function getLatestDateCovered(): \DateTime
+    public function getLatestDateCovered(): \DateTimeImmutable
     {
         return $this->latestDateCovered;
     }
 
     /**
-     * @param \DateTime $latestDateCovered
+     * @param \DateTimeImmutable $latestDateCovered
      *
      * @return UpdatedResponse
      */
-    public function setLatestDateCovered(\DateTime $latestDateCovered): UpdatedResponse
+    public function setLatestDateCovered(\DateTimeImmutable $latestDateCovered): UpdatedResponse
     {
         $this->latestDateCovered = $latestDateCovered;
 

@@ -144,7 +144,7 @@ class Client extends AbstractClient
         $end->setTimezone(new \DateTimeZone("UTC"));
 
         $response = $this->client->get(
-            self::BASE_PATH.'sobjects/'.$sObjectType,
+            self::BASE_PATH.'sobjects/'.$sObjectType.'/updated/',
             [
                 'query' => [
                     'start' => $start->format(\DateTime::ISO8601),
@@ -181,7 +181,7 @@ class Client extends AbstractClient
         $end->setTimezone(new \DateTimeZone("UTC"));
 
         $response = $this->client->get(
-            self::BASE_PATH.'sobjects/'.$sObjectType,
+            self::BASE_PATH.'sobjects/'.$sObjectType.'/deleted/',
             [
                 'query' => [
                     'start' => $start->format(\DateTime::ISO8601),

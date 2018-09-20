@@ -159,9 +159,13 @@ class CompositeClientTest extends TestCase
 
     public function testCompositeRequest()
     {
+        $now     = new \DateTime();
         $builder = new CompositeRequestBuilder();
 
         $builder
+            ->info("BasicInfo", "Account")
+            ->describeGlobal("GlobalDescribe")
+            ->describe("DescribeAccount", "Account")
             ->createSObject(
                 "FirstCreate",
                 "Account",
@@ -190,6 +194,12 @@ class CompositeClientTest extends TestCase
                     ]
                 )
             )
+            ->getUpdated(
+                "UpdatedAccounts",
+                "Account",
+                (clone($now))->sub(new \DateInterval("P1D")),
+                (clone($now))->add(new \DateInterval('PT1M'))
+            )
             ->query(
                 "QueryForAccount",
                 "SELECT Id, Name FROM Account WHERE Name = 'Wicked Cool Thang 1'"
@@ -199,12 +209,28 @@ class CompositeClientTest extends TestCase
                 "Account",
                 $builder->reference("QueryForAccount")->field("records[0].Id")
             )
+            ->getDeleted(
+                "DeletedAccounts",
+                "Account",
+                (clone($now))->sub(new \DateInterval("P1D")),
+                (clone($now))->add(new \DateInterval('PT1M'))
+            )
         ;
 
         $request = $builder->build();
 
         $response = $this->client->sendCompositeRequest($request);
-        $this->assertEquals(5, count($response->getCompositeResponse()));
+        $this->assertEquals(10, count($response->getCompositeResponse()));
+
+        $info = $response->findResultByReferenceId("BasicInfo");
+        $this->assertNotNull($info);
+        $this->assertEquals(200, $info->getHttpStatusCode());
+        $this->assertEquals("Account", $info->getBody()->getObjectDescribe()->getName());
+
+        $describe = $response->findResultByReferenceId("DescribeAccount");
+        $this->assertNotNull($describe);
+        $this->assertEquals(200, $describe->getHttpStatusCode());
+        $this->assertEquals("Account", $describe->getBody()->getName());
 
         $create = $response->findResultByReferenceId("FirstCreate");
         $this->assertNotNull($create);
@@ -223,6 +249,11 @@ class CompositeClientTest extends TestCase
         $this->assertNotNull($update);
         $this->assertEquals(204, $update->getHttpStatusCode());
 
+        $updated = $response->findResultByReferenceId("UpdatedAccounts");
+        $this->assertNotNull($updated);
+        $this->assertEquals(200, $updated->getHttpStatusCode());
+        $this->assertNotEmpty($updated->getBody()->getIds());
+
         $query = $response->findResultByReferenceId("QueryForAccount");
         $this->assertNotNull($query);
         $this->assertEquals(200, $query->getHttpStatusCode());
@@ -233,5 +264,10 @@ class CompositeClientTest extends TestCase
         $delete = $response->findResultByReferenceId("DeleteFirstThang");
         $this->assertNotNull($delete);
         $this->assertEquals(204, $update->getHttpStatusCode());
+
+        $deleted = $response->findResultByReferenceId("DeletedAccounts");
+        $this->assertNotNull($deleted);
+        $this->assertEquals(200, $deleted->getHttpStatusCode());
+        $this->assertNotEmpty($deleted->getBody()->getDeletedRecords());
     }
 }

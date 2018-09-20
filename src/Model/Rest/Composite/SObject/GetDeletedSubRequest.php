@@ -108,7 +108,7 @@ class GetDeletedSubRequest extends GetSubRequest implements SObjectSubRequestInt
         $this->start->setTimezone(new \DateTimeZone("UTC"));
         $this->end->setTimezone(new \DateTimeZone("UTC"));
 
-        $this->url = '/'.Client::BASE_PATH.'sObjects/'.$this->sObjectType.'?'
+        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/deleted/?'
             .http_build_query(
                 [
                     'start' => $this->start->format(\DATE_ISO8601),

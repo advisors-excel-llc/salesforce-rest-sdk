@@ -203,9 +203,7 @@ class CompositeClient extends AbstractClient
 
     protected function getDeserializationType(SubRequest $request): string
     {
-        if ($request instanceof LimitSubRequest) {
-            return Limits::class;
-        } elseif ($request instanceof QuerySubRequest) {
+        if ($request instanceof QuerySubRequest) {
             return QueryResult::class;
         } elseif ($request instanceof BasicInfoSubRequest) {
             return BasicInfo::class;

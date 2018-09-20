@@ -49,18 +49,6 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
         $this->references = new ArrayCollection();
     }
 
-    // LIMITS
-
-    /**
-     * @param string $referenceId
-     *
-     * @return CompositeRequestBuilder
-     */
-    public function limits(string $referenceId): CompositeRequestBuilder
-    {
-        return $this->addSubRequest(new LimitSubRequest($referenceId));
-    }
-
     // QUERY
 
     /**

@@ -14,7 +14,7 @@ use AE\SalesforceRestSdk\Rest\SObject\Client;
 
 class DescribeGlobalSubRequest extends GetSubRequest implements DescribeGlobalSubRequestInterface
 {
-    protected $url = '/'.Client::BASE_PATH;
+    protected $url = '/'.Client::BASE_PATH.'sobjects/';
 
     final public function setBody($body): SubRequest
     {

@@ -21,7 +21,7 @@ class DeletedResponse
 {
     /**
      * @var array|SObject[]
-     * @Serializer\Type("array<AE\SalesforceRestSdk\Model\SObject>")
+     * @Serializer\Type("array<AE\SalesforceRestSdk\Model\Rest\DeletedRecord>")
      */
     private $deletedRecords = [];
 

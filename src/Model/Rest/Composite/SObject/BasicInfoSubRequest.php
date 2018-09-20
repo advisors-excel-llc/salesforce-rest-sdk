@@ -11,11 +11,13 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite\SObject;
 use AE\SalesforceRestSdk\Model\Rest\Composite\GetSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
 use AE\SalesforceRestSdk\Rest\SObject\Client;
+use JMS\Serializer\Annotation as Serializer;
 
 class BasicInfoSubRequest extends GetSubRequest implements SObjectSubRequestInterface
 {
     /**
      * @var string
+     * @Serializer\Exclude()
      */
     private $sObjectType;
 
@@ -24,7 +26,7 @@ class BasicInfoSubRequest extends GetSubRequest implements SObjectSubRequestInte
         parent::__construct($referenceId);
 
         $this->sObjectType = $sObjectType;
-        $this->url         = Client::BASE_PATH.'sobjects/'.$this->sObjectType;
+        $this->url         = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType;
     }
 
     /**

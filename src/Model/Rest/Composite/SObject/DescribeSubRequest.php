@@ -28,7 +28,7 @@ class DescribeSubRequest extends GetSubRequest implements DescribeSubRequestInte
         parent::__construct($referenceId);
 
         $this->sObjectType = $sObjectType;
-        $this->url = '/'.Client::BASE_PATH.$this->sObjectType.'/describe';
+        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/describe';
     }
 
     /**
