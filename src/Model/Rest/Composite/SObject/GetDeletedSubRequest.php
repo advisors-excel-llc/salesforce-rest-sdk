@@ -10,10 +10,11 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite\SObject;
 
 use AE\SalesforceRestSdk\Model\Rest\Composite\GetSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
+use AE\SalesforceRestSdk\Model\Rest\DeletedResponse;
 use AE\SalesforceRestSdk\Rest\SObject\Client;
 use JMS\Serializer\Annotation as Serializer;
 
-class GetDeletedSubRequest extends GetSubRequest implements SObjectSubRequestInterface
+class GetDeletedSubRequest extends GetSubRequest implements GetDeletedSubRequestInterface
 {
     /**
      * @var string
@@ -98,6 +99,11 @@ class GetDeletedSubRequest extends GetSubRequest implements SObjectSubRequestInt
     final public function setUrl(string $url): SubRequest
     {
         return $this;
+    }
+
+    public function getResultClass(): ?string
+    {
+        return DeletedResponse::class;
     }
 
     /**

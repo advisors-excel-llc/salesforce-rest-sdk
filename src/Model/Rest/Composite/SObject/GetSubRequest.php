@@ -75,6 +75,11 @@ class GetSubRequest extends BaseSubRequest implements ReferenceableInterface, SO
         return $this;
     }
 
+    public function getResultClass(): ?string
+    {
+        return SObject::class;
+    }
+
     /**
      * @Serializer\PreSerialize()
      */

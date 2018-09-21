@@ -10,7 +10,8 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SObject;
 
 use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\GetSubRequest as BaseSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SubRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\SObjectSubRequestInterface;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\CompositeSObjectSubRequestInterface;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\SObject\Client;
 use JMS\Serializer\Annotation as Serializer;
@@ -20,7 +21,7 @@ use JMS\Serializer\Annotation as Serializer;
  *
  * @package AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SObject
  */
-class GetSubRequest extends BaseSubRequest implements SObjectSubRequestInterface
+class GetSubRequest extends BaseSubRequest implements CompositeSObjectSubRequestInterface
 {
     /**
      * @var string
@@ -40,12 +41,13 @@ class GetSubRequest extends BaseSubRequest implements SObjectSubRequestInterface
      */
     private $fields = ["Id"];
 
-    public function __construct(string $sObjectType, string $sObjectId)
+    public function __construct(string $sObjectType, string $sObjectId, array $fields = ["Id"])
     {
         parent::__construct();
 
         $this->sObjectType = $sObjectType;
         $this->sObjectId   = $sObjectId;
+        $this->fields      = $fields;
     }
 
     final public function setRichInput($richInput): SubRequest
@@ -79,8 +81,11 @@ class GetSubRequest extends BaseSubRequest implements SObjectSubRequestInterface
             throw new \RuntimeException("The GetSubRequest is incomplete.");
         }
 
-        $this->url = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/'.$this->sObjectId.'?fields='
-            .implode(",", $this->fields);
+        $this->url = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/'.$this->sObjectId.'?'
+            .http_build_query([
+                "fields" => implode(",", $this->fields)
+            ])
+            ;
     }
 
     public function reference(string $fieldName): ?string
@@ -115,5 +120,10 @@ class GetSubRequest extends BaseSubRequest implements SObjectSubRequestInterface
     public function getFields(): array
     {
         return $this->fields;
+    }
+
+    public function getResultClass(): ?string
+    {
+        return CompositeSObject::class;
     }
 }

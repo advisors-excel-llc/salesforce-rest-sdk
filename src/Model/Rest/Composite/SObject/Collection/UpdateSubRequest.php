@@ -9,6 +9,7 @@
 namespace AE\SalesforceRestSdk\Model\Rest\Composite\SObject\Collection;
 
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequestInterface;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionResponse;
 use AE\SalesforceRestSdk\Model\Rest\Composite\PatchSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
@@ -35,5 +36,10 @@ class UpdateSubRequest extends PatchSubRequest implements CompositeCollectionSub
     final public function setUrl(string $url): SubRequest
     {
         return $this;
+    }
+
+    public function getResultClass(): ?string
+    {
+        return 'array<'.CollectionResponse::class.'>';
     }
 }

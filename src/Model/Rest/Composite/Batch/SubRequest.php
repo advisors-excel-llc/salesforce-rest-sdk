@@ -98,4 +98,12 @@ abstract class SubRequest
 
         return $this;
     }
+
+    /**
+     * @return null|string
+     */
+    public function getResultClass(): ?string
+    {
+        return null;
+    }
 }

@@ -8,6 +8,8 @@
 
 namespace AE\SalesforceRestSdk\Rest\Composite;
 
+use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\BatchRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\BatchResult;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequestInterface;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionResponse;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeCollection;
@@ -15,24 +17,6 @@ use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeResponse;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeTreeResponse;
-use AE\SalesforceRestSdk\Model\Rest\Composite\Query\QuerySubRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\BasicInfoSubRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\Collection\CompositeCollectionSubRequestInterface;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\CreateSubRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\DescribeGlobalSubRequestInterface;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\DescribeSubRequestInterface;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\GetDeletedSubRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\GetSubRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\GetUpdatedSubRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
-use AE\SalesforceRestSdk\Model\Rest\CreateResponse;
-use AE\SalesforceRestSdk\Model\Rest\DeletedResponse;
-use AE\SalesforceRestSdk\Model\Rest\Metadata\BasicInfo;
-use AE\SalesforceRestSdk\Model\Rest\Metadata\DescribeSObject;
-use AE\SalesforceRestSdk\Model\Rest\Metadata\GlobalDescribe;
-use AE\SalesforceRestSdk\Model\Rest\QueryResult;
-use AE\SalesforceRestSdk\Model\Rest\UpdatedResponse;
-use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\AbstractClient;
 use GuzzleHttp\Client;
 use JMS\Serializer\SerializerInterface;
@@ -181,11 +165,13 @@ class CompositeClient extends AbstractClient
         );
 
         foreach ($compositeResponse->getCompositeResponse() as $index => $result) {
-            if (null !== $result->getBody()) {
-                // For every response, there had to be a request
-                $req  = $request->findSubRequestByReferenceId($result->getReferenceId());
-                $type = $this->getDeserializationType($req);
-                $body = $this->serializer->serialize($result->getBody(), 'json');
+            // For every response, there had to be a request
+            $req    = $request->findSubRequestByReferenceId($result->getReferenceId());
+            $type   = $req->getResultClass();
+            $output = $result->getBody();
+
+            if (null !== $type && null !== $output) {
+                $body = $this->serializer->serialize($output, 'json');
 
                 $result->setBody(
                     $this->serializer->deserialize(
@@ -198,31 +184,6 @@ class CompositeClient extends AbstractClient
         }
 
         return $compositeResponse;
-    }
-
-    protected function getDeserializationType(SubRequest $request): string
-    {
-        if ($request instanceof QuerySubRequest) {
-            return QueryResult::class;
-        } elseif ($request instanceof BasicInfoSubRequest) {
-            return BasicInfo::class;
-        } elseif ($request instanceof DescribeGlobalSubRequestInterface) {
-            return GlobalDescribe::class;
-        } elseif ($request instanceof DescribeSubRequestInterface) {
-            return DescribeSObject::class;
-        } elseif ($request instanceof CreateSubRequest) {
-            return CreateResponse::class;
-        } elseif ($request instanceof GetUpdatedSubRequest) {
-            return UpdatedResponse::class;
-        } elseif ($request instanceof GetDeletedSubRequest) {
-            return DeletedResponse::class;
-        } elseif ($request instanceof GetSubRequest) {
-            return SObject::class;
-        } elseif ($request instanceof CompositeCollectionSubRequestInterface) {
-            return 'array<'.CollectionResponse::class.'>';
-        }
-
-        return 'array';
     }
 
     /**
@@ -251,8 +212,44 @@ class CompositeClient extends AbstractClient
         );
     }
 
-    public function batch()
+    public function batch(BatchRequest $request)
     {
-        // TODO: Implement Batch
+        $response = $this->client->post(
+            self::BASE_PATH.'/batch',
+            [
+                'body' => $this->serializer->serialize($request, 'json'),
+            ]
+        );
+
+        $this->throwErrorIfInvalidResponseCode($response);
+
+        $body = (string)$response->getBody();
+        /** @var BatchResult $batchResult */
+        $batchResult = $this->serializer->deserialize(
+            $body,
+            BatchResult::class,
+            'json'
+        );
+
+        $requests = $request->getBatchRequests();
+        foreach ($batchResult->getResults() as $i => $result) {
+            $req    = $requests[$i];
+            $type   = $req->getResultClass();
+            $output = $result->getResult();
+
+            if (null !== $type && null !== $output) {
+                $input = $this->serializer->serialize($output, 'json');
+
+                $result->setResult(
+                    $this->serializer->deserialize(
+                        $input,
+                        $type,
+                        'json'
+                    )
+                );
+            }
+        }
+
+        return $batchResult;
     }
 }

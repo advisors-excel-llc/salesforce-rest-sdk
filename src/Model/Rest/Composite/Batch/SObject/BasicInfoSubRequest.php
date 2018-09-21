@@ -6,10 +6,11 @@
  * Time: 4:32 PM
  */
 
-namespace AE\SalesforceRestSdk\Model\Rest\Composite\SObject;
+namespace AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SObject;
 
-use AE\SalesforceRestSdk\Model\Rest\Composite\GetSubRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\BasicInfoRequestInterface;
+use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\GetSubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Metadata\BasicInfo;
 use AE\SalesforceRestSdk\Rest\SObject\Client;
 use JMS\Serializer\Annotation as Serializer;
@@ -22,12 +23,12 @@ class BasicInfoSubRequest extends GetSubRequest implements BasicInfoRequestInter
      */
     private $sObjectType;
 
-    public function __construct(string $sObjectType, ?string $referenceId = null)
+    public function __construct(string $sObjectType)
     {
-        parent::__construct($referenceId);
+        parent::__construct();
 
         $this->sObjectType = $sObjectType;
-        $this->url         = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType;
+        $this->url         = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType;
     }
 
     /**
@@ -38,7 +39,7 @@ class BasicInfoSubRequest extends GetSubRequest implements BasicInfoRequestInter
         return $this->sObjectType;
     }
 
-    final public function setBody($body): SubRequest
+    final public function setRichInput($body): SubRequest
     {
         return $this;
     }

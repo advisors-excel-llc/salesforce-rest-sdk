@@ -80,6 +80,15 @@ class UpdateSubRequest extends PatchSubRequest implements SObjectSubRequestInter
         }
 
         $this->url = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/'.$this->sObjectId;
+
+        $this->richInput->Id   = null;
+        $this->richInput->Type = null;
+    }
+
+    public function postSerialize()
+    {
+        $this->richInput->Id   = $this->sObjectId;
+        $this->richInput->Type = $this->sObjectType;
     }
 
     /**
@@ -96,5 +105,17 @@ class UpdateSubRequest extends PatchSubRequest implements SObjectSubRequestInter
     public function getSObjectId(): string
     {
         return $this->sObjectId;
+    }
+
+    /**
+     * @param string $sObjectId
+     *
+     * @return UpdateSubRequest
+     */
+    public function setSObjectId(string $sObjectId): UpdateSubRequest
+    {
+        $this->sObjectId = $sObjectId;
+
+        return $this;
     }
 }

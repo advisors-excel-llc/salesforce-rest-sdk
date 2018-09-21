@@ -6,7 +6,7 @@
  * Time: 1:38 PM
  */
 
-namespace AE\SalesforceRestSdk\Model\Rest\Composite\Query;
+namespace AE\SalesforceRestSdk\Model\Rest\Composite\Batch\Query;
 
 use AE\SalesforceRestSdk\Rest\SObject\Client;
 use JMS\Serializer\Annotation as Serializer;
@@ -19,7 +19,7 @@ class QueryAllSubRequest extends QuerySubRequest
     public function preSerialize()
     {
         if (is_string($this->query)) {
-            $this->url = '/'.Client::BASE_PATH.'queryAll/?'.http_build_query(['q' => $this->query]);
+            $this->url = 'v'.Client::VERSION.'queryAll/?'.http_build_query(['q' => $this->query]);
         } else {
             parent::preSerialize();
         }

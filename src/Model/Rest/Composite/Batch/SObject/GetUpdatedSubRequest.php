@@ -6,10 +6,11 @@
  * Time: 4:43 PM
  */
 
-namespace AE\SalesforceRestSdk\Model\Rest\Composite\SObject;
+namespace AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SObject;
 
-use AE\SalesforceRestSdk\Model\Rest\Composite\GetSubRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\GetSubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\GetUpdatedSubRequestInterface;
 use AE\SalesforceRestSdk\Model\Rest\UpdatedResponse;
 use AE\SalesforceRestSdk\Rest\SObject\Client;
 use JMS\Serializer\Annotation as Serializer;
@@ -37,10 +38,9 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
     public function __construct(
         string $sObjectType,
         \DateTime $start,
-        ?\DateTime $end = null,
-        ?string $referenceId = null
+        ?\DateTime $end = null
     ) {
-        parent::__construct($referenceId);
+        parent::__construct();
 
         $this->sObjectType = $sObjectType;
         $this->start       = $start;
@@ -87,7 +87,7 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
         return $this->sObjectType;
     }
 
-    final public function setBody($body): SubRequest
+    final public function setRichInput($body): SubRequest
     {
         return $this;
     }
@@ -110,7 +110,7 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
         $this->start->setTimezone(new \DateTimeZone("UTC"));
         $this->end->setTimezone(new \DateTimeZone("UTC"));
 
-        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/updated/?'
+        $this->url = 'v'.Client::VERSION.'sobjects/'.$this->sObjectType.'/updated/?'
             .http_build_query(
                 [
                     'start' => $this->start->format(\DATE_ISO8601),

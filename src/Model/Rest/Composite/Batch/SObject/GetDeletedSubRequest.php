@@ -3,18 +3,19 @@
  * Created by PhpStorm.
  * User: alex.boyce
  * Date: 9/19/18
- * Time: 4:43 PM
+ * Time: 4:49 PM
  */
 
-namespace AE\SalesforceRestSdk\Model\Rest\Composite\SObject;
+namespace AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SObject;
 
-use AE\SalesforceRestSdk\Model\Rest\Composite\GetSubRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
-use AE\SalesforceRestSdk\Model\Rest\UpdatedResponse;
+use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\GetSubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\GetDeletedSubRequestInterface;
+use AE\SalesforceRestSdk\Model\Rest\DeletedResponse;
 use AE\SalesforceRestSdk\Rest\SObject\Client;
 use JMS\Serializer\Annotation as Serializer;
 
-class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequestInterface
+class GetDeletedSubRequest extends GetSubRequest implements GetDeletedSubRequestInterface
 {
     /**
      * @var string
@@ -34,13 +35,9 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
      */
     private $end;
 
-    public function __construct(
-        string $sObjectType,
-        \DateTime $start,
-        ?\DateTime $end = null,
-        ?string $referenceId = null
-    ) {
-        parent::__construct($referenceId);
+    public function __construct(string $sObjectType, \DateTime $start, ?\DateTime $end)
+    {
+        parent::__construct();
 
         $this->sObjectType = $sObjectType;
         $this->start       = $start;
@@ -57,10 +54,14 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
 
     /**
      * @param \DateTime $start
+     *
+     * @return GetDeletedSubRequest
      */
-    public function setStart(\DateTime $start): void
+    public function setStart(\DateTime $start): GetDeletedSubRequest
     {
         $this->start = $start;
+
+        return $this;
     }
 
     /**
@@ -73,10 +74,14 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
 
     /**
      * @param \DateTime $end
+     *
+     * @return GetDeletedSubRequest
      */
-    public function setEnd(\DateTime $end): void
+    public function setEnd(\DateTime $end): GetDeletedSubRequest
     {
         $this->end = $end;
+
+        return $this;
     }
 
     /**
@@ -87,7 +92,7 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
         return $this->sObjectType;
     }
 
-    final public function setBody($body): SubRequest
+    final public function setRichInput($body): SubRequest
     {
         return $this;
     }
@@ -95,11 +100,6 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
     final public function setUrl(string $url): SubRequest
     {
         return $this;
-    }
-
-    public function getResultClass(): ?string
-    {
-        return UpdatedResponse::class;
     }
 
     /**
@@ -110,12 +110,17 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
         $this->start->setTimezone(new \DateTimeZone("UTC"));
         $this->end->setTimezone(new \DateTimeZone("UTC"));
 
-        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/updated/?'
+        $this->url = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/deleted/?'
             .http_build_query(
                 [
                     'start' => $this->start->format(\DATE_ISO8601),
                     'end'   => $this->end->format(\DATE_ISO8601),
                 ]
             );
+    }
+
+    public function getResultClass(): ?string
+    {
+        return DeletedResponse::class;
     }
 }

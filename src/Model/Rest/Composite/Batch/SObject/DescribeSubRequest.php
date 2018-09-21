@@ -6,10 +6,11 @@
  * Time: 2:47 PM
  */
 
-namespace AE\SalesforceRestSdk\Model\Rest\Composite\SObject;
+namespace AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SObject;
 
-use AE\SalesforceRestSdk\Model\Rest\Composite\GetSubRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\GetSubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SubRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\DescribeSubRequestInterface;
 use AE\SalesforceRestSdk\Model\Rest\Metadata\DescribeSObject;
 use AE\SalesforceRestSdk\Rest\SObject\Client;
 use JMS\Serializer\Annotation as Serializer;
@@ -23,13 +24,12 @@ class DescribeSubRequest extends GetSubRequest implements DescribeSubRequestInte
     private $sObjectType;
 
     public function __construct(
-        string $sObjectType,
-        ?string $referenceId = null
+        string $sObjectType
     ) {
-        parent::__construct($referenceId);
+        parent::__construct();
 
         $this->sObjectType = $sObjectType;
-        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/describe';
+        $this->url         = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/describe';
     }
 
     /**
@@ -40,7 +40,7 @@ class DescribeSubRequest extends GetSubRequest implements DescribeSubRequestInte
         return $this->sObjectType;
     }
 
-    final public function setBody($body): SubRequest
+    final public function getRichInput($body): SubRequest
     {
         return $this;
     }

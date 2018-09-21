@@ -10,13 +10,24 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SObject;
 
 use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\PostSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SubRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\SObjectSubRequestInterface;
+use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\CreateSubRequestInterface;
+use AE\SalesforceRestSdk\Model\Rest\CreateResponse;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\SObject\Client;
 use JMS\Serializer\Annotation as Serializer;
 
-class CreateSubRequest extends PostSubRequest implements SObjectSubRequestInterface
+/**
+ * Class CreateSubRequest
+ *
+ * @package AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SObject
+ * @Serializer\ExclusionPolicy("none")
+ */
+class CreateSubRequest extends PostSubRequest implements CreateSubRequestInterface
 {
+    /**
+     * @var string
+     * @Serializer\Exclude()
+     */
     private $sObjectType;
 
     public function __construct(string $sObjectType)
@@ -24,12 +35,13 @@ class CreateSubRequest extends PostSubRequest implements SObjectSubRequestInterf
         parent::__construct();
 
         $this->sObjectType = $sObjectType;
+        $this->url         = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/';
     }
 
     final public function setRichInput($richInput): SubRequest
     {
         if ($richInput instanceof SObject) {
-            $richInput->Id = null;
+            $richInput->Id   = null;
             $richInput->Type = null;
 
             parent::setRichInput($richInput);
@@ -49,22 +61,15 @@ class CreateSubRequest extends PostSubRequest implements SObjectSubRequestInterf
     }
 
     /**
-     * @Serializer\PreSerialize()
-     */
-    public function preSerialize()
-    {
-        if (null === $this->sObjectType) {
-            throw new \RuntimeException("No SObjectType has been set.");
-        }
-
-        $this->url = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/';
-    }
-
-    /**
      * @return string
      */
     public function getSObjectType(): string
     {
         return $this->sObjectType;
+    }
+
+    public function getResultClass(): ?string
+    {
+        return CreateResponse::class;
     }
 }

@@ -11,11 +11,12 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite\SObject;
 use AE\SalesforceRestSdk\Model\Rest\Composite\PostSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\ReferenceableInterface;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
+use AE\SalesforceRestSdk\Model\Rest\CreateResponse;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\SObject\Client;
 use JMS\Serializer\Annotation as Serializer;
 
-class CreateSubRequest extends PostSubRequest implements ReferenceableInterface, SObjectSubRequestInterface
+class CreateSubRequest extends PostSubRequest implements ReferenceableInterface, CreateSubRequestInterface
 {
     /**
      * @var string
@@ -76,5 +77,10 @@ class CreateSubRequest extends PostSubRequest implements ReferenceableInterface,
     public function getSObjectType()
     {
         return $this->sObjectType;
+    }
+
+    public function getResultClass(): ?string
+    {
+        return CreateResponse::class;
     }
 }

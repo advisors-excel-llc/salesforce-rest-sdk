@@ -8,6 +8,7 @@
 
 namespace AE\SalesforceRestSdk\Model\Rest\Composite\SObject\Collection;
 
+use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use AE\SalesforceRestSdk\Model\Rest\Composite\GetSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
@@ -102,6 +103,11 @@ class ReadSubRequest extends GetSubRequest implements CompositeCollectionSubRequ
     final public function setUrl(string $url): SubRequest
     {
         return $this;
+    }
+
+    public function getResultClass(): ?string
+    {
+        return 'array<'.CompositeSObject::class.'>';
     }
 
     /**

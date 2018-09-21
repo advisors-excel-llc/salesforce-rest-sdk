@@ -36,6 +36,11 @@ class DeleteSubRequest extends BaseSubRequest implements SObjectSubRequestInterf
         $this->sObjectId   = $sObjectId;
     }
 
+    final public function setRichInput($richInput): SubRequest
+    {
+        return $this;
+    }
+
     final public function setUrl(string $url): SubRequest
     {
         return $this;
@@ -59,5 +64,25 @@ class DeleteSubRequest extends BaseSubRequest implements SObjectSubRequestInterf
     public function getSObjectType(): string
     {
         return $this->sObjectType;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSObjectId(): string
+    {
+        return $this->sObjectId;
+    }
+
+    /**
+     * @param string $sObjectId
+     *
+     * @return DeleteSubRequest
+     */
+    public function setSObjectId(string $sObjectId): DeleteSubRequest
+    {
+        $this->sObjectId = $sObjectId;
+
+        return $this;
     }
 }
