@@ -17,6 +17,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Request;
 use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\Naming\IdenticalPropertyNamingStrategy;
 use JMS\Serializer\SerializerBuilder;
@@ -124,6 +125,34 @@ class Client extends AbstractClient
             Limits::class,
             'json'
         );
+    }
+
+    public function apex(
+        string $method,
+        string $path,
+        $payload = null,
+        string $responseType = 'array',
+        array $headers = []
+    ) {
+        $headers['Content-Type'] = 'application/json';
+        $headers['Accept']       = 'Accept';
+
+        $body    = null !== $payload ? $this->serializer->serialize($payload, 'json') : null;
+        $request = new Request($method, '/services/apexrest'.$path, $headers, $body);
+
+        $response = $this->client->request($request);
+
+        $resBody = (string)$response->getBody();
+
+        if (null !== $resBody) {
+            return $this->serializer->deserialize(
+                $resBody,
+                $responseType,
+                'json'
+            );
+        }
+
+        return null;
     }
 
     protected function createHttpClient(string $url): GuzzleClient
