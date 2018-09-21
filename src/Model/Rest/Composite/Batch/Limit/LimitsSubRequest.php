@@ -12,7 +12,7 @@ use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Limits;
 use AE\SalesforceRestSdk\Rest\Client;
 
-class LimitsSubQuery extends GetSubRequest
+class LimitsSubRequest extends GetSubRequest
 {
     protected $url = 'v'.Client::VERSION.'/limits';
 

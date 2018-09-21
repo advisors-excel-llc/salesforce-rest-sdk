@@ -40,7 +40,7 @@ class DescribeSubRequest extends GetSubRequest implements DescribeSubRequestInte
         return $this->sObjectType;
     }
 
-    final public function getRichInput($body): SubRequest
+    final public function setRichInput($body): SubRequest
     {
         return $this;
     }

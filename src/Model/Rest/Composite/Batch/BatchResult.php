@@ -26,7 +26,7 @@ class BatchResult
 
     /**
      * @var array|SubRequestResult
-     * @Serializer\Type("array<AE\SalesforceRestSdk\Model\Rest\Composite\Batch\Result>")
+     * @Serializer\Type("array<AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SubRequestResult>")
      */
     private $results = [];
 

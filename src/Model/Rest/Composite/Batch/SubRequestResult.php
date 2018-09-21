@@ -25,7 +25,7 @@ class SubRequestResult
     private $statusCode = 0;
 
     /**
-     * @var array|null
+     * @var mixed
      * @Serializer\Type("array")
      */
     private $result;
@@ -51,19 +51,19 @@ class SubRequestResult
     }
 
     /**
-     * @return array|null
+     * @return mixed
      */
-    public function getResult(): ?array
+    public function getResult()
     {
         return $this->result;
     }
 
     /**
-     * @param array|null $result
+     * @param $result
      *
      * @return SubRequestResult
      */
-    public function setResult(?array $result): SubRequestResult
+    public function setResult($result): SubRequestResult
     {
         $this->result = $result;
 

@@ -8,9 +8,7 @@
 
 namespace AE\SalesforceRestSdk\Rest\Composite\Builder;
 
-use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeRequest;
-
 interface RequestBuilderInterface
 {
-    public function build(): CompositeRequest;
+    public function build();
 }

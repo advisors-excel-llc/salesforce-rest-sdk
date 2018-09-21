@@ -110,7 +110,7 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
         $this->start->setTimezone(new \DateTimeZone("UTC"));
         $this->end->setTimezone(new \DateTimeZone("UTC"));
 
-        $this->url = 'v'.Client::VERSION.'sobjects/'.$this->sObjectType.'/updated/?'
+        $this->url = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/updated/?'
             .http_build_query(
                 [
                     'start' => $this->start->format(\DATE_ISO8601),

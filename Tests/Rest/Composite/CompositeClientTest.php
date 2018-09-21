@@ -14,6 +14,7 @@ use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeCollection;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\Client;
+use AE\SalesforceRestSdk\Rest\Composite\Builder\BatchRequestBuilder;
 use AE\SalesforceRestSdk\Rest\Composite\Builder\CompositeRequestBuilder;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequest;
@@ -287,8 +288,8 @@ class CompositeClientTest extends TestCase
                         new CompositeSObject(
                             "Contact",
                             [
-                                "FirstName"  => "Composite",
-                                "LastName"   => "Contact",
+                                "FirstName" => "Composite",
+                                "LastName"  => "Contact",
                             ]
                         ),
                     ]
@@ -321,11 +322,11 @@ class CompositeClientTest extends TestCase
                         new CompositeSObject(
                             "Contact",
                             [
-                                "Id"   => $builder->reference("create")->field("id", 1),
+                                "Id"        => $builder->reference("create")->field("id", 1),
                                 "FirstName" => $builder->reference("getContact")->field("LastName"),
-                                "LastName" => $builder->reference("getContact")->field("FirstName"),
+                                "LastName"  => $builder->reference("getContact")->field("FirstName"),
                             ]
-                        )
+                        ),
                     ]
                 )
             )
@@ -336,15 +337,15 @@ class CompositeClientTest extends TestCase
                         new CompositeSObject(
                             "Account",
                             [
-                                "Id" => $builder->reference("create")->field("id", 0)
+                                "Id" => $builder->reference("create")->field("id", 0),
                             ]
                         ),
                         new CompositeSObject(
                             "Contact",
                             [
-                                "Id" => $builder->reference("create")->field("id", 1)
+                                "Id" => $builder->reference("create")->field("id", 1),
                             ]
-                        )
+                        ),
                     ]
                 )
             )
@@ -409,27 +410,29 @@ class CompositeClientTest extends TestCase
 
     public function testTree()
     {
-        $tree = new CompositeCollection([
-            new CompositeSObject(
-                "Account",
-                [
-                    "referenceId" => "account1",
-                    "Name" => "Composite Tree Account",
-                    "Contacts" => new CompositeCollection(
-                        [
-                            new CompositeSObject(
-                                "Contact",
-                                [
-                                    "referenceId" => "contact1",
-                                    "FirstName" => "Composite",
-                                    "LastName" => "Tree Contact"
-                                ]
-                            )
-                        ]
-                    )
-                ]
-            )
-        ]);
+        $tree = new CompositeCollection(
+            [
+                new CompositeSObject(
+                    "Account",
+                    [
+                        "referenceId" => "account1",
+                        "Name"        => "Composite Tree Account",
+                        "Contacts"    => new CompositeCollection(
+                            [
+                                new CompositeSObject(
+                                    "Contact",
+                                    [
+                                        "referenceId" => "contact1",
+                                        "FirstName"   => "Composite",
+                                        "LastName"    => "Tree Contact",
+                                    ]
+                                ),
+                            ]
+                        ),
+                    ]
+                ),
+            ]
+        );
 
         $response = $this->client->tree("Account", $tree);
 
@@ -442,9 +445,119 @@ class CompositeClientTest extends TestCase
         $this->assertNotNull($results[1]->getId());
 
         // A Good Programmer always cleans up after themselves
-        $this->client->delete(new CollectionRequest([
-            new CompositeSObject("Account", ["Id" => $results[0]->getId()]),
-            new CompositeSObject("Contact", ["Id" => $results[1]->getId()]),
-        ]));
+        $this->client->delete(
+            new CollectionRequest(
+                [
+                    new CompositeSObject("Account", ["Id" => $results[0]->getId()]),
+                    new CompositeSObject("Contact", ["Id" => $results[1]->getId()]),
+                ]
+            )
+        );
+    }
+
+    public function testBatchSObject()
+    {
+        $builder = new BatchRequestBuilder();
+
+        $builder
+            ->limits()
+            ->describe("Account")
+            ->query("SELECT Id, Name FROM Account")
+            ->createSObject(
+                "Account",
+                new SObject(
+                    [
+                        "Name" => "Batch Test Account",
+                    ]
+                )
+            )
+            ->search("FIND {Batch Test Account}")
+        ;
+
+        $firstResponse = $this->client->batch($builder->build());
+
+        $results = $firstResponse->getResults();
+        $this->assertCount(5, $results);
+
+        $limits = $results[0];
+        $this->assertEquals(200, $limits->getStatusCode());
+        $this->assertGreaterThan(0, $limits->getResult()->getDailyApiRequests()->getRemaining());
+
+        $describe = $results[1];
+        $this->assertEquals(200, $describe->getStatusCode());
+        $this->assertEquals("Account", $describe->getResult()->getName());
+
+        $query = $results[2];
+        $this->assertEquals(200, $query->getStatusCode());
+        $this->assertGreaterThan(0, $query->getResult()->getTotalSize());
+
+        $create = $results[3];
+        $this->assertEquals(201, $create->getStatusCode());
+        $this->assertTrue($create->getResult()->isSuccess());
+        $id = $create->getResult()->getId();
+        $this->assertNotNull($id);
+
+        $search = $results[4];
+        $this->assertEquals(200, $search->getStatusCode());
+        $this->assertNotEmpty($search->getResult()->getSearchRecords());
+
+        return $id;
+    }
+
+    /**
+     * @param string $id
+     *
+     * @depends testBatchSObject
+     */
+    public function testBatchSObject2(string $id)
+    {
+        $builder = new BatchRequestBuilder();
+        $now     = new \DateTime();
+
+        $builder
+            ->getSObject("Account", $id, ["Id", "Name"])
+            ->updateSObject(
+                "Account",
+                new SObject(
+                    [
+                        "Id"   => $id,
+                        "Name" => "Batch Test Update",
+                    ]
+                )
+            )
+            ->getUpdated("Account", $now, (clone($now))->add(new \DateInterval('PT2M')))
+            ->deleteSObject("Account", $id)
+            ->getDeleted(
+                "Account",
+                (clone($now))->sub(new \DateInterval('PT10M')),
+                (clone($now))->add(new \DateInterval('PT2M'))
+            )
+        ;
+
+        $response = $this->client->batch($builder->build());
+        $results  = $response->getResults();
+
+        $this->assertCount(5, $results);
+
+        $get = $results[0];
+        $this->assertEquals(200, $get->getStatusCode());
+        $this->assertEquals($id, $get->getResult()->Id);
+        $this->assertEquals("Batch Test Account", $get->getResult()->Name);
+
+        $update = $results[1];
+        $this->assertEquals(204, $update->getStatusCode());
+        $this->assertNull($update->getResult());
+
+        $updated = $results[2];
+        $this->assertEquals(200, $updated->getStatusCode());
+        $this->assertNotEmpty($updated->getResult());
+
+        $delete = $results[3];
+        $this->assertEquals(204, $delete->getStatusCode());
+        $this->assertNull($delete->getResult());
+
+        $deleted = $results[4];
+        $this->assertEquals(200, $deleted->getStatusCode());
+        $this->assertNotEmpty($deleted->getResult()->getDeletedRecords());
     }
 }

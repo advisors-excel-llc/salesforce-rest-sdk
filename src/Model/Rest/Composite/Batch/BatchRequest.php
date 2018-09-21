@@ -20,7 +20,7 @@ class BatchRequest
 {
     /**
      * @var array|SubRequest[]
-     * @Serializer\Type("array<AE\SalesforceRestSdk\Model\Rest\Composite\Batch\BatchRequest>")
+     * @Serializer\Type("array<AE\SalesforceRestSdk\Model\Rest\Composite\Batch\SubRequest>")
      */
     private $batchRequests;
 
