@@ -26,14 +26,14 @@ class DeletedResponse
     private $deletedRecords = [];
 
     /**
-     * @var \DateTime|null
-     * @Serializer\Type("datetime")
+     * @var \DateTimeImmutable|null
+     * @Serializer\Type("DateTimeImmutable<'Y-m-d\TH:i:s.u\Z'>")
      */
     private $earliestDateAvailable;
 
     /**
-     * @var \DateTime|null
-     * @Serializer\Type("datetime")
+     * @var \DateTimeImmutable|null
+     * @Serializer\Type("DateTimeImmutable<'Y-m-d\TH:i:s.u\Z'>")
      */
     private $latestDateCovered;
 
@@ -66,11 +66,11 @@ class DeletedResponse
     }
 
     /**
-     * @param \DateTime|null $earliestDateAvailable
+     * @param \DateTimeImmutable|null $earliestDateAvailable
      *
      * @return DeletedResponse
      */
-    public function setEarliestDateAvailable(?\DateTime $earliestDateAvailable): DeletedResponse
+    public function setEarliestDateAvailable(?\DateTimeImmutable $earliestDateAvailable): DeletedResponse
     {
         $this->earliestDateAvailable = $earliestDateAvailable;
 
@@ -78,9 +78,9 @@ class DeletedResponse
     }
 
     /**
-     * @return \DateTime|null
+     * @return \DateTimeImmutable|null
      */
-    public function getLatestDateCovered(): ?\DateTime
+    public function getLatestDateCovered(): ?\DateTimeImmutable
     {
         return $this->latestDateCovered;
     }
