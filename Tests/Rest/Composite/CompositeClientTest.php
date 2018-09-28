@@ -223,7 +223,7 @@ class CompositeClientTest extends TestCase
         $request = $builder->build();
 
         $response = $this->client->sendCompositeRequest($request);
-        $this->assertEquals(10, count($response->getCompositeResponse()));
+        $this->assertCount(10, $response->getCompositeResponse());
 
         $info = $response->findResultByReferenceId("BasicInfo");
         $this->assertNotNull($info);

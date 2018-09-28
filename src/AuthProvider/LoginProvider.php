@@ -18,7 +18,7 @@ class LoginProvider implements AuthProviderInterface
     private $isAuthorized = false;
 
     /**
-     * @var String
+     * @var string
      */
     private $token;
 
@@ -127,9 +127,9 @@ class LoginProvider implements AuthProviderInterface
     }
 
     /**
-     * @return String
+     * @return string
      */
-    public function getToken(): String
+    public function getToken(): ?string
     {
         return $this->token;
     }
@@ -137,8 +137,16 @@ class LoginProvider implements AuthProviderInterface
     /**
      * @return string
      */
-    public function getTokenType(): string
+    public function getTokenType(): ?string
     {
         return $this->tokenType;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAuthorized(): bool
+    {
+        return $this->isAuthorized;
     }
 }

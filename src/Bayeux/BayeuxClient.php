@@ -9,6 +9,7 @@
 namespace AE\SalesforceRestSdk\Bayeux;
 
 use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
+use AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException;
 use AE\SalesforceRestSdk\Bayeux\Extension\ExtensionInterface;
 use AE\SalesforceRestSdk\Bayeux\Transport\AbstractClientTransport;
 use AE\SalesforceRestSdk\Bayeux\Transport\HttpClientTransport;
@@ -110,6 +111,11 @@ class BayeuxClient
      * @var ArrayCollection|ExtensionInterface[]
      */
     private $extensions;
+
+    /**
+     * @var int
+     */
+    protected $maxRetries = 1;
 
     /**
      * BayeuxClient constructor.
@@ -491,12 +497,20 @@ class BayeuxClient
             return;
         }
 
-        $newMessages = $this->transport->send(
-            $messages,
-            function (RequestInterface $request) {
-                return $request->withAddedHeader('Authorization', $this->authProvider->authorize());
-            }
-        );
+        try {
+            $newMessages = $this->transport->send(
+                $messages,
+                function (RequestInterface $request) {
+                    return $request->withAddedHeader('Authorization', $this->authProvider->authorize());
+                }
+            );
+        } catch (SessionExpiredOrInvalidException $e) {
+            array_unshift($this->requestQueue, $messages);
+            $this->authProvider->reauthorize();
+            $this->processQueue();
+
+            return;
+        }
 
         $this->processExtensions($newMessages);
 
@@ -605,6 +619,26 @@ class BayeuxClient
         if (!$this->extensions->contains($extension)) {
             $this->extensions->add($extension);
         }
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMaxRetries(): int
+    {
+        return $this->maxRetries;
+    }
+
+    /**
+     * @param int $maxRetries
+     *
+     * @return BayeuxClient
+     */
+    public function setMaxRetries(int $maxRetries): BayeuxClient
+    {
+        $this->maxRetries = $maxRetries;
 
         return $this;
     }

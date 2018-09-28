@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 
 class LoginAuthProviderTest extends TestCase
 {
-    public function testAutoReconnect()
+    public function testReauthorize()
     {
         $auth = new LoginProvider(
             getenv("SF_CLIENT_ID"),

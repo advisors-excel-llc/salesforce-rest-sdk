@@ -27,13 +27,13 @@ class DeletedResponse
 
     /**
      * @var \DateTimeImmutable|null
-     * @Serializer\Type("DateTimeImmutable<'Y-m-d\TH:i:s.u\Z'>")
+     * @Serializer\Type("DateTimeImmutable<'Y-m-d\TH:i:s.uO'>")
      */
     private $earliestDateAvailable;
 
     /**
      * @var \DateTimeImmutable|null
-     * @Serializer\Type("DateTimeImmutable<'Y-m-d\TH:i:s.u\Z'>")
+     * @Serializer\Type("DateTimeImmutable<'Y-m-d\TH:i:s.uO'>")
      */
     private $latestDateCovered;
 
