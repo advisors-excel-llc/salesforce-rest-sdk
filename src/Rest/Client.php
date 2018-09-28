@@ -43,11 +43,10 @@ class Client extends AbstractClient
      */
     protected $sObjectClient;
 
-    public function __construct(string $baseUrl, AuthProviderInterface $provider)
+    public function __construct(AuthProviderInterface $provider)
     {
-        $this->baseUrl         = $baseUrl;
         $this->authProvider    = $provider;
-        $this->client          = $this->createHttpClient($baseUrl);
+        $this->client          = $this->createHttpClient();
         $this->serializer      = $this->createSerializer();
         $this->compositeClient = new CompositeClient($this->client, $this->serializer);
         $this->sObjectClient   = new SObject\Client($this->client, $this->serializer);
@@ -162,7 +161,7 @@ class Client extends AbstractClient
         return null;
     }
 
-    protected function createHttpClient(string $url): GuzzleClient
+    protected function createHttpClient(): GuzzleClient
     {
         $stack = new HandlerStack();
         $stack->setHandler(\GuzzleHttp\choose_handler());
@@ -173,6 +172,14 @@ class Client extends AbstractClient
                 }
             )
         );
+
+        $url = $this->authProvider->getInstanceUrl();
+
+        // If the instance URL isn't set, try and get it from the auth provider
+        if (null === $url) {
+            $this->authProvider->authorize();
+            $url = $this->authProvider->getInstanceUrl();
+        }
 
         $client = new GuzzleClient(
             [

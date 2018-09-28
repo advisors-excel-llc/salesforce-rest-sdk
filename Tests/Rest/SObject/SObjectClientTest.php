@@ -24,7 +24,6 @@ class SObjectClientTest extends TestCase
     protected function setUp()/* The :void return type declaration that should be here would cause a BC issue */
     {
         $client = new \AE\SalesforceRestSdk\Rest\Client(
-            getenv("SF_URL"),
             new LoginProvider(
                 getenv("SF_CLIENT_ID"),
                 getenv("SF_CLIENT_SECRET"),
@@ -86,9 +85,9 @@ class SObjectClientTest extends TestCase
     /**
      * @param SObject $SObject
      *
-     * @depends testCreate
-     *
      * @return SObject
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function testGet(SObject $SObject): SObject
     {
@@ -104,9 +103,9 @@ class SObjectClientTest extends TestCase
     /**
      * @param SObject $SObject
      *
-     * @depends testGet
-     *
      * @return SObject
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function testQuery(SObject $SObject): SObject
     {
@@ -135,9 +134,9 @@ class SObjectClientTest extends TestCase
     /**
      * @param SObject $SObject
      *
-     * @depends testQuery
-     *
      * @return SObject
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function testSearch(SObject $SObject): SObject
     {
@@ -166,9 +165,9 @@ class SObjectClientTest extends TestCase
     /**
      * @param SObject $SObject
      *
-     * @depends testSearch
-     *
      * @return SObject
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function testUpdate(SObject $SObject): SObject
     {
@@ -187,7 +186,9 @@ class SObjectClientTest extends TestCase
 
     /**
      * @param SObject $SObject
-     * @depends testUpdate
+     *
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function testDelete(SObject $SObject)
     {

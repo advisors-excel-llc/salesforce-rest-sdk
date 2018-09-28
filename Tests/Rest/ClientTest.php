@@ -21,7 +21,6 @@ class ClientTest extends TestCase
     protected function setUp()/* The :void return type declaration that should be here would cause a BC issue */
     {
         $this->client = new Client(
-            getenv("SF_URL"),
             new LoginProvider(
                 getenv("SF_CLIENT_ID"),
                 getenv("SF_CLIENT_SECRET"),

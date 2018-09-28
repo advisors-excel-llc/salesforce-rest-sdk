@@ -52,6 +52,11 @@ class LoginProvider implements AuthProviderInterface
      */
     private $clientSecret;
 
+    /**
+     * @var null|string
+     */
+    private $instanceUrl;
+
     public function __construct(string $clientId, string $clientSecret, string $username, string $password, string $url)
     {
         $this->clientId     = $clientId;
@@ -82,11 +87,11 @@ class LoginProvider implements AuthProviderInterface
             '/services/oauth2/token',
             [
                 'form_params' => [
-                    'grant_type'      => 'password',
-                    'client_id'       => $this->clientId,
-                    'client_secret'   => $this->clientSecret,
-                    'username' => $this->username,
-                    'password' => $this->password,
+                    'grant_type'    => 'password',
+                    'client_id'     => $this->clientId,
+                    'client_secret' => $this->clientSecret,
+                    'username'      => $this->username,
+                    'password'      => $this->password,
                 ],
                 'headers'     => [
                     'Content-Type' => 'application/x-www-form-urlencoded',
@@ -102,8 +107,9 @@ class LoginProvider implements AuthProviderInterface
             throw new SessionExpiredOrInvalidException($parts['message'], $parts['errorCode']);
         }
 
-        $this->tokenType = $parts['token_type'];
-        $this->token     = $parts['access_token'];
+        $this->tokenType   = $parts['token_type'];
+        $this->token       = $parts['access_token'];
+        $this->instanceUrl = $parts['instance_url'];
 
         $this->isAuthorized = true;
 
@@ -148,5 +154,13 @@ class LoginProvider implements AuthProviderInterface
     public function isAuthorized(): bool
     {
         return $this->isAuthorized;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getInstanceUrl(): ?string
+    {
+        return $this->instanceUrl;
     }
 }

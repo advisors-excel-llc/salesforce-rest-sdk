@@ -30,7 +30,6 @@ class BayeuxClientTest extends TestCase
     protected function setUp()
     {
         $this->client = new BayeuxClient(
-            getenv("SF_URL"),
             new LongPollingTransport(),
             new LoginProvider(
                 getenv("SF_CLIENT_ID"),

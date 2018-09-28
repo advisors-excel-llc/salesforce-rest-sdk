@@ -30,7 +30,6 @@ class CompositeClientTest extends TestCase
     protected function setUp()
     {
         $client = new Client(
-            getenv("SF_URL"),
             new LoginProvider(
                 getenv("SF_CLIENT_ID"),
                 getenv("SF_CLIENT_SECRET"),

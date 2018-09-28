@@ -113,11 +113,6 @@ class BayeuxClient
     private $extensions;
 
     /**
-     * @var int
-     */
-    protected $maxRetries = 1;
-
-    /**
      * BayeuxClient constructor.
      *
      * @param string $url
@@ -128,19 +123,13 @@ class BayeuxClient
      * @throws \Exception
      */
     public function __construct(
-        string $url,
         AbstractClientTransport $transport,
         AuthProviderInterface $authProvider,
         LoggerInterface $logger = null
     ) {
         $this->transport    = $transport;
         $this->authProvider = $authProvider;
-        $this->httpClient   = new Client(
-            [
-                'base_uri' => $url.'/cometd/'.static::SALESFORCE_VERSION.'/',
-                'cookies'  => true,
-            ]
-        );
+        $this->httpClient   = $this->createClient();
         $this->channels     = new ArrayCollection();
         $this->extensions   = new ArrayCollection();
         $this->logger       = $logger;
@@ -148,6 +137,23 @@ class BayeuxClient
         if ($this->transport instanceof HttpClientTransport) {
             $this->transport->setHttpClient($this->httpClient);
         }
+    }
+
+    protected function createClient()
+    {
+        $url = $this->authProvider->getInstanceUrl();
+
+        if (null === $url) {
+            $this->authProvider->authorize();
+            $url = $this->authProvider->getInstanceUrl();
+        }
+
+        return new Client(
+            [
+                'base_uri' => $url.'/cometd/'.static::SALESFORCE_VERSION.'/',
+                'cookies'  => true,
+            ]
+        );
     }
 
     /**
@@ -619,26 +625,6 @@ class BayeuxClient
         if (!$this->extensions->contains($extension)) {
             $this->extensions->add($extension);
         }
-
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getMaxRetries(): int
-    {
-        return $this->maxRetries;
-    }
-
-    /**
-     * @param int $maxRetries
-     *
-     * @return BayeuxClient
-     */
-    public function setMaxRetries(int $maxRetries): BayeuxClient
-    {
-        $this->maxRetries = $maxRetries;
 
         return $this;
     }

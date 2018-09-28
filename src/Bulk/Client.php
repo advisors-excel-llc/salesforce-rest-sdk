@@ -9,9 +9,11 @@
 namespace AE\SalesforceRestSdk\Bulk;
 
 use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
+use AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException;
 use AE\SalesforceRestSdk\Rest\AbstractClient;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Request;
 use JMS\Serializer\Naming\IdenticalPropertyNamingStrategy;
 use JMS\Serializer\SerializerBuilder;
 use JMS\Serializer\SerializerInterface;
@@ -35,29 +37,24 @@ class Client extends AbstractClient
     public const BASE_PATH = "/services/async/".self::VERSION."/job";
 
     /**
-     * @var AuthProviderInterface
-     */
-    private $authProvider;
-
-    /**
      * Client constructor.
      *
-     * @param string $url
      * @param AuthProviderInterface $authProvider
+     *
+     * @throws SessionExpiredOrInvalidException
      */
-    public function __construct(string $url, AuthProviderInterface $authProvider)
+    public function __construct(AuthProviderInterface $authProvider)
     {
         $this->authProvider = $authProvider;
-        $this->client       = $this->createHttpClient($url);
+        $this->client       = $this->createHttpClient();
         $this->serializer   = $this->createSerializer();
     }
 
     /**
-     * @param string $url
-     *
      * @return \GuzzleHttp\Client
+     * @throws SessionExpiredOrInvalidException
      */
-    protected function createHttpClient(string $url): \GuzzleHttp\Client
+    protected function createHttpClient(): \GuzzleHttp\Client
     {
         $stack = new HandlerStack();
         $stack->setHandler(\GuzzleHttp\choose_handler());
@@ -68,6 +65,13 @@ class Client extends AbstractClient
                 }
             )
         );
+
+        $url = $this->authProvider->getInstanceUrl();
+
+        if (null === $url) {
+            $this->authProvider->authorize();
+            $url = $this->authProvider->getInstanceUrl();
+        }
 
         return new \GuzzleHttp\Client(
             [
@@ -101,6 +105,7 @@ class Client extends AbstractClient
      * @param RequestInterface $request
      *
      * @return RequestInterface
+     * @throws SessionExpiredOrInvalidException
      */
     protected function authorize(RequestInterface $request): RequestInterface
     {
@@ -111,10 +116,13 @@ class Client extends AbstractClient
 
     /**
      * @param string $sObjectType
+     * @param string $operation
      * @param string $contentType
      * @param string $concurrencyMode
      *
      * @return JobInfo
+     * @throws SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function createJob(
         string $sObjectType,
@@ -129,14 +137,15 @@ class Client extends AbstractClient
                 ->setConcurrencyMode($concurrencyMode)
         ;
 
-        $response = $this->client->post(
-            self::BASE_PATH,
-            [
-                'body' => $this->serializer->serialize($jobInfo, 'json'),
-            ]
+        $response = $this->send(
+            new Request(
+                "POST",
+                self::BASE_PATH,
+                [],
+                $this->serializer->serialize($jobInfo, 'json')
+            ),
+            201
         );
-
-        $this->throwErrorIfInvalidResponseCode($response, 201);
 
         $body = (string)$response->getBody();
 
@@ -148,10 +157,12 @@ class Client extends AbstractClient
     }
 
     /**
-     * @param string $jobId
+     * @param JobInfo $job
      * @param $batch
      *
      * @return BatchInfo
+     * @throws SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function addBatch(JobInfo $job, $batch): BatchInfo
     {
@@ -167,17 +178,17 @@ class Client extends AbstractClient
             $batch = $this->serializer->serialize($batch, 'json');
         }
 
-        $response = $this->client->post(
-            self::BASE_PATH.'/'.$job->getId().'/batch',
-            [
-                'headers' => [
+        $response = $this->send(
+            new Request(
+                "POST",
+                self::BASE_PATH.'/'.$job->getId().'/batch',
+                [
                     'Content-Type' => $contentType,
                 ],
-                'body'    => $batch,
-            ]
+                $batch
+            ),
+            201
         );
-
-        $this->throwErrorIfInvalidResponseCode($response, 201);
 
         $body = (string)$response->getBody();
 
@@ -192,12 +203,14 @@ class Client extends AbstractClient
      * @param string $jobId
      *
      * @return JobInfo
+     * @throws SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getJobStatus(string $jobId): JobInfo
     {
-        $response = $this->client->get(self::BASE_PATH.'/'.$jobId);
-
-        $this->throwErrorIfInvalidResponseCode($response);
+        $response = $this->send(
+            new Request("GET", self::BASE_PATH.'/'.$jobId)
+        );
 
         $body = (string)$response->getBody();
 
@@ -213,12 +226,17 @@ class Client extends AbstractClient
      * @param string $batchId
      *
      * @return BatchInfo
+     * @throws SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getBatchStatus(string $jobId, string $batchId): BatchInfo
     {
-        $response = $this->client->get(self::BASE_PATH.'/'.$jobId.'/batch/'.$batchId);
-
-        $this->throwErrorIfInvalidResponseCode($response);
+        $response = $this->send(
+            new Request(
+                "GET",
+                self::BASE_PATH.'/'.$jobId.'/batch/'.$batchId
+            )
+        );
 
         $body = (string)$response->getBody();
 
@@ -234,12 +252,22 @@ class Client extends AbstractClient
      * @param string $batchId
      *
      * @return array|string[]
+     *
+     *
+     * /**
+     *
+     * @param string $jobId
+     * @param string $batchId
+     *
+     * @return array
+     * @throws SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getBatchResults(string $jobId, string $batchId): array
     {
-        $response = $this->client->get(self::BASE_PATH.'/'.$jobId.'/batch/'.$batchId.'/result');
-
-        $this->throwErrorIfInvalidResponseCode($response);
+        $response = $this->send(
+            new Request("GET", self::BASE_PATH.'/'.$jobId.'/batch/'.$batchId.'/result')
+        );
 
         $body = (string)$response->getBody();
 
@@ -256,31 +284,35 @@ class Client extends AbstractClient
      * @param string $resultId
      *
      * @return string
+     * @throws SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getResult(string $jobId, string $batchId, string $resultId): string
     {
-        $response = $this->client->get(self::BASE_PATH.'/'.$jobId.'/batch/'.$batchId.'/result/'.$resultId);
-
-        $this->throwErrorIfInvalidResponseCode($response);
+        $response = $this->send(
+            new Request("GET", self::BASE_PATH.'/'.$jobId.'/batch/'.$batchId.'/result/'.$resultId)
+        );
 
         return (string)$response->getBody();
     }
 
+    /**
+     * @param string $jobId
+     *
+     * @return JobInfo
+     * @throws SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function closeJob(string $jobId): JobInfo
     {
         $jobInfo = new JobInfo();
         $jobInfo->setState(JobInfo::STATE_CLOSED);
 
-        $response = $this->client->post(
-            self::BASE_PATH.'/'.$jobId,
-            [
-                'body' => $this->serializer->serialize($jobInfo, 'json')
-            ]
+        $response = $this->send(
+            new Request("POST", self::BASE_PATH.'/'.$jobId, [], $this->serializer->serialize($jobInfo, 'json'))
         );
 
-        $this->throwErrorIfInvalidResponseCode($response);
-
-        $body = (string) $response->getBody();
+        $body = (string)$response->getBody();
 
         return $this->serializer->deserialize(
             $body,
