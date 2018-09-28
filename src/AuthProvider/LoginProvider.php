@@ -18,7 +18,7 @@ class LoginProvider implements AuthProviderInterface
     private $isAuthorized = false;
 
     /**
-     * @var String
+     * @var string
      */
     private $token;
 
@@ -52,6 +52,11 @@ class LoginProvider implements AuthProviderInterface
      */
     private $clientSecret;
 
+    /**
+     * @var null|string
+     */
+    private $instanceUrl;
+
     public function __construct(string $clientId, string $clientSecret, string $username, string $password, string $url)
     {
         $this->clientId     = $clientId;
@@ -69,11 +74,12 @@ class LoginProvider implements AuthProviderInterface
     /**
      * @param bool $reauth
      *
+     * @throws SessionExpiredOrInvalidException
      * @return string
      */
     public function authorize($reauth = false): string
     {
-        if (!$reauth && ($this->isAuthorized && strlen($this->token) > 0)) {
+        if (!$reauth && $this->isAuthorized && strlen($this->token) > 0) {
             return "{$this->tokenType} {$this->token}";
         }
 
@@ -81,11 +87,11 @@ class LoginProvider implements AuthProviderInterface
             '/services/oauth2/token',
             [
                 'form_params' => [
-                    'grant_type'      => 'password',
-                    'client_id'       => $this->clientId,
-                    'client_secret'   => $this->clientSecret,
-                    'username' => $this->username,
-                    'password' => $this->password,
+                    'grant_type'    => 'password',
+                    'client_id'     => $this->clientId,
+                    'client_secret' => $this->clientSecret,
+                    'username'      => $this->username,
+                    'password'      => $this->password,
                 ],
                 'headers'     => [
                     'Content-Type' => 'application/x-www-form-urlencoded',
@@ -97,8 +103,15 @@ class LoginProvider implements AuthProviderInterface
         $body  = (string)$response->getBody();
         $parts = json_decode($body, true);
 
-        $this->tokenType = $parts['token_type'];
-        $this->token     = $parts['access_token'];
+        if (401 === $response->getStatusCode()) {
+            throw new SessionExpiredOrInvalidException($parts['message'], $parts['errorCode']);
+        }
+
+        $this->tokenType   = $parts['token_type'];
+        $this->token       = $parts['access_token'];
+        $this->instanceUrl = $parts['instance_url'];
+
+        $this->isAuthorized = true;
 
         return "{$this->tokenType} {$this->token}";
     }
@@ -117,5 +130,37 @@ class LoginProvider implements AuthProviderInterface
         $this->token        = null;
         $this->tokenType    = null;
         $this->isAuthorized = false;
+    }
+
+    /**
+     * @return string
+     */
+    public function getToken(): ?string
+    {
+        return $this->token;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTokenType(): ?string
+    {
+        return $this->tokenType;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAuthorized(): bool
+    {
+        return $this->isAuthorized;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getInstanceUrl(): ?string
+    {
+        return $this->instanceUrl;
     }
 }

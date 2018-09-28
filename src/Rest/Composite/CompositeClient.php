@@ -19,6 +19,7 @@ use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeTreeResponse;
 use AE\SalesforceRestSdk\Rest\AbstractClient;
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Request;
 use JMS\Serializer\SerializerInterface;
 
 class CompositeClient extends AbstractClient
@@ -36,19 +37,16 @@ class CompositeClient extends AbstractClient
     /**
      * @param CollectionRequestInterface $request
      *
-     * @return CollectionResponse[]
+     * @return array
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function create(CollectionRequestInterface $request): array
     {
         $requestBody = $this->serializer->serialize($request, 'json');
-        $response    = $this->client->post(
-            self::BASE_PATH.'/sobjects',
-            [
-                'body' => $requestBody,
-            ]
+        $response    = $this->send(
+            new Request("POST", self::BASE_PATH.'/sobjects', [], $requestBody)
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         $body = (string)$response->getBody();
 
@@ -64,21 +62,24 @@ class CompositeClient extends AbstractClient
      * @param array $ids
      * @param array $fields
      *
-     * @return array|CompositeSObject[]
+     * @return array
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function read(string $sObjectType, array $ids, array $fields = ['id']): array
     {
-        $response = $this->client->get(
-            self::BASE_PATH.'/sobjects/'.$sObjectType,
-            [
-                'query' => [
-                    'ids'    => implode(",", $ids),
-                    'fields' => implode(",", $fields),
-                ],
-            ]
+        $response = $this->send(
+            new Request(
+                "GET",
+                self::BASE_PATH.'/sobjects/'.$sObjectType.'?'.
+                http_build_query(
+                    [
+                        'ids'    => implode(",", $ids),
+                        'fields' => implode(",", $fields),
+                    ]
+                )
+            )
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         return $this->serializer->deserialize(
             $response->getBody(),
@@ -90,19 +91,21 @@ class CompositeClient extends AbstractClient
     /**
      * @param CollectionRequestInterface $request
      *
-     * @return CollectionResponse[]
+     * @return array
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function update(CollectionRequestInterface $request): array
     {
         $requestBody = $this->serializer->serialize($request, 'json');
-        $response    = $this->client->patch(
-            self::BASE_PATH.'/sobjects',
-            [
-                'body' => $requestBody,
-            ]
+        $response    = $this->send(
+            new Request(
+                "PATCH",
+                self::BASE_PATH.'/sobjects',
+                [],
+                $requestBody
+            )
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         $body = (string)$response->getBody();
 
@@ -116,7 +119,9 @@ class CompositeClient extends AbstractClient
     /**
      * @param CollectionRequestInterface $request
      *
-     * @return CollectionResponse[]
+     * @return array
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function delete(CollectionRequestInterface $request): array
     {
@@ -128,14 +133,17 @@ class CompositeClient extends AbstractClient
             }
         }
 
-        $response = $this->client->delete(
-            self::BASE_PATH.'/sobjects',
-            [
-                'query' => [
-                    'allOrNone' => $request->isAllOrNone() ? "true" : "false",
-                    'ids'       => implode(",", $ids),
-                ],
-            ]
+        $response = $this->send(
+            new Request(
+                "DELETE",
+                self::BASE_PATH.'/sobjects?'.
+                http_build_query(
+                    [
+                        'allOrNone' => $request->isAllOrNone() ? "true" : "false",
+                        'ids'       => implode(",", $ids),
+                    ]
+                )
+            )
         );
 
         return $this->serializer->deserialize(
@@ -145,16 +153,23 @@ class CompositeClient extends AbstractClient
         );
     }
 
+    /**
+     * @param CompositeRequest $request
+     *
+     * @return CompositeResponse
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function sendCompositeRequest(CompositeRequest $request)
     {
-        $response = $this->client->post(
-            self::BASE_PATH,
-            [
-                'body' => $this->serializer->serialize($request, 'json'),
-            ]
+        $response = $this->send(
+            new Request(
+                "POST",
+                self::BASE_PATH,
+                [],
+                $this->serializer->serialize($request, 'json')
+            )
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         $body = (string)$response->getBody();
         /** @var CompositeResponse $compositeResponse */
@@ -191,17 +206,20 @@ class CompositeClient extends AbstractClient
      * @param CompositeCollection $collection
      *
      * @return CompositeTreeResponse
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function tree(string $sObjectType, CompositeCollection $collection): CompositeTreeResponse
     {
-        $response = $this->client->post(
-            self::BASE_PATH.'/tree/'.$sObjectType,
-            [
-                'body' => $this->serializer->serialize($collection, 'json'),
-            ]
+        $response = $this->send(
+            new Request(
+                "POST",
+                self::BASE_PATH.'/tree/'.$sObjectType,
+                [],
+                $this->serializer->serialize($collection, 'json')
+            ),
+            201
         );
-
-        $this->throwErrorIfInvalidResponseCode($response, 201);
 
         $body = (string)$response->getBody();
 
@@ -212,16 +230,23 @@ class CompositeClient extends AbstractClient
         );
     }
 
+    /**
+     * @param BatchRequest $request
+     *
+     * @return BatchResult
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function batch(BatchRequest $request)
     {
-        $response = $this->client->post(
-            self::BASE_PATH.'/batch',
-            [
-                'body' => $this->serializer->serialize($request, 'json'),
-            ]
+        $response = $this->send(
+            new Request(
+                "POST",
+                self::BASE_PATH.'/batch',
+                [],
+                $this->serializer->serialize($request, 'json')
+            )
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         $body = (string)$response->getBody();
         /** @var BatchResult $batchResult */

@@ -9,6 +9,7 @@
 namespace AE\SalesforceRestSdk\Bayeux;
 
 use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
+use AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException;
 use AE\SalesforceRestSdk\Bayeux\Extension\ExtensionInterface;
 use AE\SalesforceRestSdk\Bayeux\Transport\AbstractClientTransport;
 use AE\SalesforceRestSdk\Bayeux\Transport\HttpClientTransport;
@@ -122,19 +123,13 @@ class BayeuxClient
      * @throws \Exception
      */
     public function __construct(
-        string $url,
         AbstractClientTransport $transport,
         AuthProviderInterface $authProvider,
         LoggerInterface $logger = null
     ) {
         $this->transport    = $transport;
         $this->authProvider = $authProvider;
-        $this->httpClient   = new Client(
-            [
-                'base_uri' => $url.'/cometd/'.static::SALESFORCE_VERSION.'/',
-                'cookies'  => true,
-            ]
-        );
+        $this->httpClient   = $this->createClient();
         $this->channels     = new ArrayCollection();
         $this->extensions   = new ArrayCollection();
         $this->logger       = $logger;
@@ -142,6 +137,23 @@ class BayeuxClient
         if ($this->transport instanceof HttpClientTransport) {
             $this->transport->setHttpClient($this->httpClient);
         }
+    }
+
+    protected function createClient()
+    {
+        $url = $this->authProvider->getInstanceUrl();
+
+        if (null === $url) {
+            $this->authProvider->authorize();
+            $url = $this->authProvider->getInstanceUrl();
+        }
+
+        return new Client(
+            [
+                'base_uri' => $url.'/cometd/'.static::SALESFORCE_VERSION.'/',
+                'cookies'  => true,
+            ]
+        );
     }
 
     /**
@@ -491,12 +503,20 @@ class BayeuxClient
             return;
         }
 
-        $newMessages = $this->transport->send(
-            $messages,
-            function (RequestInterface $request) {
-                return $request->withAddedHeader('Authorization', $this->authProvider->authorize());
-            }
-        );
+        try {
+            $newMessages = $this->transport->send(
+                $messages,
+                function (RequestInterface $request) {
+                    return $request->withAddedHeader('Authorization', $this->authProvider->authorize());
+                }
+            );
+        } catch (SessionExpiredOrInvalidException $e) {
+            array_unshift($this->requestQueue, $messages);
+            $this->authProvider->reauthorize();
+            $this->processQueue();
+
+            return;
+        }
 
         $this->processExtensions($newMessages);
 

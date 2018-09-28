@@ -30,7 +30,6 @@ class BayeuxClientTest extends TestCase
     protected function setUp()
     {
         $this->client = new BayeuxClient(
-            getenv("SF_URL"),
             new LongPollingTransport(),
             new LoginProvider(
                 getenv("SF_CLIENT_ID"),
@@ -105,5 +104,39 @@ class BayeuxClientTest extends TestCase
         );
 
         $this->client->start();
+    }
+
+    public function testHandshakeReauth()
+    {
+        if (!$this->client->isDisconnected()) {
+            $this->client->disconnect();
+        }
+
+        $class = new \ReflectionClass(LoginProvider::class);
+
+        $tokenProperty = $class->getProperty('token');
+        $tokenProperty->setAccessible(true);
+        $tokenProperty->setValue($this->client->getAuthProvider(), 'BAD_VALUE');
+
+        $typeProperty = $class->getProperty('tokenType');
+        $typeProperty->setAccessible(true);
+        $typeProperty->setValue($this->client->getAuthProvider(), 'Bearer');
+
+        $authProperty = $class->getProperty('isAuthorized');
+        $authProperty->setAccessible(true);
+        $authProperty->setValue($this->client->getAuthProvider(), true);
+
+        $this->assertNotNull($this->client->getAuthProvider()->getToken());
+        $this->assertTrue($this->client->getAuthProvider()->isAuthorized());
+
+        $this->client->handshake();
+
+        $this->assertNotNull($this->client->getAuthProvider()->getToken());
+        $this->assertNotEquals('BAD_VALUE', $this->client->getAuthProvider()->getToken());
+        $this->assertTrue($this->client->getAuthProvider()->isAuthorized());
+
+        if (!$this->client->isDisconnected()) {
+            $this->client->terminate();
+        }
     }
 }

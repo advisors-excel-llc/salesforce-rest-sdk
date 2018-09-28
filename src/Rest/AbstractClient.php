@@ -8,7 +8,10 @@
 
 namespace AE\SalesforceRestSdk\Rest;
 
+use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
+use AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException;
 use JMS\Serializer\SerializerInterface;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 abstract class AbstractClient
@@ -24,10 +27,37 @@ abstract class AbstractClient
     protected $serializer;
 
     /**
+     * @var AuthProviderInterface
+     */
+    protected $authProvider;
+
+    /**
+     * @param RequestInterface $request
+     * @param int $expectedStatusCode
+     *
+     * @return mixed|ResponseInterface
+     * @throws SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    protected function send(RequestInterface $request, $expectedStatusCode = 200)
+    {
+        $response = $this->client->send($request);
+
+        try {
+            $this->throwErrorIfInvalidResponseCode($response, $expectedStatusCode);
+        } catch (SessionExpiredOrInvalidException $e) {
+            $this->authProvider->reauthorize();
+            return $this->send($request, $expectedStatusCode);
+        }
+
+        return $response;
+    }
+
+    /**
      * @param ResponseInterface $response
      * @param int $expectedStatusCode
      *
-     * @throws \RuntimeException
+     * @throws \RuntimeException|SessionExpiredOrInvalidException
      */
     protected function throwErrorIfInvalidResponseCode(ResponseInterface $response, int $expectedStatusCode = 200)
     {
@@ -35,7 +65,12 @@ abstract class AbstractClient
             $body = (string)$response->getBody();
             if (strlen($body) > 0) {
                 $errors = $this->serializer->deserialize($body, 'array', 'json');
-                throw new \RuntimeException("{$errors[0]['errorCode']}: {$errors[0]['message']}");
+
+                if (401 === $response->getStatusCode()) {
+                    throw new SessionExpiredOrInvalidException($errors[0]['message'], $errors[0]['errorCode']);
+                } else {
+                    throw new \RuntimeException("{$errors[0]['errorCode']}: {$errors[0]['message']}");
+                }
             } else {
                 throw new \RuntimeException(
                     "Received Status Code {$response->getStatusCode()}, expected $expectedStatusCode"

@@ -19,6 +19,7 @@ use AE\SalesforceRestSdk\Model\Rest\UpdatedResponse;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\AbstractClient;
 use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Psr7\Request;
 use JMS\Serializer\SerializerInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -38,14 +39,14 @@ class Client extends AbstractClient
      * @param string $sObjectType
      *
      * @return BasicInfo
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function info(string $sObjectType): BasicInfo
     {
-        $response = $this->client->get(
-            self::BASE_PATH.'sobjects/'.$sObjectType
+        $response = $this->send(
+            new Request("GET", self::BASE_PATH.'sobjects/'.$sObjectType)
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         $body = (string)$response->getBody();
 
@@ -60,14 +61,14 @@ class Client extends AbstractClient
      * @param string $sObjectType
      *
      * @return DescribeSObject
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function describe(string $sObjectType): DescribeSObject
     {
-        $response = $this->client->get(
-            self::BASE_PATH.'sobjects/'.$sObjectType.'/describe'
+        $response = $this->send(
+            new Request("GET", self::BASE_PATH.'sobjects/'.$sObjectType.'/describe')
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         $body = (string)$response->getBody();
 
@@ -80,14 +81,14 @@ class Client extends AbstractClient
 
     /**
      * @return GlobalDescribe
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function describeGlobal(): GlobalDescribe
     {
-        $response = $this->client->get(
-            self::BASE_PATH.'sobjects/'
+        $response = $this->send(
+            new Request("GET", self::BASE_PATH.'sobjects/')
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         $body = (string)$response->getBody();
 
@@ -104,19 +105,22 @@ class Client extends AbstractClient
      * @param array $fields
      *
      * @return SObject
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function get(string $sObjectType, string $id, array $fields = ['Id']): SObject
     {
-        $response = $this->client->get(
-            self::BASE_PATH.'sobjects/'.$sObjectType.'/'.$id,
-            [
-                'query' => [
-                    'fields' => implode(",", $fields),
-                ],
-            ]
+        $response = $this->send(
+            new Request(
+                "GET",
+                self::BASE_PATH.'sobjects/'.$sObjectType.'/'.$id.'?'.
+                http_build_query(
+                    [
+                        'fields' => implode(",", $fields),
+                    ]
+                )
+            )
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         $body = (string)$response->getBody();
 
@@ -133,6 +137,8 @@ class Client extends AbstractClient
      * @param \DateTime|null $end
      *
      * @return UpdatedResponse
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getUpdated(string $sObjectType, \DateTime $start, \DateTime $end = null): UpdatedResponse
     {
@@ -143,17 +149,18 @@ class Client extends AbstractClient
         $start->setTimezone(new \DateTimeZone("UTC"));
         $end->setTimezone(new \DateTimeZone("UTC"));
 
-        $response = $this->client->get(
-            self::BASE_PATH.'sobjects/'.$sObjectType.'/updated/',
-            [
-                'query' => [
-                    'start' => $start->format(\DateTime::ISO8601),
-                    'end'   => $end->format(\DateTime::ISO8601),
-                ],
-            ]
+        $response = $this->send(
+            new Request(
+                "GET",
+                self::BASE_PATH.'sobjects/'.$sObjectType.'/updated/?'.
+                http_build_query(
+                    [
+                        'start' => $start->format(\DateTime::ISO8601),
+                        'end'   => $end->format(\DateTime::ISO8601),
+                    ]
+                )
+            )
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         $body = (string)$response->getBody();
 
@@ -170,6 +177,8 @@ class Client extends AbstractClient
      * @param \DateTime|null $end
      *
      * @return DeletedResponse
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getDeleted(string $sObjectType, \DateTime $start, \DateTime $end = null): DeletedResponse
     {
@@ -180,17 +189,18 @@ class Client extends AbstractClient
         $start->setTimezone(new \DateTimeZone("UTC"));
         $end->setTimezone(new \DateTimeZone("UTC"));
 
-        $response = $this->client->get(
-            self::BASE_PATH.'sobjects/'.$sObjectType.'/deleted/',
-            [
-                'query' => [
-                    'start' => $start->format(\DateTime::ISO8601),
-                    'end'   => $end->format(\DateTime::ISO8601),
-                ],
-            ]
+        $response = $this->send(
+            new Request(
+                "GET",
+                self::BASE_PATH.'sobjects/'.$sObjectType.'/deleted/?'.
+                http_build_query(
+                    [
+                        'start' => $start->format(\DateTime::ISO8601),
+                        'end'   => $end->format(\DateTime::ISO8601),
+                    ]
+                )
+            )
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         $body = (string)$response->getBody();
 
@@ -206,6 +216,8 @@ class Client extends AbstractClient
      * @param SObject $SObject
      *
      * @return bool
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function persist(string $SObjectType, SObject $SObject): bool
     {
@@ -215,15 +227,14 @@ class Client extends AbstractClient
         $SObject->Id   = null;
         $SObject->Type = null;
 
-        /** @var ResponseInterface $response */
-        $response = $this->client->$method(
+        $request = new Request(
+            $method,
             $url,
-            [
-                'body' => $this->serializer->serialize($SObject, 'json'),
-            ]
+            [],
+            $this->serializer->serialize($SObject, 'json')
         );
 
-        $this->throwErrorIfInvalidResponseCode($response, $method === "patch" ? 204 : 201);
+        $response = $this->send($request, $method === "patch" ? 204 : 201);
 
         if ($method === 'post') {
             /** @var CreateResponse $body */
@@ -254,23 +265,34 @@ class Client extends AbstractClient
         return true;
     }
 
+    /**
+     * @param string $SObjectType
+     * @param SObject $SObject
+     *
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function remove(string $SObjectType, SObject $SObject)
     {
         if (null === $SObject->Id) {
             throw new \RuntimeException("The SObject provided does not have an ID set.");
         }
 
-        $response = $this->client->delete(
-            self::BASE_PATH.'sobjects/'.$SObjectType.'/'.$SObject->Id
+        $this->send(
+            new Request(
+                "DELETE",
+                self::BASE_PATH.'sobjects/'.$SObjectType.'/'.$SObject->Id
+            ),
+            204
         );
-
-        $this->throwErrorIfInvalidResponseCode($response, 204);
     }
 
     /**
-     * @param string|QueryResult $query
+     * @param $query
      *
      * @return QueryResult
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function query($query): QueryResult
     {
@@ -279,21 +301,19 @@ class Client extends AbstractClient
                 return $query;
             }
 
-            $response = $this->client->get(
-                $query->getNextRecordsUrl()
-            );
+            $url = $query->getNextRecordsUrl();
         } else {
-            $response = $this->client->get(
-                self::BASE_PATH.'query/',
-                [
-                    'query' => [
+            $url = self::BASE_PATH.'query/?'.
+                http_build_query(
+                    [
                         'q' => $query,
-                    ],
-                ]
-            );
+                    ]
+                );
         }
 
-        $this->throwErrorIfInvalidResponseCode($response);
+        $response = $this->send(
+            new Request("GET", $url)
+        );
 
         $body = (string)$response->getBody();
 
@@ -304,22 +324,30 @@ class Client extends AbstractClient
         );
     }
 
+    /**
+     * @param $query
+     *
+     * @return QueryResult
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function queryAll($query): QueryResult
     {
         if ($query instanceof QueryResult) {
             return $this->query($query);
         }
 
-        $response = $this->client->get(
-            self::BASE_PATH.'queryAll/',
-            [
-                'query' => [
-                    'q' => $query,
-                ],
-            ]
+        $response = $this->send(
+            new Request(
+                "GET",
+                self::BASE_PATH.'queryAll/?'.
+                http_build_query(
+                    [
+                        'q' => $query,
+                    ]
+                )
+            )
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         $body = (string)$response->getBody();
 
@@ -334,19 +362,22 @@ class Client extends AbstractClient
      * @param string $query
      *
      * @return SearchResult
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function search(string $query): SearchResult
     {
-        $response = $this->client->get(
-            self::BASE_PATH.'search/',
-            [
-                'query' => [
-                    'q' => $query,
-                ],
-            ]
+        $response = $this->send(
+            new Request(
+                "GET",
+                self::BASE_PATH.'search/?'.
+                http_build_query(
+                    [
+                        'q' => $query,
+                    ]
+                )
+            )
         );
-
-        $this->throwErrorIfInvalidResponseCode($response);
 
         $body = (string)$response->getBody();
 
