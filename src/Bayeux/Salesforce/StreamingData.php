@@ -38,6 +38,12 @@ class StreamingData
     private $payload;
 
     /**
+     * @var null|string
+     * @JMS\Type("string")
+     */
+    private $schema;
+
+    /**
      * @return Event
      */
     public function getEvent(): Event
@@ -93,6 +99,26 @@ class StreamingData
     public function setPayload($payload)
     {
         $this->payload = $payload;
+
+        return $this;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getSchema(): ?string
+    {
+        return $this->schema;
+    }
+
+    /**
+     * @param null|string $schema
+     *
+     * @return StreamingData
+     */
+    public function setSchema(?string $schema): StreamingData
+    {
+        $this->schema = $schema;
 
         return $this;
     }

@@ -9,14 +9,15 @@
 namespace AE\SalesforceRestSdk\Rest;
 
 use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
+use AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException;
 use AE\SalesforceRestSdk\Model\Rest\Limits;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
 use AE\SalesforceRestSdk\Serializer\CompositeSObjectHandler;
 use AE\SalesforceRestSdk\Serializer\SObjectHandler;
-use Doctrine\Common\Collections\ArrayCollection;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Request;
 use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\Naming\IdenticalPropertyNamingStrategy;
 use JMS\Serializer\SerializerBuilder;
@@ -33,11 +34,6 @@ class Client extends AbstractClient
     protected $baseUrl;
 
     /**
-     * @var AuthProviderInterface
-     */
-    protected $authProvider;
-
-    /**
      * @var CompositeClient
      */
     protected $compositeClient;
@@ -47,11 +43,10 @@ class Client extends AbstractClient
      */
     protected $sObjectClient;
 
-    public function __construct(string $baseUrl, AuthProviderInterface $provider)
+    public function __construct(AuthProviderInterface $provider)
     {
-        $this->baseUrl         = $baseUrl;
         $this->authProvider    = $provider;
-        $this->client          = $this->createHttpClient($baseUrl);
+        $this->client          = $this->createHttpClient();
         $this->serializer      = $this->createSerializer();
         $this->compositeClient = new CompositeClient($this->client, $this->serializer);
         $this->sObjectClient   = new SObject\Client($this->client, $this->serializer);
@@ -106,16 +101,14 @@ class Client extends AbstractClient
     }
 
     /**
-     * @throws \RuntimeException
      * @return Limits
+     * @throws SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function limits(): Limits
     {
-        $response = $this->client->get(
-            '/services/data/v'.self::VERSION.'/limits/'
-        );
-
-        $this->throwErrorIfInvalidResponseCode($response);
+        $request = new Request("GET", '/services/data/v'.self::VERSION.'/limits/');
+        $response = $this->send($request);
 
         $body = (string)$response->getBody();
 
@@ -126,7 +119,49 @@ class Client extends AbstractClient
         );
     }
 
-    protected function createHttpClient(string $url): GuzzleClient
+    public function apex(
+        string $method,
+        string $path,
+        $payload = null,
+        string $responseType = 'array',
+        array $headers = [],
+        $expectedResponseCode = 200
+    ) {
+        $headers['Content-Type'] = 'application/json';
+        $headers['Accept']       = 'application/json';
+
+        $body    = null !== $payload ? $this->serializer->serialize($payload, 'json') : null;
+        $request = new Request($method, '/services/apexrest'.$path, $headers, $body);
+
+        $response = $this->client->request($request);
+
+        try {
+            $this->throwErrorIfInvalidResponseCode($response, $expectedResponseCode);
+        } catch (SessionExpiredOrInvalidException $e) {
+            return $this->apex(
+                $method,
+                $path,
+                $payload,
+                $responseType,
+                $headers,
+                $expectedResponseCode
+            );
+        }
+
+        $resBody = (string)$response->getBody();
+
+        if (null !== $resBody) {
+            return $this->serializer->deserialize(
+                $resBody,
+                $responseType,
+                'json'
+            );
+        }
+
+        return null;
+    }
+
+    protected function createHttpClient(): GuzzleClient
     {
         $stack = new HandlerStack();
         $stack->setHandler(\GuzzleHttp\choose_handler());
@@ -137,6 +172,14 @@ class Client extends AbstractClient
                 }
             )
         );
+
+        $url = $this->authProvider->getInstanceUrl();
+
+        // If the instance URL isn't set, try and get it from the auth provider
+        if (null === $url) {
+            $this->authProvider->authorize();
+            $url = $this->authProvider->getInstanceUrl();
+        }
 
         $client = new GuzzleClient(
             [

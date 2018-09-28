@@ -9,7 +9,7 @@
 namespace AE\SalesforceRestSdk\Tests\Composite\Serializer;
 
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
-use AE\SalesforceRestSdk\Rest\Composite\CompositeRequest;
+use AE\SalesforceRestSdk\Rest\Composite\CollectionRequest;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Serializer\CompositeSObjectHandler;
 use AE\SalesforceRestSdk\Serializer\SObjectHandler;
@@ -98,7 +98,7 @@ class CompositeSObjectHandlerTest extends TestCase
         $contact->FirstName = "Composite";
         $contact->LastName  = "Test Contact";
 
-        $request = new CompositeRequest(
+        $request = new CollectionRequest(
             [
                 $account,
                 $contact,

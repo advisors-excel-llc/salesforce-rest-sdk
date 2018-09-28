@@ -8,6 +8,7 @@
 
 namespace AE\SalesforceRestSdk\Bayeux\Transport;
 
+use AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException;
 use AE\SalesforceRestSdk\Bayeux\Message;
 use AE\SalesforceRestSdk\Serializer\SObjectHandler;
 use JMS\Serializer\Expression\ExpressionEvaluator;
@@ -51,6 +52,7 @@ abstract class AbstractClientTransport
      * @param callable|null $customize
      *
      * @return array|Message[]
+     * @throws SessionExpiredOrInvalidException
      */
     abstract public function send($messages, ?callable $customize): array ;
 

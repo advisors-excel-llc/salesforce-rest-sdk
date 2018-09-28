@@ -8,13 +8,11 @@
 
 namespace AE\SalesforceRestSdk\Bayeux\Transport;
 
+use AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException;
 use AE\SalesforceRestSdk\Bayeux\ChannelInterface;
 use AE\SalesforceRestSdk\Bayeux\Message;
-use Doctrine\Common\Collections\ArrayCollection;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\Request;
-use JMS\Serializer\SerializerInterface;
-use GuzzleHttp\Promise\PromiseInterface;
 
 class LongPollingTransport extends HttpClientTransport
 {
@@ -45,9 +43,9 @@ class LongPollingTransport extends HttpClientTransport
      * @param Message[]|array $messages
      * @param callable|null $customize
      *
-     * @throws GuzzleException
-     *
      * @return array
+     * @throws GuzzleException
+     * @throws SessionExpiredOrInvalidException
      */
     public function send($messages, ?callable $customize = null): array
     {
@@ -88,11 +86,27 @@ class LongPollingTransport extends HttpClientTransport
 
             // Need to reorder the messages that will be dispatched in the order they were dispatched, but connect
             // needs to be last, otherwise the messages won't process
-            if (count($messages) > 0 &&
-                $messages[count($messages) - 1]->getClientId() === ChannelInterface::META_CONNECT) {
-                $reconnect  = array_pop($messages);
-                $messages   = array_reverse($messages);
-                $messages[] = $reconnect;
+            if (count($messages) > 0) {
+                if (count($messages) === 1) {
+                    $message = $messages[0];
+                    $ext     = $message->getExt();
+
+                    if (null !== $ext && array_key_exists('sfdc', $ext)) {
+                        $sfdc = $ext['sfdc'];
+                        if (array_key_exists('failureReason', $sfdc)) {
+                            $replay = array_key_exists('replay', $ext) ? $ext['replay'] === true : true;
+                            if ($replay && substr($sfdc['failureReason'], 0, 3) === "401") {
+                                $errors = explode("::", $sfdc['failureReason']);
+                                throw new SessionExpiredOrInvalidException(array_pop($errors), array_pop($errors));
+                            }
+                        }
+                    }
+                }
+                if ($messages[count($messages) - 1]->getClientId() === ChannelInterface::META_CONNECT) {
+                    $reconnect  = array_pop($messages);
+                    $messages   = array_reverse($messages);
+                    $messages[] = $reconnect;
+                }
             }
 
             return $messages;

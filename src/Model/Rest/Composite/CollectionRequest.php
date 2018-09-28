@@ -6,7 +6,7 @@
  * Time: 5:05 PM
  */
 
-namespace AE\SalesforceRestSdk\Rest\Composite;
+namespace AE\SalesforceRestSdk\Model\Rest\Composite;
 
 use AE\SalesforceRestSdk\Model\SObject;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -14,12 +14,12 @@ use Doctrine\Common\Collections\Collection;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
- * Class CompositeRequest
+ * Class CollectionRequest
  *
  * @package AE\SalesforceRestSdk\Composite\Model
  * @Serializer\ExclusionPolicy("none")
  */
-class CompositeRequest implements CompositeRequestInterface
+class CollectionRequest implements CollectionRequestInterface
 {
     /**
      * @var bool
@@ -50,9 +50,9 @@ class CompositeRequest implements CompositeRequestInterface
     /**
      * @param bool $allOrNone
      *
-     * @return CompositeRequest
+     * @return CollectionRequest
      */
-    public function setAllOrNone(bool $allOrNone): CompositeRequest
+    public function setAllOrNone(bool $allOrNone): CollectionRequest
     {
         $this->allOrNone = $allOrNone;
 
@@ -67,9 +67,9 @@ class CompositeRequest implements CompositeRequestInterface
     /**
      * @param $records
      *
-     * @return CompositeRequest
+     * @return CollectionRequest
      */
-    public function setRecords($records): CompositeRequest
+    public function setRecords($records): CollectionRequest
     {
         if ($records instanceof Collection) {
             $this->records = $records;
@@ -89,9 +89,9 @@ class CompositeRequest implements CompositeRequestInterface
     /**
      * @param SObject $record
      *
-     * @return CompositeRequest
+     * @return CollectionRequest
      */
-    public function addRecord(SObject $record): CompositeRequest
+    public function addRecord(SObject $record): CollectionRequest
     {
         if (!$this->records->contains($record)) {
             $this->records->add($record);
@@ -103,9 +103,9 @@ class CompositeRequest implements CompositeRequestInterface
     /**
      * @param SObject $record
      *
-     * @return CompositeRequest
+     * @return CollectionRequest
      */
-    public function removeRecord(SObject $record): CompositeRequest
+    public function removeRecord(SObject $record): CollectionRequest
     {
         if ($this->records->contains($record)) {
             $this->records->remove($record);
@@ -118,7 +118,7 @@ class CompositeRequest implements CompositeRequestInterface
      * @param array $records
      * @param bool $allOrNone
      *
-     * @return CompositeRequest
+     * @return CollectionRequest
      */
     public static function create(array $records = [], bool $allOrNone = false)
     {

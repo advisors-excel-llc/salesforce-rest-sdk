@@ -1,5 +1,18 @@
 # Salesforce Rest SDK
 
+This API supports the following areas of the Salesforce API:
+* Limits
+* Global Describe
+* SObject Describe
+* SObject CRUD
+* SObject Get Updated/Deleted
+* Composite API
+    * Batch
+    * Tree
+    * SObject Collections
+* Bulk API
+* Streaming API
+
 ## Instantiate a Rest Client
 
 ```php
@@ -185,4 +198,3 @@ $client->start();
 
 * Tooling API
 * Metadata API
-* Bulk API

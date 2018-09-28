@@ -10,7 +10,15 @@ namespace AE\SalesforceRestSdk\AuthProvider;
 
 interface AuthProviderInterface
 {
+    /**
+     * @return mixed
+     * @throws SessionExpiredOrInvalidException
+     */
     public function authorize();
     public function reauthorize();
     public function revoke();
+    public function getToken(): ?string;
+    public function getTokenType(): ?string;
+    public function isAuthorized(): bool;
+    public function getInstanceUrl(): ?string;
 }

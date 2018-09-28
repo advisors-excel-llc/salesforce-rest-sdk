@@ -6,12 +6,12 @@
  * Time: 5:19 PM
  */
 
-namespace AE\SalesforceRestSdk\Rest\Composite;
+namespace AE\SalesforceRestSdk\Model\Rest\Composite;
 
 use AE\SalesforceRestSdk\Model\SObject;
 use Doctrine\Common\Collections\Collection;
 
-interface CompositeRequestInterface
+interface CollectionRequestInterface
 {
     public function setRecords($records);
 
