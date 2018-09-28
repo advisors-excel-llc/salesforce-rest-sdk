@@ -22,7 +22,6 @@ use AE\SalesforceRestSdk\Rest\Client;
 use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
 
 $client = new Client(
-  getenv("SF_URL"),
   new LoginProvider(
       "SF_CLIENT_ID",
       "SF_CLIENT_SECRET",
@@ -107,7 +106,6 @@ use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
 use AE\SalesforceRestSdk\Bayeux\Transport\LongPollingTransport;
 
 $client = new BayeuxClient(
-      "https://my-salesforce.my.salesforce.com",
       new LongPollingTransport(),
       new LoginProvider(
           "SF_CLIENT_ID",
