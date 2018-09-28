@@ -14,7 +14,6 @@ use AE\SalesforceRestSdk\Model\Rest\Limits;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
 use AE\SalesforceRestSdk\Serializer\CompositeSObjectHandler;
 use AE\SalesforceRestSdk\Serializer\SObjectHandler;
-use Doctrine\Common\Collections\ArrayCollection;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -24,7 +23,6 @@ use JMS\Serializer\Naming\IdenticalPropertyNamingStrategy;
 use JMS\Serializer\SerializerBuilder;
 use JMS\Serializer\SerializerInterface;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 class Client extends AbstractClient
 {

@@ -31,29 +31,23 @@ abstract class AbstractClient
      */
     protected $authProvider;
 
-    protected $maxRetries = 1;
-
     /**
      * @param RequestInterface $request
      * @param int $expectedStatusCode
-     * @param int $retry
      *
      * @return mixed|ResponseInterface
      * @throws SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    protected function send(RequestInterface $request, $expectedStatusCode = 200, $retry = 0)
+    protected function send(RequestInterface $request, $expectedStatusCode = 200)
     {
         $response = $this->client->send($request);
 
         try {
             $this->throwErrorIfInvalidResponseCode($response, $expectedStatusCode);
         } catch (SessionExpiredOrInvalidException $e) {
-            if ($retry <= $this->maxRetries) {
-                return $this->send($request, $expectedStatusCode, ++$retry);
-            } else {
-                throw $e;
-            }
+            $this->authProvider->reauthorize();
+            return $this->send($request, $expectedStatusCode);
         }
 
         return $response;
@@ -73,7 +67,6 @@ abstract class AbstractClient
                 $errors = $this->serializer->deserialize($body, 'array', 'json');
 
                 if (401 === $response->getStatusCode()) {
-                    $this->authProvider->revoke();
                     throw new SessionExpiredOrInvalidException($errors[0]['message'], $errors[0]['errorCode']);
                 } else {
                     throw new \RuntimeException("{$errors[0]['errorCode']}: {$errors[0]['message']}");
