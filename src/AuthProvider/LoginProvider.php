@@ -69,11 +69,12 @@ class LoginProvider implements AuthProviderInterface
     /**
      * @param bool $reauth
      *
+     * @throws SessionExpiredOrInvalidException
      * @return string
      */
     public function authorize($reauth = false): string
     {
-        if (!$reauth && ($this->isAuthorized && strlen($this->token) > 0)) {
+        if (!$reauth && $this->isAuthorized && strlen($this->token) > 0) {
             return "{$this->tokenType} {$this->token}";
         }
 
@@ -97,8 +98,14 @@ class LoginProvider implements AuthProviderInterface
         $body  = (string)$response->getBody();
         $parts = json_decode($body, true);
 
+        if (401 === $response->getStatusCode()) {
+            throw new SessionExpiredOrInvalidException($parts['message'], $parts['errorCode']);
+        }
+
         $this->tokenType = $parts['token_type'];
         $this->token     = $parts['access_token'];
+
+        $this->isAuthorized = true;
 
         return "{$this->tokenType} {$this->token}";
     }
@@ -117,5 +124,21 @@ class LoginProvider implements AuthProviderInterface
         $this->token        = null;
         $this->tokenType    = null;
         $this->isAuthorized = false;
+    }
+
+    /**
+     * @return String
+     */
+    public function getToken(): String
+    {
+        return $this->token;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTokenType(): string
+    {
+        return $this->tokenType;
     }
 }

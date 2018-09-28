@@ -40,4 +40,22 @@ class ClientTest extends TestCase
         $this->greaterThanOrEqual(0)->evaluate($limits->getDailyApiRequests()->getMax());
         $this->greaterThanOrEqual(0)->evaluate($limits->getDailyApiRequests()->getRemaining());
     }
+
+    public function testRetry()
+    {
+        $limits = $this->client->limits();
+
+        $this->assertNotNull($limits);
+
+        $class = new \ReflectionClass(LoginProvider::class);
+
+        $tokenProperty = $class->getProperty('token');
+        $tokenProperty->setAccessible(true);
+        $tokenProperty->setValue($this->client->getAuthProvider(), 'BAD_VALUE');
+
+        $this->assertEquals('BAD_VALUE', $this->client->getAuthProvider()->getToken());
+        $limits = $this->client->limits();
+
+        $this->assertNotNull($limits);
+    }
 }

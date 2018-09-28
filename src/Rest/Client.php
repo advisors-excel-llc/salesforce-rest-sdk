@@ -9,6 +9,7 @@
 namespace AE\SalesforceRestSdk\Rest;
 
 use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
+use AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException;
 use AE\SalesforceRestSdk\Model\Rest\Limits;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
 use AE\SalesforceRestSdk\Serializer\CompositeSObjectHandler;
@@ -23,6 +24,7 @@ use JMS\Serializer\Naming\IdenticalPropertyNamingStrategy;
 use JMS\Serializer\SerializerBuilder;
 use JMS\Serializer\SerializerInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class Client extends AbstractClient
 {
@@ -32,11 +34,6 @@ class Client extends AbstractClient
      * @var string
      */
     protected $baseUrl;
-
-    /**
-     * @var AuthProviderInterface
-     */
-    protected $authProvider;
 
     /**
      * @var CompositeClient
@@ -107,16 +104,14 @@ class Client extends AbstractClient
     }
 
     /**
-     * @throws \RuntimeException
      * @return Limits
+     * @throws SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function limits(): Limits
     {
-        $response = $this->client->get(
-            '/services/data/v'.self::VERSION.'/limits/'
-        );
-
-        $this->throwErrorIfInvalidResponseCode($response);
+        $request = new Request("GET", '/services/data/v'.self::VERSION.'/limits/');
+        $response = $this->send($request);
 
         $body = (string)$response->getBody();
 
@@ -132,15 +127,29 @@ class Client extends AbstractClient
         string $path,
         $payload = null,
         string $responseType = 'array',
-        array $headers = []
+        array $headers = [],
+        $expectedResponseCode = 200
     ) {
         $headers['Content-Type'] = 'application/json';
-        $headers['Accept']       = 'Accept';
+        $headers['Accept']       = 'application/json';
 
         $body    = null !== $payload ? $this->serializer->serialize($payload, 'json') : null;
         $request = new Request($method, '/services/apexrest'.$path, $headers, $body);
 
         $response = $this->client->request($request);
+
+        try {
+            $this->throwErrorIfInvalidResponseCode($response, $expectedResponseCode);
+        } catch (SessionExpiredOrInvalidException $e) {
+            return $this->apex(
+                $method,
+                $path,
+                $payload,
+                $responseType,
+                $headers,
+                $expectedResponseCode
+            );
+        }
 
         $resBody = (string)$response->getBody();
 
