@@ -79,9 +79,12 @@ class CompositeSObjectHandlerTest extends TestCase
 
     public function testSobjectDeserialize()
     {
+        $now = new \DateTime('now', new \DateTimeZone('UTC'));
         /** @var SObject $sobject */
         $sobject = $this->serializer->deserialize(
-            '{"attributes":{"type":"Account","url":"/test/url"},"Name":"Test Object","OwnerId":"A10500010129302A10"}',
+            '{"attributes":{"type":"Account","url":"/test/url"},"Name":"Test Object","OwnerId":"A10500010129302A10","CreatedAt":"'.$now->format(
+                \DATE_ISO8601
+            ).'"}',
             CompositeSObject::class,
             'json'
         );
@@ -90,6 +93,8 @@ class CompositeSObjectHandlerTest extends TestCase
         $this->assertEquals("/test/url", $sobject->getUrl());
         $this->assertEquals("Test Object", $sobject->Name);
         $this->assertEquals("A10500010129302A10", $sobject->OwnerId);
+        $this->assertInstanceOf(\DateTime::class, $sobject->CreatedAt);
+        $this->assertEquals($now->format(\DATE_ISO8601), $sobject->CreatedAt->format(\DATE_ISO8601));
     }
 
     public function testSobjectDeepSerialize()

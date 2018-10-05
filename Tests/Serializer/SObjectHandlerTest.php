@@ -77,9 +77,12 @@ class SObjectHandlerTest extends TestCase
 
     public function testSobjectDeserialize()
     {
+        $now = new \DateTime('now', new \DateTimeZone('UTC'));
         /** @var SObject $sobject */
         $sobject = $this->serializer->deserialize(
-            '{"Type":"Account","Name":"Test Object","OwnerId":"A10500010129302A10"}',
+            '{"Type":"Account","Name":"Test Object","OwnerId":"A10500010129302A10","CreatedAt":"'.$now->format(
+                \DATE_ISO8601
+            ).'"}',
             SObject::class,
             'json'
         );
@@ -87,6 +90,8 @@ class SObjectHandlerTest extends TestCase
         $this->assertEquals("Account", $sobject->Type);
         $this->assertEquals("Test Object", $sobject->Name);
         $this->assertEquals("A10500010129302A10", $sobject->OwnerId);
+        $this->assertInstanceOf(\DateTime::class, $sobject->CreatedAt);
+        $this->assertEquals($now->format(\DATE_ISO8601), $sobject->CreatedAt->format(\DATE_ISO8601));
     }
 
     public function testSobjectDeepSerialize()

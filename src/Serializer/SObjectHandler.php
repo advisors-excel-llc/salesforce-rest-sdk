@@ -44,21 +44,21 @@ class SObjectHandler implements SubscribingHandlerInterface
                 if (false !== $className) {
                     if (\DateTime::class === $className) {
                         $object[$field] = $context->getNavigator()->accept(
-                            $visitor->prepare($value),
+                            $value,
                             ['name' => 'DateTime', 'params' => [\DATE_ISO8601, 'UTC']],
                             $context
                         )
                         ;
                     } elseif (\DateTimeImmutable::class === $className) {
                         $object[$field] = $context->getNavigator()->accept(
-                            $visitor->prepare($value),
+                            $value,
                             ['name' => 'DateTimeImmutable', 'params' => [\DATE_ISO8601, 'UTC']],
                             $context
                         )
                         ;
                     } else {
                         $object[$field] = $context->getNavigator()->accept(
-                            $visitor->prepare($value),
+                            $value,
                             ['name' => $className],
                             $context
                         )
@@ -89,7 +89,16 @@ class SObjectHandler implements SubscribingHandlerInterface
         $sobject = new SObject();
 
         foreach ($data as $field => $value) {
-            $sobject->$field = $value;
+            if (is_string($value)
+                && preg_match('/^\d{4}-\d{2}-\d{2}\T\d{2}:\d{2}:\d{2}(\.\d{4})?(\+\d{4}|\Z)$/', $value) != false) {
+                $sobject->$field = $context->getNavigator()->accept(
+                    $value,
+                    ['name' => 'DateTime', 'params' => [\DATE_ISO8601, 'UTC']],
+                    $context
+                );
+            } else {
+                $sobject->$field = $value;
+            }
         }
 
         return $sobject;
