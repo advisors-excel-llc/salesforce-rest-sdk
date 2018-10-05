@@ -205,9 +205,26 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
 
     // REGULAR STUFF
 
+    /**
+     * @param SubRequest $subRequest
+     *
+     * @return CompositeRequestBuilder
+     */
     public function addSubRequest(SubRequest $subRequest): CompositeRequestBuilder
     {
         $this->requests->set($subRequest->getReferenceId(), $subRequest);
+
+        return $this;
+    }
+
+    /**
+     * @param SubRequest $subRequest
+     *
+     * @return CompositeRequestBuilder
+     */
+    public function removeSubRequest(SubRequest $subRequest): CompositeRequestBuilder
+    {
+        $this->requests->removeElement($subRequest);
 
         return $this;
     }
@@ -267,6 +284,11 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
         if (count($queries) > 5) {
             throw new \RuntimeException("A CompositeRequest cannot have more than 5 Query subrequests.");
         }
+    }
+
+    public function countRequests(): int
+    {
+        return count($this->requests);
     }
 
     /**
