@@ -22,7 +22,7 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
     {
         return [
             [
-                'type'   => CompositeSObject::class,
+                'type' => CompositeSObject::class,
                 'format' => 'json',
             ],
         ];
@@ -50,7 +50,37 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
                 )
                 ;
             } else {
-                $object[$field] = $value;
+                if (is_object($value)) {
+                    $className = get_class($value);
+                    if (false !== $className) {
+                        if (\DateTime::class === $className) {
+                            $object[$field] = $visitor->getNavigator()->accept(
+                                $value,
+                                ['name' => 'DateTime', 'params' => [\DATE_ISO8601, 'UTC']],
+                                $context
+                            )
+                            ;
+                        } elseif (\DateTimeImmutable::class === $className) {
+                            $object[$field] = $visitor->getNavigator()->accept(
+                                $value,
+                                ['name' => 'DateTimeImmutable', 'params' => [\DATE_ISO8601, 'UTC']],
+                                $context
+                            )
+                            ;
+                        } else {
+                            $object[$field] = $visitor->getNavigator()->accept(
+                                $value,
+                                ['name' => $className],
+                                $context
+                            )
+                            ;
+                        }
+                    } else {
+                        $object[$field] = $value;
+                    }
+                } else {
+                    $object[$field] = $value;
+                }
             }
         }
 
