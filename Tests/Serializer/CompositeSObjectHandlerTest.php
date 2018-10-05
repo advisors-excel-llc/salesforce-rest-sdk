@@ -9,10 +9,9 @@
 namespace AE\SalesforceRestSdk\Tests\Composite\Serializer;
 
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
-use AE\SalesforceRestSdk\Rest\Composite\CollectionRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequest;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Serializer\CompositeSObjectHandler;
-use AE\SalesforceRestSdk\Serializer\SObjectHandler;
 use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\Naming\IdenticalPropertyNamingStrategy;
 use JMS\Serializer\SerializerBuilder;
@@ -62,23 +61,30 @@ class CompositeSObjectHandlerTest extends TestCase
     public function testSobjectSerialziationArray()
     {
         $sobject = new CompositeSObject("Account");
+        $now = new \DateTime();
 
         $sobject->Name    = 'Test Object';
         $sobject->OwnerId = 'A10500010129302A10';
+        $sobject->CreatedAt = $now;
 
         $json = $this->serializer->serialize([$sobject], 'json');
 
         $this->assertEquals(
-            '[{"attributes":{"type":"Account"},"Name":"Test Object","OwnerId":"A10500010129302A10"}]',
+            '[{"attributes":{"type":"Account"},"Name":"Test Object","OwnerId":"A10500010129302A10","CreatedAt":"'
+            .$now->setTimezone(new \DateTimeZone('UTC'))->format(\DATE_ISO8601)
+            .'"}]',
             $json
         );
     }
 
     public function testSobjectDeserialize()
     {
+        $now = new \DateTime('now', new \DateTimeZone('UTC'));
         /** @var SObject $sobject */
         $sobject = $this->serializer->deserialize(
-            '{"attributes":{"type":"Account","url":"/test/url"},"Name":"Test Object","OwnerId":"A10500010129302A10"}',
+            '{"attributes":{"type":"Account","url":"/test/url"},"Name":"Test Object","OwnerId":"A10500010129302A10","CreatedAt":"'.$now->format(
+                \DATE_ISO8601
+            ).'"}',
             CompositeSObject::class,
             'json'
         );
@@ -87,6 +93,8 @@ class CompositeSObjectHandlerTest extends TestCase
         $this->assertEquals("/test/url", $sobject->getUrl());
         $this->assertEquals("Test Object", $sobject->Name);
         $this->assertEquals("A10500010129302A10", $sobject->OwnerId);
+        $this->assertInstanceOf(\DateTime::class, $sobject->CreatedAt);
+        $this->assertEquals($now->format(\DATE_ISO8601), $sobject->CreatedAt->format(\DATE_ISO8601));
     }
 
     public function testSobjectDeepSerialize()

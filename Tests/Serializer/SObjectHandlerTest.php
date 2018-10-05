@@ -8,8 +8,7 @@
 
 namespace AE\SalesforceRestSdk\Tests\Composite\Serializer;
 
-use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
-use AE\SalesforceRestSdk\Rest\Composite\CollectionRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequest;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Serializer\SObjectHandler;
 use JMS\Serializer\Handler\HandlerRegistry;
@@ -45,15 +44,18 @@ class SObjectHandlerTest extends TestCase
 
     public function testSobjectSerialziationSingle()
     {
-        $sobject          = new SObject();
-        $sobject->Type    = "Account";
-        $sobject->Name    = 'Test Object';
-        $sobject->OwnerId = 'A10500010129302A10';
+        $now                = new \DateTime();
+        $sobject            = new SObject();
+        $sobject->Type      = "Account";
+        $sobject->Name      = 'Test Object';
+        $sobject->OwnerId   = 'A10500010129302A10';
+        $sobject->CreatedAt = $now;
 
         $json = $this->serializer->serialize($sobject, 'json');
 
         $this->assertEquals(
-            '{"Type":"Account","Name":"Test Object","OwnerId":"A10500010129302A10"}',
+            '{"Type":"Account","Name":"Test Object","OwnerId":"A10500010129302A10","CreatedAt":"'.
+            $now->setTimezone(new \DateTimeZone('UTC'))->format(\DATE_ISO8601).'"}',
             $json
         );
     }
@@ -75,9 +77,12 @@ class SObjectHandlerTest extends TestCase
 
     public function testSobjectDeserialize()
     {
+        $now = new \DateTime('now', new \DateTimeZone('UTC'));
         /** @var SObject $sobject */
         $sobject = $this->serializer->deserialize(
-            '{"Type":"Account","Name":"Test Object","OwnerId":"A10500010129302A10"}',
+            '{"Type":"Account","Name":"Test Object","OwnerId":"A10500010129302A10","CreatedAt":"'.$now->format(
+                \DATE_ISO8601
+            ).'"}',
             SObject::class,
             'json'
         );
@@ -85,6 +90,8 @@ class SObjectHandlerTest extends TestCase
         $this->assertEquals("Account", $sobject->Type);
         $this->assertEquals("Test Object", $sobject->Name);
         $this->assertEquals("A10500010129302A10", $sobject->OwnerId);
+        $this->assertInstanceOf(\DateTime::class, $sobject->CreatedAt);
+        $this->assertEquals($now->format(\DATE_ISO8601), $sobject->CreatedAt->format(\DATE_ISO8601));
     }
 
     public function testSobjectDeepSerialize()
