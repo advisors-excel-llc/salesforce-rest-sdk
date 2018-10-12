@@ -15,6 +15,7 @@ use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Handler\SubscribingHandlerInterface;
 use JMS\Serializer\JsonDeserializationVisitor;
 use JMS\Serializer\JsonSerializationVisitor;
+use JMS\Serializer\SerializationContext;
 
 class CompositeSObjectHandler implements SubscribingHandlerInterface
 {
@@ -32,11 +33,16 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
         JsonSerializationVisitor $visitor,
         CompositeSObject $sobject,
         array $type,
-        Context $context
+        SerializationContext $context
     ): array {
         $object = [
             'attributes' => $sobject->getAttributes(),
         ];
+
+        // This is important for deep serialization
+        if (null === $visitor->getRoot()) {
+            $visitor->setRoot($object);
+        }
 
         foreach ($sobject->getFields() as $field => $value) {
             if (null === $value) {
@@ -84,10 +90,14 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
             }
         }
 
-        if (null === $visitor->getRoot()) {
-            $visitor->setRoot($object);
-        } elseif (is_array($visitor->getRoot())) {
-            $visitor->setData(null, $object);
+        if (is_array($visitor->getRoot())) {
+            if (array_key_exists('attributes', $visitor->getRoot())) {
+                $visitor->setRoot($object);
+            } else {
+                $data = $visitor->getRoot();
+                $data[] = $object;
+                $visitor->setRoot($data);
+            }
         }
 
         return $object;

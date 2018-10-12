@@ -10,7 +10,6 @@ namespace AE\SalesforceRestSdk\Rest\Composite\Builder;
 
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequestInterface;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeRequest;
-use AE\SalesforceRestSdk\Model\Rest\Composite\Limit\LimitSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Query\QueryAllSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Query\QuerySubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SObject\BasicInfoSubRequest;
