@@ -111,6 +111,9 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
     ) {
         $sobject = new CompositeSObject();
 
+        $metadata = $context->getMetadataFactory()->getMetadataForClass(CompositeSObject::class);
+        $visitor->startVisitingObject($metadata, $sobject, $type, $context);
+
         if (array_key_exists('attributes', $data)) {
             if (array_key_exists('type', $data['attributes'])) {
                 $sobject->setType($data['attributes']['type']);
@@ -149,6 +152,8 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
                 $sobject->$field = $value;
             }
         }
+
+        $visitor->endVisitingObject($metadata, $sobject, $type, $context);
 
         return $sobject;
     }
