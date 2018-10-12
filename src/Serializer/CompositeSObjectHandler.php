@@ -126,6 +126,10 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
         }
 
         foreach ($data as $field => $value) {
+            if (strtolower($field) === 'attributes') {
+                continue;
+            }
+
             if (is_array($value) && array_key_exists('hasErrors', $value) && array_key_exists('records', $value)
                 && is_array($value['records'])) {
                 $sobject->$field = $visitor->getNavigator()->accept(
