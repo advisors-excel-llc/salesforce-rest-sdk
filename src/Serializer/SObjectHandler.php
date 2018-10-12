@@ -93,6 +93,9 @@ class SObjectHandler implements SubscribingHandlerInterface
     ) {
         $sobject = new SObject();
 
+        $metadata = $context->getMetadataFactory()->getMetadataForClass(SObject::class);
+        $visitor->startVisitingObject($metadata, $sobject, $type, $context);
+
         foreach ($data as $field => $value) {
             if (is_string($value)
                 && preg_match('/^\d{4}-\d{2}-\d{2}\T\d{2}:\d{2}:\d{2}(\.\d{4})?(\+\d{4}|\Z)$/', $value) != false) {
@@ -105,6 +108,8 @@ class SObjectHandler implements SubscribingHandlerInterface
                 $sobject->$field = $value;
             }
         }
+
+        $visitor->endVisitingObject($metadata, $sobject, $type, $context);
 
         return $sobject;
     }

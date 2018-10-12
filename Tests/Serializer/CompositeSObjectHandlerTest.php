@@ -80,7 +80,7 @@ class CompositeSObjectHandlerTest extends TestCase
     public function testSobjectDeserialize()
     {
         $now = new \DateTime('now', new \DateTimeZone('UTC'));
-        /** @var SObject $sobject */
+        /** @var CompositeSObject $sobject */
         $sobject = $this->serializer->deserialize(
             '{"attributes":{"type":"Account","url":"/test/url"},"Name":"Test Object","OwnerId":"A10500010129302A10","CreatedAt":"'.$now->format(
                 \DATE_ISO8601
@@ -95,6 +95,21 @@ class CompositeSObjectHandlerTest extends TestCase
         $this->assertEquals("A10500010129302A10", $sobject->OwnerId);
         $this->assertInstanceOf(\DateTime::class, $sobject->CreatedAt);
         $this->assertEquals($now->format(\DATE_ISO8601), $sobject->CreatedAt->format(\DATE_ISO8601));
+
+        /** @var CompositeSObject[] $sobject */
+        $sobjects = $this->serializer->deserialize(
+            '[{"attributes":{"type":"Account","url":"/test/url"},"Name":"Test Object","OwnerId":"A10500010129302A10","CreatedAt":"'.$now->format(
+                \DATE_ISO8601
+            ).'"},{"attributes":{"type":"Account","url":"/test/url"},"Name":"Test Object 2","OwnerId":"A10500010129302A10","CreatedAt":"'.$now->format(
+                \DATE_ISO8601
+            ).'"}]',
+            'array<'.CompositeSObject::class.'>',
+            'json'
+        );
+
+        $this->assertCount(2, $sobjects);
+        $this->assertEquals('Test Object', $sobjects[0]->Name);
+        $this->assertEquals('Test Object 2', $sobjects[1]->Name);
     }
 
     public function testSobjectDeepSerialize()
@@ -143,5 +158,16 @@ class CompositeSObjectHandlerTest extends TestCase
         // In order to denormalize class objects, you'll have to handle that manually
         $this->assertEquals('Nemo', $des->DeepObject['name']);
         $this->assertEquals('A Fish', $des->DeepObject['description']);
+
+        $dess = $this->serializer->deserialize(
+            '[{"attributes":{"type":"Account"},"Name":"Test Object","DeepObject"'.
+            ':{"name":"Nemo","description":"A Fish"}},{"attributes":{"type":"Account"},'.
+            '"Name":"Test Object 2","DeepObject":{"name":"Dory","description":"A Clown Fish"}}]',
+            'array<'.CompositeSObject::class.'>',
+            'json');
+
+        $this->assertCount(2, $dess);
+        $this->assertEquals('Nemo', $dess[0]->deepObject['name']);
+        $this->assertEquals('Dory', $dess[1]->deepObject['name']);
     }
 }

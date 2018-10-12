@@ -84,7 +84,7 @@ class SObjectClientTest extends TestCase
 
     /**
      * @param SObject $SObject
-     *
+     * @depends testCreate
      * @return SObject
      * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
@@ -102,7 +102,7 @@ class SObjectClientTest extends TestCase
 
     /**
      * @param SObject $SObject
-     *
+     * @depends testGet
      * @return SObject
      * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
@@ -110,11 +110,7 @@ class SObjectClientTest extends TestCase
     public function testQuery(SObject $SObject): SObject
     {
         $query  = "SELECT Id, Name FROM Account WHERE Id = '{$SObject->Id}'";
-        try {
-            $result = $this->client->query($query);
-        } catch (\RuntimeException $e) {
-            $this->assertTrue(false, $e->getMessage());
-        }
+        $result = $this->client->query($query);
 
         $this->assertNotNull($result);
         $this->assertTrue($result->isDone());
@@ -133,7 +129,7 @@ class SObjectClientTest extends TestCase
 
     /**
      * @param SObject $SObject
-     *
+     * @depends testQuery
      * @return SObject
      * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
@@ -164,7 +160,7 @@ class SObjectClientTest extends TestCase
 
     /**
      * @param SObject $SObject
-     *
+     * @depends testSearch
      * @return SObject
      * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
@@ -186,7 +182,7 @@ class SObjectClientTest extends TestCase
 
     /**
      * @param SObject $SObject
-     *
+     * @depends testUpdate
      * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
