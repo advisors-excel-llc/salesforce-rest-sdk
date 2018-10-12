@@ -33,6 +33,11 @@ class SObjectHandler implements SubscribingHandlerInterface
         array $type,
         Context $context
     ): array {
+        $object = [];
+
+        if (null === $visitor->getRoot()) {
+            $visitor->setRoot(['__replaceme__' => $object]);
+        }
 
         foreach ($sobject->getFields() as $field => $value) {
             if (null === $value) {
@@ -73,7 +78,7 @@ class SObjectHandler implements SubscribingHandlerInterface
         }
 
         // If the visitor's root is the value of the last field processed, we need to fix the root
-        if ($object[$field] === $visitor->getRoot()) {
+        if (array_key_exists('__replaceme__', $visitor->getRoot())) {
             $visitor->setRoot($object);
         }
 

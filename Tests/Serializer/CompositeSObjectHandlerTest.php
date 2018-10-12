@@ -6,7 +6,7 @@
  * Time: 2:03 PM
  */
 
-namespace AE\SalesforceRestSdk\Tests\Composite\Serializer;
+namespace AE\SalesforceRestSdk\Tests\Serializer;
 
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequest;
@@ -120,5 +120,28 @@ class CompositeSObjectHandlerTest extends TestCase
             '{"allOrNone":true,"records":[{"attributes":{"type":"Account"},"Name":"Composite Test Account"},{"attributes":{"type":"Contact"},"FirstName":"Composite","LastName":"Test Contact"}]}',
             $json
         );
+    }
+
+    public function testDeepObject()
+    {
+        $do = new DeepObject();
+        $do->setName('Nemo');
+        $do->setDescription('A Fish');
+        $account = new CompositeSObject("Account", [
+            'Name' => 'Test Object',
+            'deepObject' => $do
+        ]);
+
+        $data = $this->serializer->serialize($account, 'json');
+        $this->assertEquals(
+            '{"attributes":{"type":"Account"},"Name":"Test Object","DeepObject":{"name":"Nemo","description":"A Fish"}}',
+            $data
+        );
+
+        $des = $this->serializer->deserialize($data, CompositeSObject::class, 'json');
+
+        // In order to denormalize class objects, you'll have to handle that manually
+        $this->assertEquals('Nemo', $des->DeepObject['name']);
+        $this->assertEquals('A Fish', $des->DeepObject['description']);
     }
 }
