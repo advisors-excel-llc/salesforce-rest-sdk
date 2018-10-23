@@ -105,8 +105,6 @@ class SoapProvider implements AuthProviderInterface
 
             return "{$this->tokenType} {$this->token}";
         } catch (RequestException $e) {
-            $response = $e->getResponse();
-            $body = (string) $response->getBody();
             throw new SessionExpiredOrInvalidException(
                 "Failed to authenticate with Salesforce.",
                 "INVALID_CREDENTIALS"
