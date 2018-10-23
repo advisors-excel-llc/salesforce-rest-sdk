@@ -8,7 +8,7 @@
 
 namespace AE\SalesforceRestSdk\Tests\Rest\SObject;
 
-use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
+use AE\SalesforceRestSdk\AuthProvider\OAuthProvider;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\SObject\Client;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +24,7 @@ class SObjectClientTest extends TestCase
     protected function setUp()/* The :void return type declaration that should be here would cause a BC issue */
     {
         $client = new \AE\SalesforceRestSdk\Rest\Client(
-            new LoginProvider(
+            new OAuthProvider(
                 getenv("SF_CLIENT_ID"),
                 getenv("SF_CLIENT_SECRET"),
                 getenv("SF_USER"),

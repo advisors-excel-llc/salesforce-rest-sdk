@@ -117,9 +117,12 @@ class GetDeletedSubRequest extends GetSubRequest implements GetDeletedSubRequest
         $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/deleted/?'
             .http_build_query(
                 [
-                    'start' => $this->start->format(\DATE_ISO8601),
-                    'end'   => $this->end->format(\DATE_ISO8601),
-                ]
+                    'start' => $this->start->format('Y-m-d\Th:i:sP'),
+                    'end'   => $this->end->format('Y-m-d\Th:i:sP'),
+                ],
+                null,
+                '&',
+                PHP_QUERY_RFC3986
             );
     }
 }

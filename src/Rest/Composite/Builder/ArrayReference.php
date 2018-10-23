@@ -12,6 +12,6 @@ class ArrayReference extends Reference
 {
     public function field(string $field, int $index = 0)
     {
-        return "@{{$this->getReferenceId()}[$index].$field}";
+        return "@{{$this->getReferenceId()}.[$index].$field}";
     }
 }

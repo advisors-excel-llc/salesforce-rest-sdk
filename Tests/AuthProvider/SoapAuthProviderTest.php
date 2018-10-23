@@ -8,22 +8,26 @@
 
 namespace AE\SalesforceRestSdk\Tests\AuthProvider;
 
-use AE\SalesforceRestSdk\AuthProvider\OAuthProvider;
+use AE\SalesforceRestSdk\AuthProvider\SoapProvider;
 use PHPUnit\Framework\TestCase;
 
-class LoginAuthProviderTest extends TestCase
+class SoapAuthProviderTest extends TestCase
 {
     public function testReauthorize()
     {
-        $auth = new OAuthProvider(
-            getenv("SF_CLIENT_ID"),
-            getenv("SF_CLIENT_SECRET"),
+        $auth = new SoapProvider(
             getenv("SF_USER"),
             getenv("SF_PASS"),
             getenv("SF_LOGIN_URL")
         );
 
-        $class = new \ReflectionClass(OAuthProvider::class);
+        $header = $auth->authorize();
+
+        $this->assertNotNull($header);
+        $this->assertNotNull($auth->getToken());
+        $this->assertNotNull($auth->getInstanceUrl());
+
+        $class = new \ReflectionClass(SoapProvider::class);
 
         $tokenProperty = $class->getProperty('token');
         $tokenProperty->setAccessible(true);
@@ -33,6 +37,7 @@ class LoginAuthProviderTest extends TestCase
 
         $this->assertNotNull($header);
         $this->assertNotNull($auth->getToken());
+        $this->assertNotNull($auth->getInstanceUrl());
         $this->assertEquals('Bearer', $auth->getTokenType());
     }
 }

@@ -8,7 +8,7 @@
 
 namespace AE\SalesforceRestSdk\Tests\Composite;
 
-use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
+use AE\SalesforceRestSdk\AuthProvider\OAuthProvider;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionResponse;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeCollection;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
@@ -30,7 +30,7 @@ class CompositeClientTest extends TestCase
     protected function setUp()
     {
         $client = new Client(
-            new LoginProvider(
+            new OAuthProvider(
                 getenv("SF_CLIENT_ID"),
                 getenv("SF_CLIENT_SECRET"),
                 getenv("SF_USER"),
