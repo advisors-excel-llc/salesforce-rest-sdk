@@ -8,7 +8,7 @@
 
 namespace AE\SalesforceRestSdk\Tests\Bulk;
 
-use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
+use AE\SalesforceRestSdk\AuthProvider\OAuthProvider;
 use AE\SalesforceRestSdk\Bulk\BatchInfo;
 use AE\SalesforceRestSdk\Bulk\Client;
 use AE\SalesforceRestSdk\Bulk\JobInfo;
@@ -39,7 +39,7 @@ class BulkClientTest extends TestCase
     protected function setUp()/* The :void return type declaration that should be here would cause a BC issue */
     {
         $this->client = new Client(
-            new LoginProvider(
+            new OAuthProvider(
                 getenv("SF_CLIENT_ID"),
                 getenv("SF_CLIENT_SECRET"),
                 getenv("SF_USER"),

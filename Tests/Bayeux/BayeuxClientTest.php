@@ -8,7 +8,7 @@
 
 namespace AE\SalesforceRestSdk\Tests\Bayeux;
 
-use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
+use AE\SalesforceRestSdk\AuthProvider\OAuthProvider;
 use AE\SalesforceRestSdk\Bayeux\BayeuxClient;
 use AE\SalesforceRestSdk\Bayeux\ChannelInterface;
 use AE\SalesforceRestSdk\Bayeux\Consumer;
@@ -31,7 +31,7 @@ class BayeuxClientTest extends TestCase
     {
         $this->client = new BayeuxClient(
             new LongPollingTransport(),
-            new LoginProvider(
+            new OAuthProvider(
                 getenv("SF_CLIENT_ID"),
                 getenv("SF_CLIENT_SECRET"),
                 getenv("SF_USER"),
@@ -112,7 +112,7 @@ class BayeuxClientTest extends TestCase
             $this->client->disconnect();
         }
 
-        $class = new \ReflectionClass(LoginProvider::class);
+        $class = new \ReflectionClass(OAuthProvider::class);
 
         $tokenProperty = $class->getProperty('token');
         $tokenProperty->setAccessible(true);

@@ -25,7 +25,7 @@ use Psr\Http\Message\ResponseInterface;
 
 class Client extends AbstractClient
 {
-    public const VERSION = "43.0";
+    public const VERSION = "44.0";
 
     public const BASE_PATH = "services/data/v".self::VERSION."/";
 
@@ -155,9 +155,12 @@ class Client extends AbstractClient
                 self::BASE_PATH.'sobjects/'.$sObjectType.'/updated/?'.
                 http_build_query(
                     [
-                        'start' => $start->format(\DateTime::ISO8601),
-                        'end'   => $end->format(\DateTime::ISO8601),
-                    ]
+                        'start' => $start->format('Y-m-d\Th:i:sP'),
+                        'end'   => $end->format('Y-m-d\Th:i:sP'),
+                    ],
+                    null,
+                    '&',
+                    PHP_QUERY_RFC3986
                 )
             )
         );
@@ -195,9 +198,12 @@ class Client extends AbstractClient
                 self::BASE_PATH.'sobjects/'.$sObjectType.'/deleted/?'.
                 http_build_query(
                     [
-                        'start' => $start->format(\DateTime::ISO8601),
-                        'end'   => $end->format(\DateTime::ISO8601),
-                    ]
+                        'start' => $start->format('Y-m-d\Th:i:sP'),
+                        'end'   => $end->format('Y-m-d\Th:i:sP'),
+                    ],
+                    null,
+                    '&',
+                    PHP_QUERY_RFC3986
                 )
             )
         );

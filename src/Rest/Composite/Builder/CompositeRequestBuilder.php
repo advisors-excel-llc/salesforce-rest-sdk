@@ -117,7 +117,7 @@ class CompositeRequestBuilder implements RequestBuilderInterface, ReferenceableI
         string $referenceId,
         string $sObjectType,
         \DateTime $start,
-        ?\DateTime $end
+        ?\DateTime $end = null
     ): CompositeRequestBuilder {
         return $this->addSubRequest(
             new GetDeletedSubRequest(
