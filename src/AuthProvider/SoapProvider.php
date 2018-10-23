@@ -96,7 +96,8 @@ class SoapProvider implements AuthProviderInterface
                 $soapBody,
                 $matches
             )) {
-                $this->instanceUrl = $matches['serverUrl'];
+                $host = parse_url($matches['serverUrl'], PHP_URL_HOST);
+                $this->instanceUrl = "https://$host/";
                 $this->token       = $matches['sessionId'];
             } else {
                 throw new SessionExpiredOrInvalidException("Failed to login to Salesforce.", "INVALID_CREDENTIALS");
