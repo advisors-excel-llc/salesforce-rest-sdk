@@ -155,8 +155,8 @@ class Client extends AbstractClient
                 self::BASE_PATH.'sobjects/'.$sObjectType.'/updated/?'.
                 http_build_query(
                     [
-                        'start' => $start->format('Y-m-d\Th:i:sP'),
-                        'end'   => $end->format('Y-m-d\Th:i:sP'),
+                        'start' => $start->format('Y-m-d\TH:i:sP'),
+                        'end'   => $end->format('Y-m-d\TH:i:sP'),
                     ],
                     null,
                     '&',
@@ -198,8 +198,8 @@ class Client extends AbstractClient
                 self::BASE_PATH.'sobjects/'.$sObjectType.'/deleted/?'.
                 http_build_query(
                     [
-                        'start' => $start->format('Y-m-d\Th:i:sP'),
-                        'end'   => $end->format('Y-m-d\Th:i:sP'),
+                        'start' => $start->format('Y-m-d\TH:i:sP'),
+                        'end'   => $end->format('Y-m-d\TH:i:sP'),
                     ],
                     null,
                     '&',
