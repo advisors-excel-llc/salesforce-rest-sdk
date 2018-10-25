@@ -303,7 +303,7 @@ class Client extends AbstractClient
 
         return $this->serializer->deserialize(
             $body,
-            'array<string>',
+            'array',
             'json'
         );
     }
