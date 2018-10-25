@@ -20,7 +20,7 @@ class DescribeSObject
 {
     /**
      * @var array|string
-     * @Serializer\Type("array<string>")
+     * @Serializer\Type("array")
      */
     private $actionOverrides = [];
 

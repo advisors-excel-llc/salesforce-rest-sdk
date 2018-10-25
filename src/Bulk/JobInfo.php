@@ -29,6 +29,14 @@ class JobInfo
     public const TYPE_XML  = "XML";
     public const TYPE_JSON = "JSON";
 
+    public const QUERY = "query";
+    public const QUERY_ALL = "queryall";
+    public const INSERT = "insert";
+    public const UPDATE = "update";
+    public const UPSERT = "upsert";
+    public const DELETE = "delete";
+    public const HARD_DELETE = "hardDelete";
+
     /**
      * @var string|null
      * @Serializer\Type("string")
@@ -148,6 +156,11 @@ class JobInfo
      * @Serializer\Type("int")
      */
     private $apexProcessingTime;
+
+    /**
+     * @var string|null
+     */
+    private $externalIdFieldName;
 
     /**
      * @return null|string
@@ -545,6 +558,26 @@ class JobInfo
     public function setApexProcessingTime(?int $apexProcessingTime): JobInfo
     {
         $this->apexProcessingTime = $apexProcessingTime;
+
+        return $this;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getExternalIdFieldName(): ?string
+    {
+        return $this->externalIdFieldName;
+    }
+
+    /**
+     * @param null|string $externalIdFieldName
+     *
+     * @return JobInfo
+     */
+    public function setExternalIdFieldName(?string $externalIdFieldName): JobInfo
+    {
+        $this->externalIdFieldName = $externalIdFieldName;
 
         return $this;
     }

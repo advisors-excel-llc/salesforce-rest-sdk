@@ -69,7 +69,8 @@ abstract class AbstractClient
                 if (401 === $response->getStatusCode()) {
                     throw new SessionExpiredOrInvalidException($errors[0]['message'], $errors[0]['errorCode']);
                 } else {
-                    throw new \RuntimeException("{$errors[0]['errorCode']}: {$errors[0]['message']}");
+                    $error = array_key_exists(0, $errors) ? $errors[0] : $errors;
+                    throw new \RuntimeException("{$error['errorCode']}: {$error['message']}");
                 }
             } else {
                 throw new \RuntimeException(
