@@ -11,9 +11,12 @@ namespace AE\SalesforceRestSdk\Bulk;
 use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
 use AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException;
 use AE\SalesforceRestSdk\Rest\AbstractClient;
+use AE\SalesforceRestSdk\Serializer\CompositeSObjectHandler;
+use AE\SalesforceRestSdk\Serializer\SObjectHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
+use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\Naming\IdenticalPropertyNamingStrategy;
 use JMS\Serializer\SerializerBuilder;
 use JMS\Serializer\SerializerInterface;
@@ -96,6 +99,12 @@ class Client extends AbstractClient
                 ->addDefaultListeners()
                 ->addDefaultDeserializationVisitors()
                 ->addDefaultSerializationVisitors()
+                ->configureHandlers(
+                    function (HandlerRegistry $handler) {
+                        $handler->registerSubscribingHandler(new SObjectHandler());
+                        $handler->registerSubscribingHandler(new CompositeSObjectHandler());
+                    }
+                )
         ;
 
         return $builder->build();
