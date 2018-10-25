@@ -24,7 +24,7 @@ use JMS\Serializer\SerializerInterface;
 
 class CompositeClient extends AbstractClient
 {
-    public const VERSION = '43.0';
+    public const VERSION = '44.0';
 
     public const BASE_PATH = '/services/data/v'.self::VERSION.'/composite';
 

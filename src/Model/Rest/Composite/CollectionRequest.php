@@ -29,7 +29,7 @@ class CollectionRequest implements CollectionRequestInterface
 
     /**
      * @var Collection
-     * @Serializer\Type("ArrayCollection<AE\SalesforceRestSdk\Model\SObject>")
+     * @Serializer\Type("ArrayCollection<AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject>")
      */
     private $records;
 
