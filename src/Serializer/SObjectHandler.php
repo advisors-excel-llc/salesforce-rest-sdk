@@ -33,18 +33,53 @@ class SObjectHandler implements SubscribingHandlerInterface
         array $type,
         Context $context
     ): array {
+        $object = [];
+
+        if (null === $visitor->getRoot()) {
+            $visitor->setRoot(['__replaceme__' => $object]);
+        }
 
         foreach ($sobject->getFields() as $field => $value) {
             if (null === $value) {
                 continue;
             }
-            $object[$field] = $value;
+
+            if (is_object($value)) {
+                $className = get_class($value);
+                if (false !== $className) {
+                    if (\DateTime::class === $className) {
+                        $object[$field] = $context->getNavigator()->accept(
+                            $value,
+                            ['name' => 'DateTime', 'params' => [\DATE_ISO8601, 'UTC']],
+                            $context
+                        )
+                        ;
+                    } elseif (\DateTimeImmutable::class === $className) {
+                        $object[$field] = $context->getNavigator()->accept(
+                            $value,
+                            ['name' => 'DateTimeImmutable', 'params' => [\DATE_ISO8601, 'UTC']],
+                            $context
+                        )
+                        ;
+                    } else {
+                        $object[$field] = $context->getNavigator()->accept(
+                            $value,
+                            ['name' => $className],
+                            $context
+                        )
+                        ;
+                    }
+                } else {
+                    $object[$field] = $value;
+                }
+            } else {
+                $object[$field] = $value;
+            }
         }
 
-        if (null === $visitor->getRoot()) {
+        // If the visitor's root is the value of the last field processed, we need to fix the root
+        if (array_key_exists('__replaceme__', $visitor->getRoot())) {
             $visitor->setRoot($object);
-        } elseif (is_array($visitor->getRoot())) {
-            $visitor->setData(null, $object);
         }
 
         return $object;
@@ -58,9 +93,23 @@ class SObjectHandler implements SubscribingHandlerInterface
     ) {
         $sobject = new SObject();
 
+        $metadata = $context->getMetadataFactory()->getMetadataForClass(SObject::class);
+        $visitor->startVisitingObject($metadata, $sobject, $type, $context);
+
         foreach ($data as $field => $value) {
-            $sobject->$field = $value;
+            if (is_string($value)
+                && preg_match('/^\d{4}-\d{2}-\d{2}\T\d{2}:\d{2}:\d{2}(\.\d{4})?(\+\d{4}|\Z)$/', $value) != false) {
+                $sobject->$field = $context->getNavigator()->accept(
+                    $value,
+                    ['name' => 'DateTime', 'params' => [\DATE_ISO8601, 'UTC']],
+                    $context
+                );
+            } else {
+                $sobject->$field = $value;
+            }
         }
+
+        $visitor->endVisitingObject($metadata, $sobject, $type, $context);
 
         return $sobject;
     }

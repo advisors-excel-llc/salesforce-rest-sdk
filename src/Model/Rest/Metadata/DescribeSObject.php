@@ -19,7 +19,7 @@ use JMS\Serializer\Annotation as Serializer;
 class DescribeSObject
 {
     /**
-     * @var array|string
+     * @var array
      * @Serializer\Type("array")
      */
     private $actionOverrides = [];
@@ -229,7 +229,7 @@ class DescribeSObject
     private $urls = [];
 
     /**
-     * @return array|string
+     * @return array
      */
     public function getActionOverrides()
     {
@@ -237,7 +237,7 @@ class DescribeSObject
     }
 
     /**
-     * @param array|string $actionOverrides
+     * @param array $actionOverrides
      *
      * @return DescribeSObject
      */

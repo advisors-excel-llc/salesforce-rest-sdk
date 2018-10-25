@@ -6,13 +6,12 @@
  * Time: 2:03 PM
  */
 
-namespace AE\SalesforceRestSdk\Tests\Composite\Serializer;
+namespace AE\SalesforceRestSdk\Tests\Serializer;
 
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
-use AE\SalesforceRestSdk\Rest\Composite\CollectionRequest;
+use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequest;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Serializer\CompositeSObjectHandler;
-use AE\SalesforceRestSdk\Serializer\SObjectHandler;
 use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\Naming\IdenticalPropertyNamingStrategy;
 use JMS\Serializer\SerializerBuilder;
@@ -62,23 +61,30 @@ class CompositeSObjectHandlerTest extends TestCase
     public function testSobjectSerialziationArray()
     {
         $sobject = new CompositeSObject("Account");
+        $now = new \DateTime();
 
         $sobject->Name    = 'Test Object';
         $sobject->OwnerId = 'A10500010129302A10';
+        $sobject->CreatedAt = $now;
 
         $json = $this->serializer->serialize([$sobject], 'json');
 
         $this->assertEquals(
-            '[{"attributes":{"type":"Account"},"Name":"Test Object","OwnerId":"A10500010129302A10"}]',
+            '[{"attributes":{"type":"Account"},"Name":"Test Object","OwnerId":"A10500010129302A10","CreatedAt":"'
+            .$now->setTimezone(new \DateTimeZone('UTC'))->format(\DATE_ISO8601)
+            .'"}]',
             $json
         );
     }
 
     public function testSobjectDeserialize()
     {
-        /** @var SObject $sobject */
+        $now = new \DateTime('now', new \DateTimeZone('UTC'));
+        /** @var CompositeSObject $sobject */
         $sobject = $this->serializer->deserialize(
-            '{"attributes":{"type":"Account","url":"/test/url"},"Name":"Test Object","OwnerId":"A10500010129302A10"}',
+            '{"attributes":{"type":"Account","url":"/test/url"},"Name":"Test Object","OwnerId":"A10500010129302A10","CreatedAt":"'.$now->format(
+                \DATE_ISO8601
+            ).'"}',
             CompositeSObject::class,
             'json'
         );
@@ -87,6 +93,23 @@ class CompositeSObjectHandlerTest extends TestCase
         $this->assertEquals("/test/url", $sobject->getUrl());
         $this->assertEquals("Test Object", $sobject->Name);
         $this->assertEquals("A10500010129302A10", $sobject->OwnerId);
+        $this->assertInstanceOf(\DateTime::class, $sobject->CreatedAt);
+        $this->assertEquals($now->format(\DATE_ISO8601), $sobject->CreatedAt->format(\DATE_ISO8601));
+
+        /** @var CompositeSObject[] $sobject */
+        $sobjects = $this->serializer->deserialize(
+            '[{"attributes":{"type":"Account","url":"/test/url"},"Name":"Test Object","OwnerId":"A10500010129302A10","CreatedAt":"'.$now->format(
+                \DATE_ISO8601
+            ).'"},{"attributes":{"type":"Account","url":"/test/url"},"Name":"Test Object 2","OwnerId":"A10500010129302A10","CreatedAt":"'.$now->format(
+                \DATE_ISO8601
+            ).'"}]',
+            'array<'.CompositeSObject::class.'>',
+            'json'
+        );
+
+        $this->assertCount(2, $sobjects);
+        $this->assertEquals('Test Object', $sobjects[0]->Name);
+        $this->assertEquals('Test Object 2', $sobjects[1]->Name);
     }
 
     public function testSobjectDeepSerialize()
@@ -112,5 +135,39 @@ class CompositeSObjectHandlerTest extends TestCase
             '{"allOrNone":true,"records":[{"attributes":{"type":"Account"},"Name":"Composite Test Account"},{"attributes":{"type":"Contact"},"FirstName":"Composite","LastName":"Test Contact"}]}',
             $json
         );
+    }
+
+    public function testDeepObject()
+    {
+        $do = new DeepObject();
+        $do->setName('Nemo');
+        $do->setDescription('A Fish');
+        $account = new CompositeSObject("Account", [
+            'Name' => 'Test Object',
+            'deepObject' => $do
+        ]);
+
+        $data = $this->serializer->serialize($account, 'json');
+        $this->assertEquals(
+            '{"attributes":{"type":"Account"},"Name":"Test Object","DeepObject":{"name":"Nemo","description":"A Fish"}}',
+            $data
+        );
+
+        $des = $this->serializer->deserialize($data, CompositeSObject::class, 'json');
+
+        // In order to denormalize class objects, you'll have to handle that manually
+        $this->assertEquals('Nemo', $des->DeepObject['name']);
+        $this->assertEquals('A Fish', $des->DeepObject['description']);
+
+        $dess = $this->serializer->deserialize(
+            '[{"attributes":{"type":"Account"},"Name":"Test Object","DeepObject"'.
+            ':{"name":"Nemo","description":"A Fish"}},{"attributes":{"type":"Account"},'.
+            '"Name":"Test Object 2","DeepObject":{"name":"Dory","description":"A Clown Fish"}}]',
+            'array<'.CompositeSObject::class.'>',
+            'json');
+
+        $this->assertCount(2, $dess);
+        $this->assertEquals('Nemo', $dess[0]->deepObject['name']);
+        $this->assertEquals('Dory', $dess[1]->deepObject['name']);
     }
 }

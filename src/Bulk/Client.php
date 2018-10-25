@@ -29,7 +29,7 @@ class Client extends AbstractClient
     /**
      *
      */
-    public const VERSION = "43.0";
+    public const VERSION = "44.0";
 
     /**
      *

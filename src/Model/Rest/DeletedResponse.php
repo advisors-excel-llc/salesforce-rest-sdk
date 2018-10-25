@@ -8,7 +8,6 @@
 
 namespace AE\SalesforceRestSdk\Model\Rest;
 
-use AE\SalesforceRestSdk\Model\SObject;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -20,7 +19,7 @@ use JMS\Serializer\Annotation as Serializer;
 class DeletedResponse
 {
     /**
-     * @var array|SObject[]
+     * @var array|DeletedRecord[]
      * @Serializer\Type("array<AE\SalesforceRestSdk\Model\Rest\DeletedRecord>")
      */
     private $deletedRecords = [];
@@ -38,7 +37,7 @@ class DeletedResponse
     private $latestDateCovered;
 
     /**
-     * @return SObject[]|array
+     * @return DeletedRecord[]|array
      */
     public function getDeletedRecords()
     {
@@ -46,7 +45,7 @@ class DeletedResponse
     }
 
     /**
-     * @param SObject[]|array $deletedRecords
+     * @param DeletedRecord[]|array $deletedRecords
      *
      * @return DeletedResponse
      */
@@ -58,7 +57,7 @@ class DeletedResponse
     }
 
     /**
-     * @return \DateTime|null
+     * @return \DateTime|\DateTimeImmutable|null
      */
     public function getEarliestDateAvailable(): ?\DateTime
     {
