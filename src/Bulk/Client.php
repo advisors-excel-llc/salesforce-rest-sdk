@@ -29,7 +29,7 @@ class Client extends AbstractClient
     /**
      *
      */
-    public const VERSION = "43.0";
+    public const VERSION = "44.0";
 
     /**
      *
@@ -118,6 +118,7 @@ class Client extends AbstractClient
      * @param string $sObjectType
      * @param string $operation
      * @param string $contentType
+     * @param string $externalIdField
      * @param string $concurrencyMode
      *
      * @return JobInfo
@@ -128,13 +129,33 @@ class Client extends AbstractClient
         string $sObjectType,
         string $operation,
         string $contentType,
+        ?string $externalIdField = null,
         string $concurrencyMode = "Parallel"
     ): JobInfo {
         $jobInfo = new JobInfo();
+
+        $ops = [
+            JobInfo::INSERT,
+            JobInfo::UPDATE,
+            JobInfo::UPSERT,
+            JobInfo::DELETE,
+            JobInfo::HARD_DELETE,
+            JobInfo::QUERY,
+            JobInfo::QUERY_ALL
+        ];
+        if (!in_array($operation, $ops)) {
+            throw new \RuntimeException("Operation is not one of: ".implode(', ', $ops));
+        }
+
+        if (JobInfo::UPSERT === $operation && null === $externalIdField) {
+            throw new \RuntimeException("Upsert operations require the External Id Field be specified.");
+        }
+
         $jobInfo->setObject($sObjectType)
                 ->setOperation($operation)
                 ->setContentType($contentType)
                 ->setConcurrencyMode($concurrencyMode)
+                ->setExternalIdFieldName($externalIdField)
         ;
 
         $response = $this->send(
