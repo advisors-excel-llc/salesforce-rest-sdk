@@ -70,7 +70,15 @@ abstract class AbstractClient
                     throw new SessionExpiredOrInvalidException($errors[0]['message'], $errors[0]['errorCode']);
                 } else {
                     $error = array_key_exists(0, $errors) ? $errors[0] : $errors;
-                    throw new \RuntimeException("{$error['errorCode']}: {$error['message']}");
+                    if (array_key_exists('errorCode', $error)) {
+                        throw new \RuntimeException("{$error['errorCode']}: {$error['message']}");
+                    } elseif (array_key_exists('exceptionCode', $error)) {
+                        throw new \RuntimeException("{$error['exceptionCode']}: {$error['exceptionMessage']}");
+                    } else {
+                        throw new \RuntimeException(
+                            "Received Status Code {$response->getStatusCode()}, expected $expectedStatusCode"
+                        );
+                    }
                 }
             } else {
                 throw new \RuntimeException(
