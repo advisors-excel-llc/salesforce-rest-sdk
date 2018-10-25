@@ -159,6 +159,7 @@ class JobInfo
 
     /**
      * @var string|null
+     * @Serializer\Type("string")
      */
     private $externalIdFieldName;
 
