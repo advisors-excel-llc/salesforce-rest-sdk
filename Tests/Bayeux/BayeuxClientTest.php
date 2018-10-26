@@ -9,6 +9,7 @@
 namespace AE\SalesforceRestSdk\Tests\Bayeux;
 
 use AE\SalesforceRestSdk\AuthProvider\OAuthProvider;
+use AE\SalesforceRestSdk\AuthProvider\SoapProvider;
 use AE\SalesforceRestSdk\Bayeux\BayeuxClient;
 use AE\SalesforceRestSdk\Bayeux\ChannelInterface;
 use AE\SalesforceRestSdk\Bayeux\Consumer;
@@ -50,7 +51,7 @@ class BayeuxClientTest extends TestCase
             function (ChannelInterface $channel, Message $message) use ($name, &$consumer) {
                 $this->assertTrue($message->isSuccessful());
                 $this->assertFalse($this->client->isDisconnected());
-                $client   = new Client(['base_uri' => getenv('SF_URL')]);
+                $client   = new Client(['base_uri' => $this->client->getAuthProvider()->getInstanceUrl()]);
                 $response = $client->post(
                     'services/data/v43.0/sobjects/Account',
                     [
@@ -86,7 +87,7 @@ class BayeuxClientTest extends TestCase
                         $this->client->disconnect();
                     }
 
-                    $client   = new Client(['base_uri' => getenv('SF_URL')]);
+                    $client   = new Client(['base_uri' => $this->client->getAuthProvider()->getInstanceUrl()]);
                     $response = $client->delete(
                         'services/data/v43.0/sobjects/Account/'.$sobject->Id,
                         [
