@@ -13,6 +13,8 @@ use AE\SalesforceRestSdk\Bulk\BatchInfo;
 use AE\SalesforceRestSdk\Bulk\Client;
 use AE\SalesforceRestSdk\Bulk\JobInfo;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
+use AE\SalesforceRestSdk\Model\SObject;
+use AE\SalesforceRestSdk\Psr7\CsvStream;
 use AE\SalesforceRestSdk\Serializer\CompositeSObjectHandler;
 use AE\SalesforceRestSdk\Serializer\SObjectHandler;
 use JMS\Serializer\Handler\HandlerRegistry;
@@ -67,7 +69,7 @@ class BulkClientTest extends TestCase
 
     public function testBulk()
     {
-        $job = $this->client->createJob("Account", "query", JobInfo::TYPE_JSON);
+        $job = $this->client->createJob("Account", JobInfo::QUERY, JobInfo::TYPE_JSON);
 
         $this->assertNotNull($job->getId());
         $this->assertEquals(JobInfo::STATE_OPEN, $job->getState());
@@ -77,20 +79,20 @@ class BulkClientTest extends TestCase
         $this->assertNotNull($batch->getId());
 
         do {
-            $batchStatus = $this->client->getBatchStatus($job->getId(), $batch->getId());
+            $batchStatus = $this->client->getBatchStatus($job, $batch->getId());
             sleep(10);
         } while (BatchInfo::STATE_COMPLETED !== $batchStatus->getState());
 
-        $batchResults = $this->client->getBatchResults($job->getId(), $batch->getId());
+        $batchResults = $this->client->getBatchResults($job, $batch->getId());
         $this->assertCount(1, $batchResults);
         $resultId = $batchResults[0];
 
-        $result = $this->client->getResult($job->getId(), $batch->getId(), $resultId);
+        $result = $this->client->getResult($job, $batch->getId(), $resultId);
 
         $this->assertNotNull($result);
 
         $objects = $this->serializer->deserialize(
-            $result,
+            (string)$result,
             'array<'.CompositeSObject::class.'>',
             'json'
         );
@@ -99,7 +101,43 @@ class BulkClientTest extends TestCase
         $this->assertNotNull($objects[0]->Id);
         $this->assertNotNull($objects[0]->Name);
 
-        $closeJob = $this->client->closeJob($job->getId());
+        $closeJob = $this->client->closeJob($job);
+        $this->assertEquals($job->getId(), $closeJob->getId());
+        $this->assertEquals(JobInfo::STATE_CLOSED, $closeJob->getState());
+    }
+
+    public function testCSV()
+    {
+        $job = $this->client->createJob("Account", JobInfo::QUERY, JobInfo::TYPE_CSV);
+
+        $this->assertNotNull($job->getId());
+        $this->assertEquals(JobInfo::STATE_OPEN, $job->getState());
+
+        $batch = $this->client->addBatch($job, "SELECT Id, Name From Account");
+
+        $this->assertNotNull($batch->getId());
+
+        do {
+            $batchStatus = $this->client->getBatchStatus($job, $batch->getId());
+            sleep(10);
+        } while (BatchInfo::STATE_COMPLETED !== $batchStatus->getState());
+
+        $batchResults = $this->client->getBatchResults($job, $batch->getId());
+        $this->assertCount(1, $batchResults);
+        $resultId = $batchResults[0];
+
+        /** @var CsvStream $result */
+        $result = $this->client->getResult($job, $batch->getId(), $resultId);
+
+        $this->assertNotNull($result);
+
+        $objects = $result->getContents();
+
+        $this->assertNotEmpty($objects);
+        $this->assertNotNull($objects[0]['Id']);
+        $this->assertNotNull($objects[0]['Name']);
+
+        $closeJob = $this->client->closeJob($job);
         $this->assertEquals($job->getId(), $closeJob->getId());
         $this->assertEquals(JobInfo::STATE_CLOSED, $closeJob->getState());
     }
