@@ -60,7 +60,7 @@ class BayeuxClient
 
     public const VERSION            = '1.0';
     public const MINIMUM_VERSION    = '1.0';
-    public const SALESFORCE_VERSION = '43.0';
+    public const SALESFORCE_VERSION = '44.0';
 
     /**
      * @var Client
@@ -115,7 +115,6 @@ class BayeuxClient
     /**
      * BayeuxClient constructor.
      *
-     * @param string $url
      * @param AbstractClientTransport $transport
      * @param AuthProviderInterface $authProvider
      * @param LoggerInterface|null $logger
@@ -507,7 +506,8 @@ class BayeuxClient
             $newMessages = $this->transport->send(
                 $messages,
                 function (RequestInterface $request) {
-                    return $request->withAddedHeader('Authorization', $this->authProvider->authorize());
+                    $this->authProvider->authorize();
+                    return $request->withAddedHeader('Authorization', 'OAuth '. $this->authProvider->getToken());
                 }
             );
         } catch (SessionExpiredOrInvalidException $e) {
