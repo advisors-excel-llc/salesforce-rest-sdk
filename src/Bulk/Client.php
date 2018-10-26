@@ -10,17 +10,20 @@ namespace AE\SalesforceRestSdk\Bulk;
 
 use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
 use AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException;
+use AE\SalesforceRestSdk\Psr7\CsvStream;
 use AE\SalesforceRestSdk\Rest\AbstractClient;
 use AE\SalesforceRestSdk\Serializer\CompositeSObjectHandler;
 use AE\SalesforceRestSdk\Serializer\SObjectHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
+use function GuzzleHttp\Psr7\stream_for;
 use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\Naming\IdenticalPropertyNamingStrategy;
 use JMS\Serializer\SerializerBuilder;
 use JMS\Serializer\SerializerInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Class Client
@@ -222,24 +225,25 @@ class Client extends AbstractClient
 
         $body = (string)$response->getBody();
 
+
         return $this->serializer->deserialize(
             $body,
             BatchInfo::class,
-            'json'
+            $job->getContentType() === JobInfo::TYPE_JSON ? 'json' : 'xml'
         );
     }
 
     /**
-     * @param string $jobId
+     * @param JobInfo $job
      *
      * @return JobInfo
      * @throws SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function getJobStatus(string $jobId): JobInfo
+    public function getJobStatus(JobInfo $job): JobInfo
     {
         $response = $this->send(
-            new Request("GET", self::BASE_PATH.'/'.$jobId)
+            new Request("GET", self::BASE_PATH.'/'.$job->getId())
         );
 
         $body = (string)$response->getBody();
@@ -247,24 +251,24 @@ class Client extends AbstractClient
         return $this->serializer->deserialize(
             $body,
             JobInfo::class,
-            'json'
+            $job->getContentType() === JobInfo::TYPE_JSON ? 'json' : 'xml'
         );
     }
 
     /**
-     * @param string $jobId
+     * @param JobInfo $job
      * @param string $batchId
      *
      * @return BatchInfo
      * @throws SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function getBatchStatus(string $jobId, string $batchId): BatchInfo
+    public function getBatchStatus(JobInfo $job, string $batchId): BatchInfo
     {
         $response = $this->send(
             new Request(
                 "GET",
-                self::BASE_PATH.'/'.$jobId.'/batch/'.$batchId
+                self::BASE_PATH.'/'.$job->getId().'/batch/'.$batchId
             )
         );
 
@@ -273,73 +277,89 @@ class Client extends AbstractClient
         return $this->serializer->deserialize(
             $body,
             BatchInfo::class,
-            'json'
+            $job->getContentType() === JobInfo::TYPE_JSON ? 'json' : 'xml'
         );
     }
 
     /**
-     * @param string $jobId
-     * @param string $batchId
-     *
-     * @return array|string[]
-     *
-     *
-     * /**
-     *
-     * @param string $jobId
+     * @param JobInfo $job
      * @param string $batchId
      *
      * @return array
      * @throws SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function getBatchResults(string $jobId, string $batchId): array
+    public function getBatchResults(JobInfo $job, string $batchId): array
     {
         $response = $this->send(
-            new Request("GET", self::BASE_PATH.'/'.$jobId.'/batch/'.$batchId.'/result')
+            new Request("GET", self::BASE_PATH.'/'.$job->getId().'/batch/'.$batchId.'/result')
         );
 
         $body = (string)$response->getBody();
 
+        if (substr($body, 0, strlen('<result-list')) === '<result-list') {
+            $matches = [];
+            if (false !== preg_match_all('/<result>(?<id>.*?)<\/result>/', $body, $matches)) {
+                return $matches['id'];
+            } else {
+                return [];
+            }
+        }
+
         return $this->serializer->deserialize(
             $body,
             'array',
-            'json'
+            $job->getContentType() === JobInfo::TYPE_JSON ? 'json' : 'xml'
         );
     }
 
     /**
-     * @param string $jobId
+     * @param JobInfo $job
      * @param string $batchId
      * @param string $resultId
      *
-     * @return string
+     * @return StreamInterface|CsvStream
      * @throws SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function getResult(string $jobId, string $batchId, string $resultId): string
+    public function getResult(JobInfo $job, string $batchId, string $resultId): StreamInterface
     {
         $response = $this->send(
-            new Request("GET", self::BASE_PATH.'/'.$jobId.'/batch/'.$batchId.'/result/'.$resultId)
+            new Request(
+                "GET",
+                self::BASE_PATH.'/'.$job->getId().'/batch/'.$batchId.'/result/'.$resultId,
+                [
+                    'save_to' => stream_for(fopen('php://temp', 'w'))
+                ]
+            )
         );
 
-        return (string)$response->getBody();
+        if ($job->getContentType() === JobInfo::TYPE_CSV) {
+            return new CsvStream($response->getBody());
+        }
+
+        return $response->getBody();
     }
 
     /**
-     * @param string $jobId
+     * @param JobInfo $job
      *
      * @return JobInfo
      * @throws SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function closeJob(string $jobId): JobInfo
+    public function closeJob(JobInfo $job): JobInfo
     {
         $jobInfo = new JobInfo();
         $jobInfo->setState(JobInfo::STATE_CLOSED);
 
         $response = $this->send(
-            new Request("POST", self::BASE_PATH.'/'.$jobId, [], $this->serializer->serialize($jobInfo, 'json'))
+            new Request(
+                "POST",
+                self::BASE_PATH.'/'.$job->getId(),
+                [],
+                $this->serializer->serialize($jobInfo, 'json')
+            )
         );
 
         $body = (string)$response->getBody();
