@@ -79,17 +79,58 @@ class CsvStream implements StreamInterface
         return $this->stream->isReadable();
     }
 
+    /**
+     * Similar to \GuzzleHttp\Psr7\readline, but with some helper flags
+     * @param StreamInterface $stream
+     * @param int|null $maxLength
+     * @param string $enclosure
+     * @param string $escape
+     *
+     * @return string
+     */
+    public static function readline(
+        StreamInterface $stream,
+        ?int $maxLength = null,
+        string $enclosure = '"',
+        string $escape = "\\"
+    ) {
+        $buffer = '';
+        $size = 0;
+        $encFlag = false;
+        $escFlag = false;
+
+        if ($stream instanceof CsvStream) {
+            throw new \InvalidArgumentException("Cannot use CsvStream::readline on a CsvStream.");
+        }
+
+        while (!$stream->eof()) {
+            if (null == ($byte = $stream->read(1))) {
+                return $buffer;
+            }
+
+            $buffer .= $byte;
+
+            if ($byte === $enclosure) {
+                $encFlag = !$encFlag;
+            }
+
+            if ((!$encFlag && !$escFlag && $byte === "\n") || ++$size === $maxLength - 1) {
+                break;
+            }
+
+            $escFlag = $byte === $escape && !$escFlag;
+        }
+
+        return $buffer;
+    }
+
     public function read($length = 0, string $delimiter = ",", string $enclosure = '"', string $escape = "\\")
     {
         if ($length < 0) {
             throw new \RuntimeException("The length cannot be a negative number,");
         }
 
-        $line = \GuzzleHttp\Psr7\readline($this->stream, $length > 0 ? $length : null);
-
-        if (false == $line) {
-            return false;
-        }
+        $line = self::readline($this->stream, $length > 0 ? $length : null, $enclosure, $escape);
 
         return str_getcsv($line, $delimiter, $enclosure, $escape);
     }
