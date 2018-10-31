@@ -121,7 +121,7 @@ class CsvStream implements StreamInterface
             $escFlag = $byte === $escape && !$escFlag;
         }
 
-        return $buffer;
+        return rtrim($buffer, "\n");
     }
 
     public function read($length = 0, string $delimiter = ",", string $enclosure = '"', string $escape = "\\")

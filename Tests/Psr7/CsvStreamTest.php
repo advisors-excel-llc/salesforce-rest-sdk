@@ -16,13 +16,13 @@ class CsvStreamTest extends TestCase
 {
     public function testRead()
     {
-        $testLine = '"Item 1","Item 2","This is a longer'.PHP_EOL.'multiline field","Last Field"';
+        $testLine = '"Item 1","Item 2","This is a longer'.PHP_EOL.'multiline field","Last Field"'.PHP_EOL;
         $stream = stream_for($testLine);
         $csv = new CsvStream($stream);
 
         $line = CsvStream::readline($stream);
 
-        $this->assertEquals($testLine, $line);
+        $this->assertEquals(rtrim($testLine, "\n"), $line);
 
         $stream->rewind();
 
