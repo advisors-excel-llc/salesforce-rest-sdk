@@ -58,10 +58,6 @@ class GetSubRequest extends BaseSubRequest implements CompositeSObjectSubRequest
             if (null !== $richInput->Id) {
                 $this->sObjectId = $richInput->Id;
             }
-
-            if (null !== $richInput->Type) {
-                $this->sObjectType = $richInput->Type;
-            }
         }
 
         return $this;

@@ -95,9 +95,7 @@ class CompositeSObject extends SObject
 
     public function __set($name, $value)
     {
-        if ('type' === strtolower($name)) {
-            $this->setType($value);
-        } elseif ('url' === strtolower($name)) {
+        if ('url' === strtolower($name)) {
             $this->setUrl($value);
         } elseif ("referenceid" === strtolower($name)) {
             $this->setReferenceId($value);
@@ -108,10 +106,6 @@ class CompositeSObject extends SObject
 
     public function __get($name)
     {
-        if ('type' === strtolower($name)) {
-            return $this->getType();
-        }
-
         if ('url' === strtolower($name)) {
             return $this->getUrl();
         }

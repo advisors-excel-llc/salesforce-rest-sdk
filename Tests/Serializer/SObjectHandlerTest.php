@@ -11,6 +11,7 @@ namespace AE\SalesforceRestSdk\Tests\Serializer;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequest;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Serializer\SObjectHandler;
+use Doctrine\Common\Collections\ArrayCollection;
 use JMS\Serializer\Handler\HandlerRegistry;
 use JMS\Serializer\Naming\IdenticalPropertyNamingStrategy;
 use JMS\Serializer\SerializerBuilder;
@@ -105,18 +106,17 @@ class SObjectHandlerTest extends TestCase
         $contact->FirstName = "Composite";
         $contact->LastName  = "Test Contact";
 
-        $request = new CollectionRequest(
+        $request = new ArrayCollection(
             [
                 $account,
                 $contact,
-            ],
-            true
+            ]
         );
 
         $json = $this->serializer->serialize($request, 'json');
 
         $this->assertEquals(
-            '{"allOrNone":true,"records":[{"Type":"Account","Name":"Composite Test Account"},{"Type":"Contact","FirstName":"Composite","LastName":"Test Contact"}]}',
+            '[{"Type":"Account","Name":"Composite Test Account"},{"Type":"Contact","FirstName":"Composite","LastName":"Test Contact"}]',
             $json
         );
     }
