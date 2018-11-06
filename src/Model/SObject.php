@@ -22,12 +22,6 @@ class SObject
      * @var array
      * @Serializer\Type("array")
      */
-    private $attributes = ['type' => 'sobject'];
-
-    /**
-     * @var array
-     * @Serializer\Type("array")
-     */
     protected $fields = [];
 
     public function __construct(array $fields = [])

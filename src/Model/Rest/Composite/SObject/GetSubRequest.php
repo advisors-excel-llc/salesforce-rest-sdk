@@ -61,10 +61,6 @@ class GetSubRequest extends BaseSubRequest implements ReferenceableInterface, SO
             if (null !== $richInput->Id) {
                 $this->sObjectId = $richInput->Id;
             }
-
-            if (null !== $richInput->Type) {
-                $this->sObjectType = $richInput->Type;
-            }
         }
 
         return $this;

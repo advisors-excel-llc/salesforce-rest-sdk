@@ -35,7 +35,6 @@ class CreateSubRequest extends PostSubRequest implements ReferenceableInterface,
     {
         if ($body instanceof SObject) {
             $body->Id   = null;
-            $body->Type = null;
 
             parent::setBody($body);
         }
