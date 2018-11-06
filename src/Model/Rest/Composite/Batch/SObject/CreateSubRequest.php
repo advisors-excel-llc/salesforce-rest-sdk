@@ -43,7 +43,6 @@ class CreateSubRequest extends PostSubRequest implements CreateSubRequestInterfa
     {
         if ($richInput instanceof SObject) {
             $richInput->Id   = null;
-            $richInput->Type = null;
 
             parent::setRichInput($richInput);
         }

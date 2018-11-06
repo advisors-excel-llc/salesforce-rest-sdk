@@ -56,10 +56,6 @@ class UpdateSubRequest extends PatchSubRequest implements SObjectSubRequestInter
             if (null !== $richInput->Id) {
                 $this->sObjectId = $richInput->Id;
             }
-
-            if (null !== $richInput->Type) {
-                $this->sObjectType = $richInput->Type;
-            }
         }
 
         return $this;
@@ -82,13 +78,11 @@ class UpdateSubRequest extends PatchSubRequest implements SObjectSubRequestInter
         $this->url = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/'.$this->sObjectId;
 
         $this->richInput->Id   = null;
-        $this->richInput->Type = null;
     }
 
     public function postSerialize()
     {
         $this->richInput->Id   = $this->sObjectId;
-        $this->richInput->Type = $this->sObjectType;
     }
 
     /**
