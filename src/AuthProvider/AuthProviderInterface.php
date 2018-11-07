@@ -17,6 +17,7 @@ interface AuthProviderInterface
     public function authorize();
     public function reauthorize();
     public function revoke();
+    public function getIdentity(): array;
     public function getToken(): ?string;
     public function getTokenType(): ?string;
     public function isAuthorized(): bool;

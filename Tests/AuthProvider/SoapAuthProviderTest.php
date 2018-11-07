@@ -39,5 +39,10 @@ class SoapAuthProviderTest extends TestCase
         $this->assertNotNull($auth->getToken());
         $this->assertNotNull($auth->getInstanceUrl());
         $this->assertEquals('Bearer', $auth->getTokenType());
+
+        $identity = $auth->getIdentity();
+
+        $this->assertNotEmpty($identity);
+        $this->assertEquals(getenv("SF_USER"), $identity['username']);
     }
 }
