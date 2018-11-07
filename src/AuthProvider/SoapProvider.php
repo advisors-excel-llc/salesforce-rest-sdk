@@ -49,6 +49,11 @@ class SoapProvider implements AuthProviderInterface
      */
     private $instanceUrl;
 
+    /**
+     * @var null|string
+     */
+    private $identityUrl;
+
     public function __construct(string $username, string $password, string $url = 'https://login.salesforce.com/')
     {
         $this->username   = $username;
@@ -92,13 +97,14 @@ class SoapProvider implements AuthProviderInterface
 
             $matches  = [];
             if (false != preg_match(
-                '/<serverUrl>(?<serverUrl>.*?)<\/serverUrl>.*?<sessionId>(?<sessionId>.*?)<\/sessionId>/',
+                '/<serverUrl>(?<serverUrl>.*?)\/services.*?<\/serverUrl>.*?<sessionId>(?<sessionId>.*?)<\/sessionId>.*?'.
+                '<userId>(?<userId>.*?)<\/userId>.*?<organizationId>(?<orgId>.*?)<\/organizationId>/',
                 $soapBody,
                 $matches
             )) {
-                $host = parse_url($matches['serverUrl'], PHP_URL_HOST);
-                $this->instanceUrl = "https://$host/";
+                $this->instanceUrl = $matches['serverUrl'];
                 $this->token       = $matches['sessionId'];
+                $this->identityUrl = '/id/'.$matches['orgId'].'/'.$matches['userId'];
             } else {
                 throw new SessionExpiredOrInvalidException("Failed to login to Salesforce.", "INVALID_CREDENTIALS");
             }
@@ -121,6 +127,29 @@ class SoapProvider implements AuthProviderInterface
     {
         $this->token        = null;
         $this->isAuthorized = false;
+        $this->identityUrl  = null;
+    }
+
+    public function getIdentity(): array
+    {
+        if (null === $this->identityUrl) {
+            return [];
+        }
+
+        $idRes = $this->httpClient->get(
+            $this->identityUrl,
+            [
+                'headers' => ['Authorization' => "{$this->tokenType} {$this->token}"],
+            ]
+        );
+
+        if (200 === $idRes->getStatusCode()) {
+            $idBody = (string)$idRes->getBody();
+
+            return json_decode($idBody, true);
+        }
+
+        return [];
     }
 
     /**
