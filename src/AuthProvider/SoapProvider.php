@@ -22,27 +22,27 @@ class SoapProvider implements AuthProviderInterface
     /**
      * @var string
      */
-    private $token;
+    protected $token;
 
     /**
      * @var string
      */
-    private $tokenType = 'Bearer';
+    protected $tokenType = 'Bearer';
 
     /**
      * @var Client
      */
-    private $httpClient;
+    protected $httpClient;
 
     /**
      * @var string
      */
-    private $username;
+    protected $username;
 
     /**
      * @var string
      */
-    private $password;
+    protected $password;
 
     /**
      * @var null|string
