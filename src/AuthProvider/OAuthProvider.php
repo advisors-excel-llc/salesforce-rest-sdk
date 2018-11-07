@@ -23,42 +23,42 @@ class OAuthProvider implements AuthProviderInterface
     /**
      * @var string
      */
-    private $token;
+    protected $token;
 
     /**
      * @var string
      */
-    private $tokenType;
+    protected $tokenType = 'Bearer';
 
     /**
      * @var string|null
      */
-    private $refreshToken;
+    protected $refreshToken;
 
     /**
      * @var Client
      */
-    private $httpClient;
+    protected $httpClient;
 
     /**
      * @var string
      */
-    private $username;
+    protected $username;
 
     /**
      * @var string|null
      */
-    private $password;
+    protected $password;
 
     /**
      * @var string
      */
-    private $clientId;
+    protected $clientId;
 
     /**
      * @var string
      */
-    private $clientSecret;
+    protected $clientSecret;
 
     /**
      * @var null|string
@@ -68,12 +68,12 @@ class OAuthProvider implements AuthProviderInterface
     /**
      * @var string
      */
-    private $grantType;
+    protected $grantType;
 
     /**
      * @var string|null
      */
-    private $redirectUri;
+    protected $redirectUri;
 
     /**
      * @var string|null
