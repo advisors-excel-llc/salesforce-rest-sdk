@@ -19,18 +19,40 @@ This API supports the following areas of the Salesforce API:
 <?php
 
 use AE\SalesforceRestSdk\Rest\Client;
-use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
+use AE\SalesforceRestSdk\AuthProvider\OAuthProvider;
 
 $client = new Client(
-  new LoginProvider(
+  new OAuthProvider(
       "SF_CLIENT_ID",
       "SF_CLIENT_SECRET",
+      "https://login.salesforce.com",
       "SF_USER",
-      "SF_PASS",
-      "https://login.salesforce.com"
+      "SF_PASS"
   )
 );
 ```
+
+If you have an authorization code returned to your redirectUrl and wish to use it, you can do so like this:
+
+```php
+<?php
+use AE\SalesforceRestSdk\Rest\Client;
+use AE\SalesforceRestSdk\AuthProvider\OAuthProvider;
+
+$client = new Client(
+  new OAuthProvider(
+      "SF_CLIENT_ID",
+      "SF_CLIENT_SECRET",
+      "https://login.salesforce.com",
+      null,
+      null,
+      OAuthProvider::GRANT_CODE,
+      "https://your.redirect.uri",
+      "THE_CODE_FROM_SALESFORCE"
+  )
+);
+```
+
 
 ### Work with SObjects with the SObject Client
 
@@ -59,7 +81,6 @@ $account = new \AE\SalesforceRestSdk\Model\SObject();
 $sObjectClient->persist("Account", $account); // returns true if success
 
 echo $account->Id; // outputs the SFID of the account
-echo $account->Type; // Type is populated after persistence, this will output "Account"
 
 $account->MyCustomField__c = "Some Value I want to Save";
 
@@ -102,17 +123,17 @@ var_dump($result->getSearchRecords()); // CompositeSObject[]
 ```php
 <?php
 use AE\SalesforceRestSdk\Bayeux\BayeuxClient;
-use AE\SalesforceRestSdk\AuthProvider\LoginProvider;
+use AE\SalesforceRestSdk\AuthProvider\OAuthProvider;
 use AE\SalesforceRestSdk\Bayeux\Transport\LongPollingTransport;
 
 $client = new BayeuxClient(
       new LongPollingTransport(),
-      new LoginProvider(
+      new OAuthProvider(
           "SF_CLIENT_ID",
           "SF_CLIENT_SECRET",
+          "https://login.salesforce.com",
           "SF_USER",
-          "SF_PASS",
-          "https://login.salesforce.com"
+          "SF_PASS"
       )
  );
 
