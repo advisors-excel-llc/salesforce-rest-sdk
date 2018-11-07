@@ -9,6 +9,12 @@
         <env name="SF_PASS" value="YOUR_APP_PASS_W_TOKEN" />
         <env name="SF_CLIENT_ID" value="YOUR_APP_ID" />
         <env name="SF_CLIENT_SECRET" value="YOUR_APP_SECRET" />
+        <!--
+        Auth codes are only good for 15 mins. Get yours my going to:
+        %SF_LOGIN_URL%/services/oauth2/authorize?response_type=code&client_id=%SF_CLIENT_ID&redirect_uri=%SF_REDIRECT_URI%
+        -->
+        <env name="SF_AUTH_CODE" value="AN_AUTH_CODE" />
+        <env name="SF_REDIRECT_URI" value="http://localhost" />
     </php>
     <testsuites>
         <testsuite name="Test Suite">

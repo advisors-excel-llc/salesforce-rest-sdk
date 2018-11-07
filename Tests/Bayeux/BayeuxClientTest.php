@@ -35,9 +35,9 @@ class BayeuxClientTest extends TestCase
             new OAuthProvider(
                 getenv("SF_CLIENT_ID"),
                 getenv("SF_CLIENT_SECRET"),
+                getenv("SF_LOGIN_URL"),
                 getenv("SF_USER"),
-                getenv("SF_PASS"),
-                getenv("SF_LOGIN_URL")
+                getenv("SF_PASS")
             )
         );
     }

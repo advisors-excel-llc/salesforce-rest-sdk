@@ -18,9 +18,9 @@ class LoginAuthProviderTest extends TestCase
         $auth = new OAuthProvider(
             getenv("SF_CLIENT_ID"),
             getenv("SF_CLIENT_SECRET"),
+            getenv("SF_LOGIN_URL"),
             getenv("SF_USER"),
-            getenv("SF_PASS"),
-            getenv("SF_LOGIN_URL")
+            getenv("SF_PASS")
         );
 
         $class = new \ReflectionClass(OAuthProvider::class);
@@ -34,5 +34,34 @@ class LoginAuthProviderTest extends TestCase
         $this->assertNotNull($header);
         $this->assertNotNull($auth->getToken());
         $this->assertEquals('Bearer', $auth->getTokenType());
+    }
+
+    public function testRefreshToken()
+    {
+        $auth = new OAuthProvider(
+            getenv("SF_CLIENT_ID"),
+            getenv("SF_CLIENT_SECRET"),
+            getenv("SF_LOGIN_URL"),
+            null,
+            null,
+            OAuthProvider::GRANT_CODE,
+            getenv('SF_REDIRECT_URI'),
+            getenv('SF_AUTH_CODE')
+        );
+
+        $auth->authorize();
+
+        $this->assertTrue($auth->isAuthorized());
+        $this->assertNotNull($auth->getUsername());
+        $this->assertNotNull($auth->getRefreshToken());
+
+        // Set the code to something it can't use so we're sure it's using the refresh token
+        $auth->setCode(null);
+        $auth->reauthorize();
+
+        $this->assertTrue($auth->isAuthorized());
+        $this->assertNotNull($auth->getUsername());
+        $this->assertNotNull($auth->getToken());
+        $this->assertNotNull($auth->getRefreshToken());
     }
 }
