@@ -36,8 +36,8 @@ class ClientTest extends TestCase
         $limits = $this->client->limits();
 
         $this->assertNotNull($limits);
-        $this->greaterThanOrEqual(0)->evaluate($limits->getDailyApiRequests()->getMax());
-        $this->greaterThanOrEqual(0)->evaluate($limits->getDailyApiRequests()->getRemaining());
+        $this->assertGreaterThanOrEqual(0, $limits->getDailyApiRequests()->getMax());
+        $this->assertGreaterThanOrEqual(0, $limits->getDailyApiRequests()->getRemaining());
     }
 
 
