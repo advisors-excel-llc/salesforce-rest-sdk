@@ -36,8 +36,26 @@ class ClientTest extends TestCase
         $limits = $this->client->limits();
 
         $this->assertNotNull($limits);
-        $this->greaterThanOrEqual(0)->evaluate($limits->getDailyApiRequests()->getMax());
-        $this->greaterThanOrEqual(0)->evaluate($limits->getDailyApiRequests()->getRemaining());
+        $this->assertGreaterThanOrEqual(0, $limits->getDailyApiRequests()->getMax());
+        $this->assertGreaterThanOrEqual(0, $limits->getDailyApiRequests()->getRemaining());
+    }
+
+
+    public function testCounts()
+    {
+        $counts = $this->client->count(['Account', 'Contact']);
+
+        $this->assertCount(2, $counts);
+
+        $count1 = $counts[0];
+        $this->assertEquals('Account', $count1->getName());
+        $this->assertGreaterThan(0, $count1->getCount());
+
+        $count2 = $counts[1];
+        $this->assertEquals('Contact', $count2->getName());
+        $this->assertGreaterThan(0, $count2->getCount());
+
+        $this->assertGreaterThanOrEqual(2, $this->client->count(['Account', 'Contact'])->count());
     }
 
     public function testRetry()
