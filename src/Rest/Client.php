@@ -10,6 +10,7 @@ namespace AE\SalesforceRestSdk\Rest;
 
 use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
 use AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException;
+use AE\SalesforceRestSdk\Model\Rest\CountResult;
 use AE\SalesforceRestSdk\Model\Rest\Limits;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
 use AE\SalesforceRestSdk\Serializer\CompositeSObjectHandler;
@@ -107,7 +108,7 @@ class Client extends AbstractClient
      */
     public function limits(): Limits
     {
-        $request = new Request("GET", '/services/data/v'.self::VERSION.'/limits/');
+        $request  = new Request("GET", '/services/data/v'.self::VERSION.'/limits/');
         $response = $this->send($request);
 
         $body = (string)$response->getBody();
@@ -159,6 +160,32 @@ class Client extends AbstractClient
         }
 
         return null;
+    }
+
+    /**
+     * @param array $sObjectTypes
+     *
+     * @return CountResult
+     * @throws SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function count(array $sObjectTypes = []): CountResult
+    {
+        $url = '/services/data/v'.self::VERSION.'/limits/recordCount';
+
+        if (!empty($sObjectTypes)) {
+            $url .= '?sObjects='.implode(',', $sObjectTypes);
+        }
+
+        $request  = new Request("GET", $url);
+        $response = $this->send($request);
+        $body     = (string)$response->getBody();
+
+        return $this->serializer->deserialize(
+            $body,
+            CountResult::class,
+            'json'
+        );
     }
 
     protected function createHttpClient(): GuzzleClient
