@@ -169,15 +169,15 @@ class Client extends AbstractClient
      * @throws SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function count(array $sObjectTypes): CountResult
+    public function count(array $sObjectTypes = []): CountResult
     {
-        $request  = new Request(
-            "GET",
-            '/services/data/v'.self::VERSION.'/limits/recordCount?sObjects='.implode(
-                ',',
-                $sObjectTypes
-            )
-        );
+        $url = '/services/data/v'.self::VERSION.'/limits/recordCount';
+
+        if (!empty($sObjectTypes)) {
+            $url .= '?sObjects='.implode(',', $sObjectTypes);
+        }
+
+        $request  = new Request("GET", $url);
         $response = $this->send($request);
         $body     = (string)$response->getBody();
 

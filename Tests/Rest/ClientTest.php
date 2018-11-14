@@ -54,6 +54,8 @@ class ClientTest extends TestCase
         $count2 = $counts[1];
         $this->assertEquals('Contact', $count2->getName());
         $this->assertGreaterThan(0, $count2->getCount());
+
+        $this->assertGreaterThanOrEqual(2, $this->client->count(['Account', 'Contact'])->count());
     }
 
     public function testRetry()
