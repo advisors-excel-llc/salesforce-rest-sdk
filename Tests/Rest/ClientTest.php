@@ -40,6 +40,22 @@ class ClientTest extends TestCase
         $this->greaterThanOrEqual(0)->evaluate($limits->getDailyApiRequests()->getRemaining());
     }
 
+
+    public function testCounts()
+    {
+        $counts = $this->client->count(['Account', 'Contact']);
+
+        $this->assertCount(2, $counts);
+
+        $count1 = $counts[0];
+        $this->assertEquals('Account', $count1->getName());
+        $this->assertGreaterThan(0, $count1->getCount());
+
+        $count2 = $counts[1];
+        $this->assertEquals('Contact', $count2->getName());
+        $this->assertGreaterThan(0, $count2->getCount());
+    }
+
     public function testRetry()
     {
         $limits = $this->client->limits();
