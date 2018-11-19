@@ -231,7 +231,6 @@ class Client extends AbstractClient
         $id            = $SObject->Id;
         $url           = self::BASE_PATH.'sobjects/'.$SObjectType.(null !== $id ? '/'.$id : '');
         $SObject->Id   = null;
-        $SObject->Type = null;
 
         $request = new Request(
             $method,
@@ -265,8 +264,6 @@ class Client extends AbstractClient
         } else {
             $SObject->Id = $id;
         }
-
-        $SObject->Type = $SObjectType;
 
         return true;
     }
