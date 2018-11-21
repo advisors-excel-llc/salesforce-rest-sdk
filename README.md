@@ -53,6 +53,24 @@ $client = new Client(
 );
 ```
 
+#### Composer autoloading without a framework
+
+If you happen to not be using a PHP Framework that handles annotation registration for you, like Symfony, then you must do it yourself:
+
+```PHP
+<?php
+
+use AE\SalesforceRestSdk\Rest\Client;
+use AE\SalesforceRestSdk\AuthProvider\OAuthProvider;
+use Doctrine\Common\Annotations\AnnotationRegistry;
+
+$loader = require_once 'vendor/autoload.php';
+AnnotationRegistry::registerLoader(array($loader, "loadClass"));
+
+$client = new Client(
+   // ...
+```
+
 
 ### Work with SObjects with the SObject Client
 
