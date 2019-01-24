@@ -8,6 +8,7 @@
 
 namespace AE\SalesforceRestSdk\Rest\Composite;
 
+use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\BatchRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\BatchResult;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequestInterface;
@@ -28,10 +29,11 @@ class CompositeClient extends AbstractClient
 
     public const BASE_PATH = '/services/data/v'.self::VERSION.'/composite';
 
-    public function __construct(Client $client, SerializerInterface $serializer)
+    public function __construct(Client $client, SerializerInterface $serializer, AuthProviderInterface $provider)
     {
-        $this->client     = $client;
-        $this->serializer = $serializer;
+        $this->client       = $client;
+        $this->serializer   = $serializer;
+        $this->authProvider = $provider;
     }
 
     /**
