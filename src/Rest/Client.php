@@ -49,8 +49,8 @@ class Client extends AbstractClient
         $this->authProvider    = $provider;
         $this->client          = $this->createHttpClient();
         $this->serializer      = $this->createSerializer();
-        $this->compositeClient = new CompositeClient($this->client, $this->serializer);
-        $this->sObjectClient   = new SObject\Client($this->client, $this->serializer);
+        $this->compositeClient = new CompositeClient($this->client, $this->serializer, $this->authProvider);
+        $this->sObjectClient   = new SObject\Client($this->client, $this->serializer, $this->authProvider);
     }
 
     /**

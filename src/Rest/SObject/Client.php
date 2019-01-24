@@ -8,6 +8,7 @@
 
 namespace AE\SalesforceRestSdk\Rest\SObject;
 
+use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
 use AE\SalesforceRestSdk\Model\Rest\CreateResponse;
 use AE\SalesforceRestSdk\Model\Rest\DeletedResponse;
 use AE\SalesforceRestSdk\Model\Rest\Metadata\BasicInfo;
@@ -29,10 +30,11 @@ class Client extends AbstractClient
 
     public const BASE_PATH = "services/data/v".self::VERSION."/";
 
-    public function __construct(GuzzleClient $client, SerializerInterface $serializer)
+    public function __construct(GuzzleClient $client, SerializerInterface $serializer, AuthProviderInterface $provider)
     {
-        $this->client     = $client;
-        $this->serializer = $serializer;
+        $this->client       = $client;
+        $this->serializer   = $serializer;
+        $this->authProvider = $provider;
     }
 
     /**
@@ -227,10 +229,10 @@ class Client extends AbstractClient
      */
     public function persist(string $SObjectType, SObject $SObject): bool
     {
-        $method        = null !== $SObject->Id ? 'patch' : 'post';
-        $id            = $SObject->Id;
-        $url           = self::BASE_PATH.'sobjects/'.$SObjectType.(null !== $id ? '/'.$id : '');
-        $SObject->Id   = null;
+        $method      = null !== $SObject->Id ? 'patch' : 'post';
+        $id          = $SObject->Id;
+        $url         = self::BASE_PATH.'sobjects/'.$SObjectType.(null !== $id ? '/'.$id : '');
+        $SObject->Id = null;
 
         $request = new Request(
             $method,
