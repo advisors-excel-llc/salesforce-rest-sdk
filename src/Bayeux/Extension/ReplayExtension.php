@@ -22,8 +22,14 @@ class ReplayExtension implements ExtensionInterface
      */
     private $replayId = self::REPLAY_NEWEST;
 
-    public function __construct(int $replayId = self::REPLAY_NEWEST)
+    /**
+     * @var string
+     */
+    private $channelId;
+
+    public function __construct(string $channel, int $replayId = self::REPLAY_NEWEST)
     {
+        $this->channelId = $channel;
         $this->replayId = $replayId;
     }
 
@@ -40,9 +46,9 @@ class ReplayExtension implements ExtensionInterface
      */
     public function prepareSend(Message $message): void
     {
-        if ($message->getChannel() === ChannelInterface::META_CONNECT) {
-            $ext                   = $message->getExt() ?: [];
-            $ext[$this->getName()] = $this->replayId;
+        if ($message->getSubscription() === $this->channelId) {
+            $ext = $message->getExt() ?: [];
+            $ext[$this->getName()] = [$this->channelId => $this->replayId];
 
             $message->setExt($ext);
         }
