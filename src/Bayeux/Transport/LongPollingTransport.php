@@ -78,7 +78,11 @@ class LongPollingTransport extends HttpClientTransport
         }
 
         $response = $client->send($request);
-        $body     = (string)$response->getBody();
+        $body     = preg_replace(
+            '/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})Z/',
+            '$1.000Z',
+            (string)$response->getBody()
+        );
 
         if (strlen($body) > 0) {
             /** @var Message[] $messages */

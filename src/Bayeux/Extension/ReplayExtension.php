@@ -15,7 +15,8 @@ class ReplayExtension implements ExtensionInterface
 {
     public const REPLAY_NEWEST = -1;
     public const REPLAY_SAVED  = -2;
-    public const NAME = 'replay';
+    public const NAME          = 'replay';
+    public const REPLAY_ID_KEY = 'replayId';
 
     /**
      * @var int
@@ -40,9 +41,9 @@ class ReplayExtension implements ExtensionInterface
      */
     public function prepareSend(Message $message): void
     {
-        if ($message->getChannel() === ChannelInterface::META_CONNECT) {
-            $ext                   = $message->getExt() ?: [];
-            $ext[$this->getName()] = $this->replayId;
+        if ($message->getChannel() === ChannelInterface::META_SUBSCRIBE) {
+            $ext               = $message->getExt() ?: [];
+            $ext[static::NAME] = [$message->getSubscription() => $this->replayId];
 
             $message->setExt($ext);
         }
