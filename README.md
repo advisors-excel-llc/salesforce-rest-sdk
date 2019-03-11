@@ -53,6 +53,36 @@ $client = new Client(
 );
 ```
 
+### Cached Auth Providers
+
+Cached Auth Providers provide a way to hold onto valid credentials across requests, otherwise the client will authenticate
+with Salesforce every time it's instantiated.
+
+```php
+<?php
+use AE\SalesforceRestSdk\Rest\Client;
+use AE\SalesforceRestSdk\AuthProvider\CachedOAuthProvider;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+
+// Any adapter that uses Psr\Cache\CacheItemPoolInterface will work with the Cached Providers
+$adapter = new FilesystemAdapter();
+
+$client = new Client(
+  new CachedOAuthProvider(
+      $adapter,
+      "SF_CLIENT_ID",
+      "SF_CLIENT_SECRET",
+      "https://login.salesforce.com",
+      null,
+      null,
+      CachedOAuthProvider::GRANT_CODE,
+      "https://your.redirect.uri",
+      "THE_CODE_FROM_SALESFORCE"
+  )
+);
+
+```
+
 #### Composer autoloading without a framework
 
 If you happen to not be using a PHP Framework that handles annotation registration for you, like Symfony, then you must do it yourself:
@@ -191,11 +221,29 @@ use AE\SalesforceRestSdk\Bayeux\BayeuxClient;
 use AE\SalesforceRestSdk\Bayeux\Consumer;
 use AE\SalesforceRestSdk\Bayeux\ConsumerInterface;
 use AE\SalesforceRestSdk\Bayeux\Message;
+use AE\SalesforceRestSdk\Bayeux\Extension\ReplayExtension;
+use AE\SalesforceRestSdk\Bayeux\Extension\CachedReplayExtension;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 /** @var BayeuxClient $client */
 
 // Getting a channel tells the client you want to subscribe to a topic
 $channel = $client->getChannel('/topic/[YOUR_PUSH_TOPIC_NAME]');
+
+// Give some durability to the messages on this channel by adding the ReplayExtension
+$channel->addExtension(new ReplayExtension(ReplayExtension::REPLAY_SAVED));
+
+// Using the CachedReplayExtension give greater durability in that it will remember the replay Id of the last
+// message received and pick up where it left off, even if the process stops and restarts. If no messages for the
+// channel topic have been received, it will use the value provided in the constructor.
+// Again, Any Psr\Cache\CacheItemPoolInterface will do for the adapter parameter
+$channel->addExtension(new CachedReplayExtension(new FilesystemAdapter(), CachedReplayExtension::REPLAY_SAVED));
+
+// You can also apply extensions at the Client level, rather than the channel.
+// In the case of the ReplayExtension, the last replayId will be remembered for each channel,
+// however, if no messages have been received on the channel, the constructor argument is used
+$client->addExtension(new CachedReplayExtension(new FilesystemAdapter(), CachedReplayExtension::REPLAY_SAVED));
+
 // Register topic consumers prior to starting the client
 $channel->subscribe(
     Consumer::create(function (ConsumerInterface $consumer, Message $message) {
