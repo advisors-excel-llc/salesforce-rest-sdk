@@ -8,25 +8,24 @@
 
 namespace AE\SalesforceRestSdk\AuthProvider;
 
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
-use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Psr\Cache\InvalidArgumentException;
-use Symfony\Component\Cache\CacheItem;
 
 class CachedSoapProvider extends SoapProvider
 {
     use LoggerAwareTrait;
 
     /**
-     * @var AdapterInterface
+     * @var CacheItemPoolInterface
      */
     private $adapter;
 
     private const CACHE_KEY = "SOAP_AUTH_";
 
     public function __construct(
-        AdapterInterface $adapter,
+        CacheItemPoolInterface $adapter,
         string $username,
         string $password,
         string $url = 'https://login.salesforce.com/'

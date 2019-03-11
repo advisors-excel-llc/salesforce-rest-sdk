@@ -8,10 +8,9 @@
 
 namespace AE\SalesforceRestSdk\AuthProvider;
 
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
-use Symfony\Component\Cache\Adapter\AdapterInterface;
-use Symfony\Component\Cache\CacheItem;
 use Psr\Cache\InvalidArgumentException;
 
 class CachedOAuthProvider extends OAuthProvider
@@ -19,12 +18,12 @@ class CachedOAuthProvider extends OAuthProvider
     use LoggerAwareTrait;
 
     /**
-     * @var AdapterInterface
+     * @var CacheItemPoolInterface
      */
     private $adapter;
 
     public function __construct(
-        AdapterInterface $adapter,
+        CacheItemPoolInterface $adapter,
         string $clientId,
         string $clientSecret,
         string $url,

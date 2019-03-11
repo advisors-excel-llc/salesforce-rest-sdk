@@ -9,18 +9,18 @@
 namespace AE\SalesforceRestSdk\Bayeux\Extension;
 
 use AE\SalesforceRestSdk\Bayeux\Message;
-use Symfony\Component\Cache\Adapter\AdapterInterface;
+use Psr\Cache\CacheItemPoolInterface;
 
 class CachedReplayExtension extends ReplayExtension
 {
     private const CACHE_PREFIX = "REPLAY_EXT_";
 
     /**
-     * @var AdapterInterface
+     * @var CacheItemPoolInterface
      */
     private $adapter;
 
-    public function __construct(AdapterInterface $adapter, int $replayId = self::REPLAY_NEWEST)
+    public function __construct(CacheItemPoolInterface $adapter, int $replayId = self::REPLAY_NEWEST)
     {
         parent::__construct($replayId);
         $this->adapter = $adapter;
