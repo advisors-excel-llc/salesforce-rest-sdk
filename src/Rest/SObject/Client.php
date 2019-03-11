@@ -11,18 +11,19 @@ namespace AE\SalesforceRestSdk\Rest\SObject;
 use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
 use AE\SalesforceRestSdk\Model\Rest\CreateResponse;
 use AE\SalesforceRestSdk\Model\Rest\DeletedResponse;
+use AE\SalesforceRestSdk\Model\Rest\GenericEvents;
 use AE\SalesforceRestSdk\Model\Rest\Metadata\BasicInfo;
 use AE\SalesforceRestSdk\Model\Rest\Metadata\DescribeSObject;
 use AE\SalesforceRestSdk\Model\Rest\Metadata\GlobalDescribe;
 use AE\SalesforceRestSdk\Model\Rest\QueryResult;
 use AE\SalesforceRestSdk\Model\Rest\SearchResult;
+use AE\SalesforceRestSdk\Model\Rest\StreamingChannelResponse;
 use AE\SalesforceRestSdk\Model\Rest\UpdatedResponse;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\AbstractClient;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\Request;
 use JMS\Serializer\SerializerInterface;
-use Psr\Http\Message\ResponseInterface;
 
 class Client extends AbstractClient
 {
@@ -391,5 +392,60 @@ class Client extends AbstractClient
             SearchResult::class,
             'json'
         );
+    }
+
+    /**
+     * @param string $channelId
+     * @param GenericEvents $events
+     *
+     * @return StreamingChannelResponse
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function sendGenericEvents(string $channelId, GenericEvents $events)
+    {
+        $response = $this->send(
+            new Request(
+                "POST",
+                self::BASE_PATH."sobjects/StreamingChannel/$channelId/push",
+                [],
+                $this->serializer->serialize($events, 'json')
+            )
+        );
+
+        /** @var StreamingChannelResponse $body */
+        $body = $this->serializer->deserialize(
+            $response->getBody(),
+            StreamingChannelResponse::class,
+            'json'
+        );
+
+        return $body;
+    }
+
+    /**
+     * @param string $channelId
+     *
+     * @return array|SObject[]
+     * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function getStreamingChannelSubscribers(string $channelId): array
+    {
+        $response = $this->send(
+            new Request(
+                "GET",
+                self::BASE_PATH."sobjects/StreamingChannel/$channelId/push"
+            )
+        );
+
+        /** @var array|SObject[] $body */
+        $body = $this->serializer->deserialize(
+            $response->getBody(),
+            "array<".SObject::class.">",
+            'json'
+        );
+
+        return $body;
     }
 }
