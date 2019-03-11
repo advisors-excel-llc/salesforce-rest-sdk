@@ -17,7 +17,7 @@ class SoapProvider implements AuthProviderInterface
     /**
      * @var bool
      */
-    private $isAuthorized = false;
+    protected $isAuthorized = false;
 
     /**
      * @var string
@@ -47,12 +47,12 @@ class SoapProvider implements AuthProviderInterface
     /**
      * @var null|string
      */
-    private $instanceUrl;
+    protected $instanceUrl;
 
     /**
      * @var null|string
      */
-    private $identityUrl;
+    protected $identityUrl;
 
     public function __construct(string $username, string $password, string $url = 'https://login.salesforce.com/')
     {

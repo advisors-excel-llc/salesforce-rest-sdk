@@ -18,7 +18,7 @@ class OAuthProvider implements AuthProviderInterface
     /**
      * @var bool
      */
-    private $isAuthorized = false;
+    protected $isAuthorized = false;
 
     /**
      * @var string
@@ -63,7 +63,7 @@ class OAuthProvider implements AuthProviderInterface
     /**
      * @var null|string
      */
-    private $instanceUrl;
+    protected $instanceUrl;
 
     /**
      * @var string
@@ -78,12 +78,12 @@ class OAuthProvider implements AuthProviderInterface
     /**
      * @var string|null
      */
-    private $code;
+    protected $code;
 
     /**
      * @var string|null
      */
-    private $identityUrl;
+    protected $identityUrl;
 
     public function __construct(
         string $clientId,
@@ -258,6 +258,22 @@ class OAuthProvider implements AuthProviderInterface
         }
 
         return [];
+    }
+
+    /**
+     * @return string
+     */
+    public function getClientId(): string
+    {
+        return $this->clientId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getClientSecret(): string
+    {
+        return $this->clientSecret;
     }
 
     /**

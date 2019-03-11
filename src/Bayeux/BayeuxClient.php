@@ -17,6 +17,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use GuzzleHttp\Client;
 use Psr\Http\Message\RequestInterface;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class BayeuxClient
 {
@@ -131,7 +132,7 @@ class BayeuxClient
         $this->httpClient   = $this->createClient();
         $this->channels     = new ArrayCollection();
         $this->extensions   = new ArrayCollection();
-        $this->logger       = $logger;
+        $this->logger       = $logger ?: new NullLogger();
 
         if ($this->transport instanceof HttpClientTransport) {
             $this->transport->setHttpClient($this->httpClient);
@@ -179,14 +180,12 @@ class BayeuxClient
             Consumer::create(
                 function (ChannelInterface $c, Message $message) {
                     if (!$message->isSuccessful()) {
-                        if (null !== $this->logger) {
-                            $this->logger->error(
-                                "Failed to subscribe to channel {channel}",
-                                [
-                                    'channel' => $c->getChannelId(),
-                                ]
-                            );
-                        }
+                        $this->logger->error(
+                            "Failed to subscribe to channel {channel}",
+                            [
+                                'channel' => $c->getChannelId(),
+                            ]
+                        );
 
                         $c->unsubscribeAll();
                         $this->channels->remove($c->getChannelId());
@@ -250,6 +249,7 @@ class BayeuxClient
                     if ($message->isSuccessful()) {
                         $this->listen();
                     } else {
+                        $this->logger->critical("Handshake authentication failed with the server.");
                         throw new \RuntimeException("Handshake authentication failed with the server.");
                     }
                 },
@@ -281,6 +281,7 @@ class BayeuxClient
                 static::TERMINATING,
             ]
         )) {
+            $this->logger->critical("The client must be fully disconnected before handshaking.");
             throw new \RuntimeException("The client must be fully disconnected before handshaking.");
         }
 
@@ -328,6 +329,7 @@ class BayeuxClient
     public function connect(): void
     {
         if ($this->state !== static::HANDSHAKEN && $this->state !== static::CONNECTED) {
+            $this->logger->critical("Cannot connect to the server without first handshaking with it.");
             throw new \RuntimeException("Cannot connect to the server without first handshaking with it.");
         }
 
@@ -344,14 +346,12 @@ class BayeuxClient
                 if ($message->isSuccessful()) {
                     $this->state = static::CONNECTED;
                 } else {
-                    if (null !== $this->logger) {
-                        $this->logger->critical(
-                            'Failed to connect with Salesforce: {error}',
-                            [
-                                'error' => $message->getError(),
-                            ]
-                        );
-                    }
+                    $this->logger->critical(
+                        'Failed to connect with Salesforce: {error}',
+                        [
+                            'error' => $message->getError(),
+                        ]
+                    );
 
                     $advice = $message->getAdvice();
 
@@ -381,6 +381,7 @@ class BayeuxClient
     public function listen(): void
     {
         if ($this->state !== static::HANDSHAKEN) {
+            $this->logger->critical("A handshake connection with the streaming service must occur before listening.");
             throw new \RuntimeException(
                 "A handshake connection with the streaming service must occur before listening."
             );
@@ -409,6 +410,7 @@ class BayeuxClient
     public function disconnect(): void
     {
         if (!in_array($this->state, [static::CONNECTING, static::CONNECTED, static::TERMINATING])) {
+            $this->logger->notice("The server must be connected before disconnecting.");
             throw new \RuntimeException("The server must be connected before disconnecting.");
         }
 
@@ -496,10 +498,15 @@ class BayeuxClient
 
     public function processQueue(): void
     {
+        /** @var Message[] $messages */
         $messages = array_shift($this->requestQueue);
 
         if (null === $messages) {
             return;
+        }
+
+        foreach ($messages as $message) {
+            $this->getChannel($message->getChannel())->prepareOutgoingMessage($message);
         }
 
         try {
@@ -512,7 +519,10 @@ class BayeuxClient
             );
         } catch (SessionExpiredOrInvalidException $e) {
             array_unshift($this->requestQueue, $messages);
+            $this->logger->notice("ERROR OCCURRED: ".$e->getMessage());
+            $this->logger->info("Attempting to reauthenticate");
             $this->authProvider->reauthorize();
+            $this->logger->info("Reauthentication successful");
             $this->processQueue();
 
             return;

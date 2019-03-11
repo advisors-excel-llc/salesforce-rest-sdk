@@ -8,7 +8,9 @@
         "jms/serializer": "^1.13",
         "ramsey/uuid": "^3.8",
         "doctrine/collections": "^1.5",
-        "symfony/expression-language": "^4.1"
+        "symfony/cache": "~3.4|~4.0",
+        "psr/log": "^1.1",
+        "symfony/expression-language": "^4.2"
     },
     "license": "proprietary",
     "authors": [
