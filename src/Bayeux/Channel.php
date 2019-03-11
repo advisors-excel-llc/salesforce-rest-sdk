@@ -8,6 +8,7 @@
 
 namespace AE\SalesforceRestSdk\Bayeux;
 
+use AE\SalesforceRestSdk\Bayeux\Extension\ExtensionInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 
 class Channel implements ChannelInterface
@@ -22,10 +23,16 @@ class Channel implements ChannelInterface
      */
     private $subscribers;
 
+    /**
+     * @var ArrayCollection|ExtensionInterface[]
+     */
+    private $extensions;
+
     public function __construct(string $channelId)
     {
         $this->channelId   = $channelId;
         $this->subscribers = new ArrayCollection();
+        $this->extensions  = new ArrayCollection();
     }
 
     /**
@@ -41,15 +48,22 @@ class Channel implements ChannelInterface
         /** @var ConsumerInterface[] $subscribers */
         $subscribers = $this->subscribers->getValues();
 
-        usort($subscribers, function (ConsumerInterface $a, ConsumerInterface $b) use ($subscribers) {
-            $aP = $a->getPriority() ?: count($subscribers);
-            $bP = $b->getPriority() ?: count($subscribers);
+        usort(
+            $subscribers,
+            function (ConsumerInterface $a, ConsumerInterface $b) use ($subscribers) {
+                $aP = $a->getPriority() ?: count($subscribers);
+                $bP = $b->getPriority() ?: count($subscribers);
 
-            if ($bP === $aP) {
-                return 0;
+                if ($bP === $aP) {
+                    return 0;
+                }
+
+                return $aP > $bP ? 1 : -1;
             }
+        );
 
-            return $aP > $bP ? 1 : -1;
+        $this->extensions->forAll(function (string $name, ExtensionInterface $extension) use ($message) {
+            $extension->processReceive($message);
         });
 
         foreach ($subscribers as $consumer) {
@@ -79,5 +93,28 @@ class Channel implements ChannelInterface
     public function isMeta()
     {
         return substr($this->channelId, 0, strlen(self::META)) === self::META;
+    }
+
+    public function addExtension(ExtensionInterface $extension)
+    {
+        if (!$this->hasExtension($extension->getName())) {
+            $this->extensions->set($extension->getName(), $extension);
+        }
+
+        return $this;
+    }
+
+    public function hasExtension(string $name): bool
+    {
+        return $this->extensions->containsKey($name);
+    }
+
+    public function prepareOutgoingMessage(Message $message)
+    {
+        $this->extensions->forAll(function (string $name, ExtensionInterface $extension) use ($message) {
+            $extension->prepareSend($message);
+        });
+
+        return $this;
     }
 }

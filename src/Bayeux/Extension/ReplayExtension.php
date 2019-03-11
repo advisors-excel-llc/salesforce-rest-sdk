@@ -18,6 +18,8 @@ class ReplayExtension implements ExtensionInterface
     public const NAME          = 'replay';
     public const REPLAY_ID_KEY = 'replayId';
 
+    private $dataMap = [];
+
     /**
      * @var int
      */
@@ -37,13 +39,33 @@ class ReplayExtension implements ExtensionInterface
     }
 
     /**
+     * @return int
+     */
+    public function getReplayId(): int
+    {
+        return $this->replayId;
+    }
+
+    /**
+     * @param string $channelName
+     *
+     * @return int|mixed
+     */
+    public function getReplayIdForChannel(string $channelName)
+    {
+        return array_key_exists($channelName, $this->dataMap) ? $this->dataMap[$channelName] : $this->replayId;
+    }
+
+    /**
      * @param Message $message
      */
     public function prepareSend(Message $message): void
     {
         if ($message->getChannel() === ChannelInterface::META_SUBSCRIBE) {
-            $ext               = $message->getExt() ?: [];
-            $ext[static::NAME] = [$message->getSubscription() => $this->replayId];
+            $ext = $message->getExt() ?: [];
+            $ext[static::NAME] = [
+                $message->getSubscription() => $this->getReplayIdForChannel($message->getSubscription()),
+            ];
 
             $message->setExt($ext);
         }
@@ -61,9 +83,18 @@ class ReplayExtension implements ExtensionInterface
                 $event = $data->getEvent();
 
                 if (null !== $event && null !== $event->getReplayId()) {
-                    $this->replayId = $event->getReplayId();
+                    $this->persistReplayId($message);
                 }
             }
         }
+    }
+
+    /**
+     * @param Message $message
+     */
+    protected function persistReplayId(Message $message)
+    {
+        $event = $message->getData()->getEvent();
+        $this->dataMap[$message->getChannel()] = $event->getReplayId();
     }
 }

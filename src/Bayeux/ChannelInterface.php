@@ -8,6 +8,8 @@
 
 namespace AE\SalesforceRestSdk\Bayeux;
 
+use AE\SalesforceRestSdk\Bayeux\Extension\ExtensionInterface;
+
 interface ChannelInterface
 {
     public const META             = '/meta';
@@ -23,4 +25,7 @@ interface ChannelInterface
     public function unsubscribe(ConsumerInterface $consumer);
     public function unsubscribeAll();
     public function isMeta();
+    public function addExtension(ExtensionInterface $extension);
+    public function hasExtension(string $name): bool;
+    public function prepareOutgoingMessage(Message $message);
 }
