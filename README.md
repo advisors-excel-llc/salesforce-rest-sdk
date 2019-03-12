@@ -279,6 +279,91 @@ $client->start();
 >
 > It's recommended that the streaming client be run in it's own thread
 
+### Dispatching Generic Events
+
+#### Create a Streaming Channel
+
+Before you can dispatch a Generic Event, you must create a Streaming Channel. That can be done in a number of ways:
+
+1. Via the [Salesforce Classic UI as documented here](https://developer.salesforce.com/docs/atlas.en-us.api_streaming.meta/api_streaming/create_a_streaming_channel.htm)
+2. By enabling **Enable Dynamic Streaming Channel Creation** under *Setup > User Interface* and then subscribing to a Streaming Channel using the Streaming Client as documented above
+3. Streaming Channels are a regular ole SObject and can be created like one:
+
+```php
+<?php
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use AE\SalesforceRestSdk\Rest\Client;
+use AE\SalesforceRestSdk\AuthProvider\CachedOAuthProvider;
+use AE\SalesforceRestSdk\Model\SObject;
+
+// Use the SObject Client to create a Streaming Channel
+
+// Any adapter that uses Psr\Cache\CacheItemPoolInterface will work with the Cached Providers
+$adapter = new FilesystemAdapter();
+
+$client = new Client(
+  new CachedOAuthProvider(
+      $adapter,
+      "SF_CLIENT_ID",
+      "SF_CLIENT_SECRET",
+      "https://login.salesforce.com",
+      "SF_USERNAME",
+      "SF_PASSWORD"
+  )
+);
+
+$streamingChannel = new SObject([
+    'name' => '/u/MY_AWESOME_TOPIC'
+]);
+
+$client->getSObjectClient()->persist('StreamingChannel', $streamingChannel);
+
+```
+
+#### Send Generic Events to the Streaming Channel
+
+Once the StreamingChannel is created, events can now be sent to it using the `GenericEventClient`, which piggybacks
+on the SObject client. Let's pretend we're continuing the code from above in this next example:
+
+```php
+<?php
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use AE\SalesforceRestSdk\Rest\Client;
+use AE\SalesforceRestSdk\AuthProvider\CachedOAuthProvider;
+use AE\SalesforceRestSdk\Model\SObject;
+use AE\SalesforceRestSdk\Rest\GenericEventClient;
+use AE\SalesforceRestSdk\Model\Rest\GenericEvent;
+use AE\SalesforceRestSdk\Model\Rest\GenericEvents;
+
+// ... Client and everything is defined as above
+
+// Generic Event Client also takes a cache adapter which it uses to keep track of Ids for StreamingChannels. You can
+// resuse the adapter given to the client if you wish. The keys won't conflict.
+$geClient = new GenericEventClient($adapter, $client->getSObjectClient());
+
+// Next we'll create a Generic Event to dispatch
+$event = new GenericEvent();
+$event->setPayload("This is the payload of the event. It has to be a string. But it could be XML or JSON data");
+
+// You can also set which clients subscribing to the channel you want to receive your message,
+// if you didn't want all of them getting it. Use the GenericEventClient to see which users are subscribed to the channel
+$users = $geClient->getChannelSubscribers('/u/MY_AWESOME_TOPIC');
+$event->setUserIds($users);
+
+// Send the event to the Streaming Channel
+$geClient->sendEvent('/u/MY_AWESOME_TOPIC', $event);
+
+// Multiple events can also be sent at once
+$events = GenericEvents::create([
+    GenericEvent::create("Event payload magic here"),
+    GenericEvent::create("More event payload magic here"),
+]);
+
+// Send the events to the Streaming Channel
+$geClient->sendEvents('/u/MY_AWESOME_TOPIC', $events);
+
+```
+
 ## Future Additions
 
 * Tooling API

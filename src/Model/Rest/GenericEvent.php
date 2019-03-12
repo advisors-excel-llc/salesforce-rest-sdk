@@ -24,6 +24,24 @@ class GenericEvent
      */
     private $userIds = [];
 
+    public function __construct(?string $payload = null, array $userIds = [])
+    {
+        $this->payload = $payload;
+        $this->userIds = $userIds;
+    }
+
+    /**
+     * @param null|string $payload
+     * @param array $userIds
+     *
+     * @return GenericEvent
+     */
+    public static function create(?string $payload = null, array $userIds = []): self
+    {
+        return new static($payload, $userIds);
+    }
+
+
     /**
      * @return null|string
      */

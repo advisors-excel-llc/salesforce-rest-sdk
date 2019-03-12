@@ -26,10 +26,22 @@ class GenericEvents
 
     /**
      * GenericEvents constructor.
+     *
+     * @param array $pushEvents
      */
-    public function __construct()
+    public function __construct(array $pushEvents = [])
     {
-        $this->pushEvents = new ArrayCollection();
+        $this->pushEvents = new ArrayCollection($pushEvents);
+    }
+
+    /**
+     * @param array $pushEvents
+     *
+     * @return GenericEvents
+     */
+    public static function create(array $pushEvents = []): self
+    {
+        return new static($pushEvents);
     }
 
     /**
