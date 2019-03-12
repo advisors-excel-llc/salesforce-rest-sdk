@@ -40,7 +40,7 @@ class CachedSoapProvider extends SoapProvider
      */
     private function getCacheKey(): string
     {
-        return self::CACHE_KEY.$this->username;
+        return self::CACHE_KEY.preg_replace('/[\{\}\(\)\/\@]+/', '_', $this->username);
     }
 
     public function authorize($reauth = false)
