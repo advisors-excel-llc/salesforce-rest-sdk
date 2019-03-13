@@ -552,4 +552,28 @@ class CompositeClientTest extends TestCase
         $result = $this->client->read('Account', $ids, ['Id', 'Name']);
         $this->assertCount(1000, $result);
     }
+
+    public function testBulkReadComposite()
+    {
+        // Get 1000 Accounts
+        $ids = [];
+        $query = $this->restClient->getSObjectClient()->query("SELECT Id FROM Account LIMIT 1000");
+        do {
+            foreach ($query->getRecords() as $record) {
+                $ids[] = $record->Id;
+            }
+        } while (!($query = $this->restClient->getSObjectClient()->query($query))->isDone());
+
+        $this->assertCount(1000, $ids);
+
+        $builder = new CompositeRequestBuilder();
+        $builder->getSObjectCollection('test_bulk', 'Account', $ids, ['Id', 'Name']);
+
+        $result = $this->client->sendCompositeRequest($builder->build());
+        $subResult = $result->findResultByReferenceId('test_bulk');
+        $this->assertEquals(200, $subResult->getHttpStatusCode());
+        /** @var CompositeSObject[] $body */
+        $body = $subResult->getBody();
+        $this->assertCount(1000, $body);
+    }
 }
