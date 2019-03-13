@@ -23,13 +23,18 @@ use PHPUnit\Framework\TestCase;
 class CompositeClientTest extends TestCase
 {
     /**
+     * @var Client
+     */
+    private $restClient;
+
+    /**
      * @var CompositeClient
      */
     private $client;
 
     protected function setUp()
     {
-        $client = new Client(
+        $this->restClient = new Client(
             new OAuthProvider(
                 getenv("SF_CLIENT_ID"),
                 getenv("SF_CLIENT_SECRET"),
@@ -39,7 +44,7 @@ class CompositeClientTest extends TestCase
             )
         );
 
-        $this->client = $client->getCompositeClient();
+        $this->client = $this->restClient->getCompositeClient();
     }
 
     public function testCreate()
@@ -529,5 +534,22 @@ class CompositeClientTest extends TestCase
         $deleted = $results[4];
         $this->assertEquals(200, $deleted->getStatusCode());
         $this->assertNotEmpty($deleted->getResult()->getDeletedRecords());
+    }
+
+    public function testBulkRead()
+    {
+        // Get 1000 Accounts
+        $ids = [];
+        $query = $this->restClient->getSObjectClient()->query("SELECT Id FROM Account LIMIT 1000");
+        do {
+            foreach ($query->getRecords() as $record) {
+                $ids[] = $record->Id;
+            }
+        } while (!($query = $this->restClient->getSObjectClient()->query($query))->isDone());
+
+        $this->assertCount(1000, $ids);
+
+        $result = $this->client->read('Account', $ids, ['Id', 'Name']);
+        $this->assertCount(1000, $result);
     }
 }
