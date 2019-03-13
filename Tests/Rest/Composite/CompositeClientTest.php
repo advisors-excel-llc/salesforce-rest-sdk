@@ -567,10 +567,18 @@ class CompositeClientTest extends TestCase
         $this->assertCount(1000, $ids);
 
         $builder = new CompositeRequestBuilder();
-        $builder->getSObjectCollection('test_bulk', 'Account', $ids, ['Id', 'Name']);
+        for ($i = 0; $i < 5; $i++) {
+            $builder->getSObjectCollection('test_bulk_'.$i, 'Account', $ids, ['Id', 'Name']);
+        }
 
         $result = $this->client->sendCompositeRequest($builder->build());
-        $subResult = $result->findResultByReferenceId('test_bulk');
+        $subResult = $result->findResultByReferenceId('test_bulk_0');
+        $this->assertEquals(200, $subResult->getHttpStatusCode());
+        /** @var CompositeSObject[] $body */
+        $body = $subResult->getBody();
+        $this->assertCount(1000, $body);
+
+        $subResult = $result->findResultByReferenceId('test_bulk_4');
         $this->assertEquals(200, $subResult->getHttpStatusCode());
         /** @var CompositeSObject[] $body */
         $body = $subResult->getBody();
