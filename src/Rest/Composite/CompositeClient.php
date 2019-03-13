@@ -31,11 +31,11 @@ class CompositeClient extends AbstractClient
 
     // Derived from protocol + max subdomain size + "my.salesforce.com"
     // @See https://help.salesforce.com/articleView?id=faq_domain_name_is_there_a_limit.htm&type=5
-    private const MAX_HOSTNAME_SIZE = 59;
+    public const MAX_HOSTNAME_SIZE = 59;
 
     // URI Length maxes out at 16,088 for Salesforce
     // @See https://salesforce.stackexchange.com/questions/195449/what-is-the-longest-uri-that-salesforce-will-accept-through-the-rest-api/195450
-    private const MAX_URI_LENGTH = 16088;
+    public const MAX_URI_LENGTH = 16088;
 
     public function __construct(Client $client, SerializerInterface $serializer, AuthProviderInterface $provider)
     {
