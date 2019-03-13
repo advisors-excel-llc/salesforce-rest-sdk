@@ -329,25 +329,6 @@ class CompositeClientTest extends TestCase
                     ]
                 )
             )
-            ->deleteSObjectCollection(
-                "delete",
-                new CollectionRequest(
-                    [
-                        new CompositeSObject(
-                            "Account",
-                            [
-                                "Id" => $builder->reference("create")->field("id", 0),
-                            ]
-                        ),
-                        new CompositeSObject(
-                            "Contact",
-                            [
-                                "Id" => $builder->reference("create")->field("id", 1),
-                            ]
-                        ),
-                    ]
-                )
-            )
             ->deleteSObject("deleteAccount", "Account", $builder->reference("create")->field("id", 0))
             ->deleteSObject("deleteContact", "Contact", $builder->reference("create")->field("id", 1))
         ;
@@ -387,16 +368,6 @@ class CompositeClientTest extends TestCase
         $updated = $update->getBody();
         $this->assertTrue($updated[0]->isSuccess());
         $this->assertTrue($updated[1]->isSuccess());
-
-        $delete = $response->findResultByReferenceId("delete");
-        $this->assertNotNull($delete);
-        $this->assertEquals(200, $delete->getHttpStatusCode());
-        /** @var CollectionResponse[] $deleted */
-        $deleted = $delete->getBody();
-        $this->assertCount(2, $deleted);
-        // Can't use references in delete requests either. What good are these things?
-        $this->assertFalse($deleted[0]->isSuccess());
-        $this->assertFalse($deleted[1]->isSuccess());
 
         $deleteAccount = $response->findResultByReferenceId("deleteAccount");
         $this->assertNotNull($deleteAccount);
