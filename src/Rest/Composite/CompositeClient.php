@@ -29,6 +29,14 @@ class CompositeClient extends AbstractClient
 
     public const BASE_PATH = '/services/data/v'.self::VERSION.'/composite';
 
+    // Derived from protocol + max subdomain size + "my.salesforce.com"
+    // @See https://help.salesforce.com/articleView?id=faq_domain_name_is_there_a_limit.htm&type=5
+    private const MAX_HOSTNAME_SIZE = 59;
+
+    // URI Length maxes out at 16,088 for Salesforce
+    // @See https://salesforce.stackexchange.com/questions/195449/what-is-the-longest-uri-that-salesforce-will-accept-through-the-rest-api/195450
+    private const MAX_URI_LENGTH = 16088;
+
     public function __construct(Client $client, SerializerInterface $serializer, AuthProviderInterface $provider)
     {
         $this->client       = $client;
@@ -70,16 +78,40 @@ class CompositeClient extends AbstractClient
      */
     public function read(string $sObjectType, array $ids, array $fields = ['id']): array
     {
+        if (empty($ids) || empty($fields)) {
+            return [];
+        }
+
+        $url       = self::BASE_PATH.'/sobjects/'.$sObjectType;
+        $method    = "GET";
+        $body      = null;
+        $query     = http_build_query(
+            [
+                'ids'    => implode(",", $ids),
+                'fields' => implode(",", $fields),
+            ]
+        );
+        $uriLength = self::MAX_HOSTNAME_SIZE + strlen($url."?$query");
+
+        if ($uriLength > self::MAX_URI_LENGTH) {
+            $method = "POST";
+            $body   = $this->serializer->serialize(
+                [
+                    'ids'    => $ids,
+                    'fields' => $fields,
+                ],
+                'json'
+            );
+        } else {
+            $url .= "?$query";
+        }
+
         $response = $this->send(
             new Request(
-                "GET",
-                self::BASE_PATH.'/sobjects/'.$sObjectType.'?'.
-                http_build_query(
-                    [
-                        'ids'    => implode(",", $ids),
-                        'fields' => implode(",", $fields),
-                    ]
-                )
+                $method,
+                $url,
+                [],
+                $body
             )
         );
 
