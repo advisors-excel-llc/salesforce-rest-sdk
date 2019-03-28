@@ -219,7 +219,7 @@ Supported Standard Objects:
 <?php
 use AE\SalesforceRestSdk\Bayeux\BayeuxClient;
 use AE\SalesforceRestSdk\Bayeux\Consumer;
-use AE\SalesforceRestSdk\Bayeux\ConsumerInterface;
+use AE\SalesforceRestSdk\Bayeux\ChannelInterface;
 use AE\SalesforceRestSdk\Bayeux\Message;
 use AE\SalesforceRestSdk\Bayeux\Extension\ReplayExtension;
 use AE\SalesforceRestSdk\Bayeux\Extension\CachedReplayExtension;
@@ -246,7 +246,7 @@ $client->addExtension(new CachedReplayExtension(new FilesystemAdapter(), CachedR
 
 // Register topic consumers prior to starting the client
 $channel->subscribe(
-    Consumer::create(function (ConsumerInterface $consumer, Message $message) {
+    Consumer::create(function (ChannelInterface $channel, Message $message) {
         // This will be fired when the client receives a topic notification
         
         $payload = $message->getData();
