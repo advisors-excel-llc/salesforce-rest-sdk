@@ -93,7 +93,7 @@ class Message
      * @JMS\Type("bool")
      * @JMS\Exclude(if="context.getDirection() === 1")
      */
-    private $successful;
+    private $successful = true;
 
     /**
      * @var bool|null
@@ -326,7 +326,7 @@ class Message
     /**
      * @return bool|null
      */
-    public function isSuccessful(): ?bool
+    public function isSuccessful(): bool
     {
         return $this->successful;
     }
@@ -336,7 +336,7 @@ class Message
      *
      * @return Message
      */
-    public function setSuccessful(?bool $successful): Message
+    public function setSuccessful(bool $successful): Message
     {
         $this->successful = $successful;
 
