@@ -38,9 +38,10 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
     public function __construct(
         string $sObjectType,
         \DateTime $start,
-        ?\DateTime $end = null
+        ?\DateTime $end = null,
+        string $version = "44.0"
     ) {
-        parent::__construct();
+        parent::__construct($version);
 
         $this->sObjectType = $sObjectType;
         $this->start       = $start;
@@ -110,7 +111,7 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
         $this->start->setTimezone(new \DateTimeZone("UTC"));
         $this->end->setTimezone(new \DateTimeZone("UTC"));
 
-        $this->url = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/updated/?'
+        $this->url = 'v'.$this->getVersion().'/sobjects/'.$this->sObjectType.'/updated/?'
             .http_build_query(
                 [
                     'start' => $this->start->format(\DATE_ISO8601),

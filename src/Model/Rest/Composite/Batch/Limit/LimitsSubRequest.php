@@ -14,7 +14,12 @@ use AE\SalesforceRestSdk\Rest\Client;
 
 class LimitsSubRequest extends GetSubRequest
 {
-    protected $url = 'v'.Client::VERSION.'/limits';
+    public function __construct(string $version = "44.0")
+    {
+        parent::__construct($version);
+
+        $this->url = 'v'.$version.'/limits';
+    }
 
     final public function setRichInput($richInput): SubRequest
     {

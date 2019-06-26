@@ -27,7 +27,9 @@ class ClientTest extends TestCase
                 getenv("SF_LOGIN_URL"),
                 getenv("SF_USER"),
                 getenv("SF_PASS")
-            )
+            ),
+            "45.0",
+            "testing_sdk"
         );
     }
 

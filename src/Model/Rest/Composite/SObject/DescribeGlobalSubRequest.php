@@ -11,11 +11,17 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite\SObject;
 use AE\SalesforceRestSdk\Model\Rest\Composite\GetSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Metadata\GlobalDescribe;
-use AE\SalesforceRestSdk\Rest\SObject\Client;
+use JMS\Serializer\Annotation as Serializer;
 
 class DescribeGlobalSubRequest extends GetSubRequest implements DescribeGlobalSubRequestInterface
 {
-    protected $url = '/'.Client::BASE_PATH.'sobjects/';
+    /**
+     * @Serializer\PreSerialize()
+     */
+    public function preSerialize()
+    {
+        $this->url = $this->getBasePath();
+    }
 
     final public function setBody($body): SubRequest
     {
@@ -30,5 +36,10 @@ class DescribeGlobalSubRequest extends GetSubRequest implements DescribeGlobalSu
     public function getResultClass(): ?string
     {
         return GlobalDescribe::class;
+    }
+
+    public function getBasePath(): string
+    {
+        return "/services/data/v".$this->getVersion()."/sobjects/";
     }
 }

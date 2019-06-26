@@ -26,52 +26,61 @@ use Doctrine\Common\Collections\ArrayCollection;
 
 class BatchRequestBuilder implements RequestBuilderInterface
 {
+    /**
+     * @var ArrayCollection
+     */
     private $requests;
 
-    public function __construct()
+    /**
+     * @var string
+     */
+    private $version = "44.0";
+
+    public function __construct(string $version = "44.0")
     {
         $this->requests = new ArrayCollection();
+        $this->version  = $version;
     }
 
     public function limits(): BatchRequestBuilder
     {
         return $this->addSubRequest(
-            new LimitsSubRequest()
+            new LimitsSubRequest($this->version)
         );
     }
 
     public function query(string $query): BatchRequestBuilder
     {
         return $this->addSubRequest(
-            new QuerySubRequest($query)
+            new QuerySubRequest($query, $this->version)
         );
     }
 
     public function queryAll(string $query): BatchRequestBuilder
     {
         return $this->addSubRequest(
-            new QueryAllSubRequest($query)
+            new QueryAllSubRequest($query, $this->version)
         );
     }
 
     public function search(string $query): BatchRequestBuilder
     {
         return $this->addSubRequest(
-            new SearchSubRequest($query)
+            new SearchSubRequest($query, $this->version)
         );
     }
 
     public function describe(string $sObjectType): BatchRequestBuilder
     {
         return $this->addSubRequest(
-            new DescribeSubRequest($sObjectType)
+            new DescribeSubRequest($sObjectType, $this->version)
         );
     }
 
     public function getSObject(string $sObjectType, string $sObjectId, array $fields): BatchRequestBuilder
     {
         return $this->addSubRequest(
-            new GetSubRequest($sObjectType, $sObjectId, $fields)
+            new GetSubRequest($sObjectType, $sObjectId, $fields, $this->version)
         );
     }
 
@@ -81,7 +90,8 @@ class BatchRequestBuilder implements RequestBuilderInterface
             new GetUpdatedSubRequest(
                 $sObjectType,
                 $start,
-                $end
+                $end,
+                $this->version
             )
         );
     }
@@ -92,7 +102,8 @@ class BatchRequestBuilder implements RequestBuilderInterface
             new GetDeletedSubRequest(
                 $sObjectType,
                 $start,
-                $end
+                $end,
+                $this->version
             )
         );
     }
@@ -100,7 +111,7 @@ class BatchRequestBuilder implements RequestBuilderInterface
     public function createSObject(string $sObjectType, SObject $sObject): BatchRequestBuilder
     {
         return $this->addSubRequest(
-            new CreateSubRequest($sObjectType, $sObject)
+            new CreateSubRequest($sObjectType, $sObject, $this->version)
         );
     }
 
@@ -109,7 +120,8 @@ class BatchRequestBuilder implements RequestBuilderInterface
         return $this->addSubRequest(
             new UpdateSubRequest(
                 $sObjectType,
-                $sObject
+                $sObject,
+                $this->version
             )
         );
     }
@@ -117,7 +129,7 @@ class BatchRequestBuilder implements RequestBuilderInterface
     public function deleteSObject(string $sObjectType, string $sObjectId): BatchRequestBuilder
     {
         return $this->addSubRequest(
-            new DeleteSubRequest($sObjectType, $sObjectId)
+            new DeleteSubRequest($sObjectType, $sObjectId, $this->version)
         );
     }
 

@@ -23,9 +23,9 @@ use JMS\Serializer\Annotation as Serializer;
  */
 class DeleteSubRequest extends BaseSubRequest implements CompositeCollectionSubRequestInterface
 {
-    public function __construct(CollectionRequestInterface $request, ?string $referenceId = null)
+    public function __construct(CollectionRequestInterface $request, $version = "44.0", ?string $referenceId = null)
     {
-        parent::__construct($referenceId);
+        parent::__construct($version, $referenceId);
 
         $this->setBody($request);
     }
@@ -68,11 +68,16 @@ class DeleteSubRequest extends BaseSubRequest implements CompositeCollectionSubR
             throw new \RuntimeException("Cannot make a delete collection request without IDs.");
         }
 
-        $this->url = CompositeClient::BASE_PATH.'/sobjects?'.http_build_query(
+        $this->url = $this->getBasePath().'?'.http_build_query(
             [
                 'allOrNone' => $this->body->isAllOrNone() ? "true" : "false",
                 'ids'       => implode(",", $ids),
             ]
         );
+    }
+
+    public function getBasePath(): string
+    {
+        return '/services/data/v'.$this->getVersion().'/composite/sobjects';
     }
 }

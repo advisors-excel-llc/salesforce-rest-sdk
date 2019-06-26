@@ -37,7 +37,8 @@ class GenericEventClientTest extends TestCase
                 getenv("SF_LOGIN_URL"),
                 getenv("SF_USER"),
                 getenv("SF_PASS")
-            )
+            ),
+            "45.0"
         );
         $this->sObjectClient = $restClient->getSObjectClient();
 

@@ -81,6 +81,7 @@ class CsvStream implements StreamInterface
 
     /**
      * Similar to \GuzzleHttp\Psr7\readline, but with some helper flags
+     *
      * @param StreamInterface $stream
      * @param int|null $maxLength
      * @param string $enclosure
@@ -94,8 +95,8 @@ class CsvStream implements StreamInterface
         string $enclosure = '"',
         string $escape = "\\"
     ) {
-        $buffer = '';
-        $size = 0;
+        $buffer  = '';
+        $size    = 0;
         $encFlag = false;
         $escFlag = false;
 
@@ -135,29 +136,39 @@ class CsvStream implements StreamInterface
         return str_getcsv($line, $delimiter, $enclosure, $escape);
     }
 
+    /**
+     * @param bool $hasHeaders
+     * @param string $delimiter
+     * @param string $enclosure
+     * @param string $escape
+     *
+     * Call to get the next row as a keyed array with header values (if $hasHeader == true), if there are no more rows,
+     * the function will return null
+     *
+     * @return \Generator|array|boolean
+     */
     public function getContents(
         bool $hasHeaders = true,
         string $delimiter = ",",
         string $enclosure = '"',
         string $escape = "\\"
-    ): array {
-        $rows = [];
+    ) {
+        $headers = [];
+        $row     = $this->read(0, $delimiter, $enclosure, $escape);
 
-        while (false !== ($row = $this->read(0, $delimiter, $enclosure, $escape))) {
-            $rows[] = $row;
-        }
-
-        if ($hasHeaders) {
-            array_walk(
-                $rows,
-                function (&$a) use ($rows) {
-                    $a = array_combine($rows[0], $a);
+        if (false === $row) {
+            return;
+        } else {
+            if ($hasHeaders && empty($headers)) {
+                $headers = $row;
+                $row     = $this->read(0, $delimiter, $enclosure, $escape);
+                if (false === $row) {
+                    return;
                 }
-            );
-            array_shift($rows); # remove column header
-        }
+            }
 
-        return $rows;
+            yield $hasHeaders ? array_combine($headers, $row) : $row;
+        }
     }
 
     public function getMetadata($key = null)

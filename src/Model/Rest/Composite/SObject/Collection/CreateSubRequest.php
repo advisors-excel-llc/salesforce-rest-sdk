@@ -16,12 +16,15 @@ use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
 
 class CreateSubRequest extends PostSubRequest implements CompositeCollectionSubRequestInterface
 {
-    public function __construct(CollectionRequestInterface $request, ?string $referenceId = null)
-    {
-        parent::__construct($referenceId);
+    public function __construct(
+        CollectionRequestInterface $request,
+        string $version = "44.0",
+        ?string $referenceId = null
+    ) {
+        parent::__construct($version, $referenceId);
 
         $this->setBody($request);
-        $this->url = CompositeClient::BASE_PATH.'/sobjects';
+        $this->url = $this->getBasePath();
     }
 
     final public function setBody($body): SubRequest
@@ -41,5 +44,10 @@ class CreateSubRequest extends PostSubRequest implements CompositeCollectionSubR
     public function getResultClass(): ?string
     {
         return 'array<'.CollectionResponse::class.'>';
+    }
+
+    public function getBasePath(): string
+    {
+        return '/services/data/v'.$this->getVersion().'/composite/sobjects';
     }
 }

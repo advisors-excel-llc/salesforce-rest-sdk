@@ -10,8 +10,8 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite;
 
 class PatchSubRequest extends SubRequest
 {
-    public function __construct(?string $referenceId = null)
+    public function __construct(string $version, ?string $referenceId = null)
     {
-        parent::__construct("PATCH", $referenceId);
+        parent::__construct("PATCH", $version, $referenceId);
     }
 }

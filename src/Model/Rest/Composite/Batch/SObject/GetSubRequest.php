@@ -41,9 +41,13 @@ class GetSubRequest extends BaseSubRequest implements CompositeSObjectSubRequest
      */
     private $fields = ["Id"];
 
-    public function __construct(string $sObjectType, string $sObjectId, array $fields = ["Id"])
-    {
-        parent::__construct();
+    public function __construct(
+        string $sObjectType,
+        string $sObjectId,
+        array $fields = ["Id"],
+        string $version = "44.0"
+    ) {
+        parent::__construct($version);
 
         $this->sObjectType = $sObjectType;
         $this->sObjectId   = $sObjectId;
@@ -77,11 +81,12 @@ class GetSubRequest extends BaseSubRequest implements CompositeSObjectSubRequest
             throw new \RuntimeException("The GetSubRequest is incomplete.");
         }
 
-        $this->url = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/'.$this->sObjectId.'?'
-            .http_build_query([
-                "fields" => implode(",", $this->fields)
-            ])
-            ;
+        $this->url = 'v'.$this->getVersion().'/sobjects/'.$this->sObjectType.'/'.$this->sObjectId.'?'
+            .http_build_query(
+                [
+                    "fields" => implode(",", $this->fields),
+                ]
+            );
     }
 
     public function reference(string $fieldName): ?string

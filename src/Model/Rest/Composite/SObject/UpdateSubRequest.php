@@ -31,13 +31,18 @@ class UpdateSubRequest extends PatchSubRequest implements SObjectSubRequestInter
     /**
      * UpdateSubRequest constructor.
      *
+     * @param string $version
      * @param string $sObjectType
      * @param null|string|SObject $sObject
      * @param null|string $referenceId
      */
-    public function __construct(string $sObjectType, $sObject = null, ?string $referenceId = null)
-    {
-        parent::__construct($referenceId);
+    public function __construct(
+        string $sObjectType,
+        $sObject = null,
+        string $version = "44.0",
+        ?string $referenceId = null
+    ) {
+        parent::__construct($version, $referenceId);
 
         $this->sObjectType = $sObjectType;
 
@@ -75,9 +80,8 @@ class UpdateSubRequest extends PatchSubRequest implements SObjectSubRequestInter
             throw new \RuntimeException("The UpdateSubRequest is incomplete.");
         }
 
-        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/'.$this->sObjectId;
-
-        $this->body->Id   = null;
+        $this->url      = $this->getBasePath().$this->sObjectType.'/'.$this->sObjectId;
+        $this->body->Id = null;
     }
 
     /**
@@ -85,7 +89,7 @@ class UpdateSubRequest extends PatchSubRequest implements SObjectSubRequestInter
      */
     public function postSerialize()
     {
-        $this->body->Id   = $this->sObjectId;
+        $this->body->Id = $this->sObjectId;
     }
 
     /**
@@ -102,5 +106,10 @@ class UpdateSubRequest extends PatchSubRequest implements SObjectSubRequestInter
     public function getSObjectId(): string
     {
         return $this->sObjectId;
+    }
+
+    public function getBasePath(): string
+    {
+        return "/services/data/v".$this->getVersion()."/sobjects/";
     }
 }

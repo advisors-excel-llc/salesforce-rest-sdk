@@ -24,12 +24,13 @@ class DescribeSubRequest extends GetSubRequest implements DescribeSubRequestInte
 
     public function __construct(
         string $sObjectType,
+        string $version = "44.0",
         ?string $referenceId = null
     ) {
-        parent::__construct($referenceId);
+        parent::__construct($version, $referenceId);
 
         $this->sObjectType = $sObjectType;
-        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/describe';
+        $this->url         = $this->getBasePath().$this->sObjectType.'/describe';
     }
 
     /**
@@ -53,5 +54,10 @@ class DescribeSubRequest extends GetSubRequest implements DescribeSubRequestInte
     public function getResultClass(): ?string
     {
         return DescribeSObject::class;
+    }
+
+    public function getBasePath(): string
+    {
+        return "/services/data/v".$this->getVersion()."/sobjects/";
     }
 }
