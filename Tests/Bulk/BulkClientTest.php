@@ -47,7 +47,8 @@ class BulkClientTest extends TestCase
                 getenv("SF_LOGIN_URL"),
                 getenv("SF_USER"),
                 getenv("SF_PASS")
-            )
+            ),
+            "45.0"
         );
 
         $builder = SerializerBuilder::create();
@@ -131,14 +132,14 @@ class BulkClientTest extends TestCase
 
         $this->assertNotNull($result);
 
-        $objects = $result->getContents();
-
-        $this->assertNotEmpty($objects);
-        $this->assertNotNull($objects[0]['Id']);
-        $this->assertNotNull($objects[0]['Name']);
-
         $closeJob = $this->client->closeJob($job);
         $this->assertEquals($job->getId(), $closeJob->getId());
         $this->assertEquals(JobInfo::STATE_CLOSED, $closeJob->getState());
+
+        $object = $result->getContents(true)->current();
+
+        $this->assertNotEmpty($object);
+        $this->assertNotNull($object["Id"]);
+        $this->assertNotNull($object["Name"]);
     }
 }

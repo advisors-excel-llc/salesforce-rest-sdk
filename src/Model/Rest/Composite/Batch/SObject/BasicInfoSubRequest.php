@@ -23,12 +23,12 @@ class BasicInfoSubRequest extends GetSubRequest implements BasicInfoRequestInter
      */
     private $sObjectType;
 
-    public function __construct(string $sObjectType)
+    public function __construct(string $sObjectType, string $version = "44.0")
     {
-        parent::__construct();
+        parent::__construct($version);
 
         $this->sObjectType = $sObjectType;
-        $this->url         = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType;
+        $this->url         = 'v'.$this->getVersion().'/sobjects/'.$this->sObjectType;
     }
 
     /**

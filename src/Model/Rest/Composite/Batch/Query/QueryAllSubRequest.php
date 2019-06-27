@@ -19,7 +19,7 @@ class QueryAllSubRequest extends QuerySubRequest
     public function preSerialize()
     {
         if (is_string($this->query)) {
-            $this->url = 'v'.Client::VERSION.'queryAll/?'.http_build_query(['q' => $this->query]);
+            $this->url = 'v'.$this->getVersion().'/queryAll/?'.http_build_query(['q' => $this->query]);
         } else {
             parent::preSerialize();
         }

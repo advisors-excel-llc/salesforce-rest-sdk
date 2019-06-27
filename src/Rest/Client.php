@@ -27,8 +27,6 @@ use Psr\Http\Message\RequestInterface;
 
 class Client extends AbstractClient
 {
-    public const VERSION = "44.0";
-
     /**
      * @var string
      */
@@ -44,13 +42,33 @@ class Client extends AbstractClient
      */
     protected $sObjectClient;
 
-    public function __construct(AuthProviderInterface $provider)
+    /**
+     * @var array
+     */
+    protected $callOptions = [];
+
+    public function __construct(AuthProviderInterface $provider, string $version = "44.0", ?string $appName = null)
     {
+        if (null !== $appName) {
+            $this->callOptions = ['client' => $appName];
+        }
+
+        $this->version         = $version;
         $this->authProvider    = $provider;
         $this->client          = $this->createHttpClient();
         $this->serializer      = $this->createSerializer();
-        $this->compositeClient = new CompositeClient($this->client, $this->serializer, $this->authProvider);
-        $this->sObjectClient   = new SObject\Client($this->client, $this->serializer, $this->authProvider);
+        $this->compositeClient = new CompositeClient(
+            $this->client,
+            $this->serializer,
+            $this->authProvider,
+            $this->version
+        );
+        $this->sObjectClient   = new SObject\Client(
+            $this->client,
+            $this->serializer,
+            $this->authProvider,
+            $this->version
+        );
     }
 
     /**
@@ -108,7 +126,7 @@ class Client extends AbstractClient
      */
     public function limits(): Limits
     {
-        $request  = new Request("GET", '/services/data/v'.self::VERSION.'/limits/');
+        $request  = new Request("GET", '/services/data/v'.$this->getVersion().'/limits/');
         $response = $this->send($request);
 
         $body = (string)$response->getBody();
@@ -171,7 +189,7 @@ class Client extends AbstractClient
      */
     public function count(array $sObjectTypes = []): CountResult
     {
-        $url = '/services/data/v'.self::VERSION.'/limits/recordCount';
+        $url = '/services/data/v'.$this->getVersion().'/limits/recordCount';
 
         if (!empty($sObjectTypes)) {
             $url .= '?sObjects='.implode(',', $sObjectTypes);
@@ -188,6 +206,10 @@ class Client extends AbstractClient
         );
     }
 
+    /**
+     * @return GuzzleClient
+     * @throws SessionExpiredOrInvalidException
+     */
     protected function createHttpClient(): GuzzleClient
     {
         $stack = new HandlerStack();
@@ -208,14 +230,16 @@ class Client extends AbstractClient
             $url = $this->authProvider->getInstanceUrl();
         }
 
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept'       => 'application/json',
+        ];
+
         $client = new GuzzleClient(
             [
                 'base_uri' => $url,
                 'handler'  => $stack,
-                'headers'  => [
-                    'Content-Type' => 'application/json',
-                    'Accept'       => 'application/json',
-                ],
+                'headers'  => $headers,
             ]
         );
 
@@ -244,5 +268,69 @@ class Client extends AbstractClient
     protected function authorize(RequestInterface $request): RequestInterface
     {
         return $request->withAddedHeader('Authorization', $this->authProvider->authorize());
+    }
+
+    protected function appendSforceCallOptions(RequestInterface $request): RequestInterface
+    {
+        $callOptions = array_reduce(
+            array_keys($this->callOptions),
+            function (array $carry, $key) {
+                $value = $this->callOptions[$key];
+                if (strlen($value) > 0) {
+                    $carry[] = "$key=$value";
+                }
+
+                return $carry;
+            },
+            []
+        );
+
+        if (!empty($callOptions)) {
+            return $request->withAddedHeader('Sforce-Call-Options', implode(" ", $callOptions));
+        }
+
+        return $request;
+    }
+
+    protected function send(RequestInterface $request, $expectedStatusCode = 200)
+    {
+        return parent::send($this->appendSforceCallOptions($request), $expectedStatusCode);
+    }
+
+    /**
+     * @param array $options
+     *
+     * @return Client
+     */
+    public function setCallOptions(array $options): self
+    {
+        $this->callOptions = $options;
+
+        return $this;
+    }
+
+    /**
+     * @param $name
+     * @param string $value
+     *
+     * @return Client
+     */
+    public function setCallOption($name, string $value): self
+    {
+        $this->callOptions[$name] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param $name
+     *
+     * @return Client
+     */
+    public function removeCallOption($name): self
+    {
+        unset($this->callOptions[$name]);
+
+        return $this;
     }
 }

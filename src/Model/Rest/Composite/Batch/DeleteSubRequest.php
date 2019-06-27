@@ -10,8 +10,8 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite\Batch;
 
 class DeleteSubRequest extends SubRequest
 {
-    public function __construct()
+    public function __construct(string $version = "44.0")
     {
-        parent::__construct("DELETE");
+        parent::__construct("DELETE", $version);
     }
 }

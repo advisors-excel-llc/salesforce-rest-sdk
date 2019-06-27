@@ -12,7 +12,6 @@ use AE\SalesforceRestSdk\Model\Rest\Composite\GetSubRequest as BaseSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\ReferenceableInterface;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
 use AE\SalesforceRestSdk\Model\SObject;
-use AE\SalesforceRestSdk\Rest\SObject\Client;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
@@ -44,13 +43,14 @@ class GetSubRequest extends BaseSubRequest implements ReferenceableInterface, SO
         string $sObjectType,
         string $sObjectId,
         array $fields = ["Id"],
+        string $version = "44.0",
         ?string $referenceId = null
     ) {
         $this->sObjectType = $sObjectType;
         $this->sObjectId   = $sObjectId;
         $this->fields      = $fields;
 
-        parent::__construct($referenceId);
+        parent::__construct($version, $referenceId);
     }
 
     final public function setRichInput($richInput): SubRequest
@@ -85,7 +85,7 @@ class GetSubRequest extends BaseSubRequest implements ReferenceableInterface, SO
             throw new \RuntimeException("The GetSubRequest is incomplete.");
         }
 
-        $this->url = '/services/data/v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/'.$this->sObjectId.'?'
+        $this->url = $this->getBasePath().$this->sObjectType.'/'.$this->sObjectId.'?'
             .http_build_query(
                 [
                     'fields' => implode(",", $this->fields)
@@ -138,5 +138,10 @@ class GetSubRequest extends BaseSubRequest implements ReferenceableInterface, SO
         $this->fields = $fields;
 
         return $this;
+    }
+
+    public function getBasePath(): string
+    {
+        return "/services/data/v".$this->getVersion()."/sobjects/";
     }
 }

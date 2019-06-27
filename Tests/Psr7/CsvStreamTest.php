@@ -38,4 +38,28 @@ class CsvStreamTest extends TestCase
             $row
         );
     }
+
+    public function testGetContents()
+    {
+        $testLine = '"Name","Alt Name","Description","Alt Desc"'.PHP_EOL.
+            '"Item 1","Item 2","This is a longer'.PHP_EOL.'multiline field","Last Field"'.PHP_EOL;
+        $stream = stream_for($testLine);
+        $csv = new CsvStream($stream);
+
+        foreach ($csv->getContents(true) as $row) {
+            if (false === $row) {
+                break;
+            }
+        }
+
+        $this->assertEquals(
+            [
+                "Name" => 'Item 1',
+                "Alt Name" => 'Item 2',
+                "Description" => 'This is a longer'.PHP_EOL.'multiline field',
+                "Alt Desc" => 'Last Field',
+            ],
+            $row
+        );
+    }
 }

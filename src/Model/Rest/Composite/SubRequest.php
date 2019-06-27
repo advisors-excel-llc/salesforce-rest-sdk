@@ -47,7 +47,14 @@ abstract class SubRequest
      */
     protected $httpHeaders;
 
-    public function __construct(string $method, ?string $referenceId = null)
+    /**
+     * @var string
+     * @Serializer\Type("string")
+     * @Serializer\Exclude()
+     */
+    private $version = "44.0";
+
+    public function __construct(string $method, string $version = "44.0", ?string $referenceId = null)
     {
         if (null === $referenceId) {
             $referenceId = uniqid("ref_");
@@ -56,6 +63,7 @@ abstract class SubRequest
         $this->method      = $method;
         $this->referenceId = $referenceId;
         $this->httpHeaders = new ArrayCollection();
+        $this->version     = $version;
     }
 
     /**
@@ -191,5 +199,30 @@ abstract class SubRequest
     public function getResultClass(): ?string
     {
         return null;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVersion(): string
+    {
+        return $this->version;
+    }
+
+    /**
+     * @param string $version
+     *
+     * @return SubRequest
+     */
+    public function setVersion(string $version): self
+    {
+        $this->version = $version;
+
+        return $this;
+    }
+
+    public function getBasePath(): string
+    {
+        return "";
     }
 }

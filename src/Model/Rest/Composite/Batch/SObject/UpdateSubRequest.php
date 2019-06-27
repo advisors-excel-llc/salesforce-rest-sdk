@@ -34,10 +34,11 @@ class UpdateSubRequest extends PatchSubRequest implements SObjectSubRequestInter
      *
      * @param string $sObjectType
      * @param null|string|SObject $sObject
+     * @param string $version
      */
-    public function __construct(string $sObjectType, $sObject = null)
+    public function __construct(string $sObjectType, $sObject = null, string $version = "44.0")
     {
-        parent::__construct();
+        parent::__construct($version);
 
         $this->sObjectType = $sObjectType;
 
@@ -75,7 +76,7 @@ class UpdateSubRequest extends PatchSubRequest implements SObjectSubRequestInter
             throw new \RuntimeException("The UpdateSubRequest is incomplete.");
         }
 
-        $this->url = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/'.$this->sObjectId;
+        $this->url = 'v'.$this->getVersion().'/sobjects/'.$this->sObjectType.'/'.$this->sObjectId;
 
         $this->richInput->Id   = null;
     }

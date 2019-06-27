@@ -30,12 +30,12 @@ class CreateSubRequest extends PostSubRequest implements CreateSubRequestInterfa
      */
     private $sObjectType;
 
-    public function __construct(string $sObjectType, ?SObject $sObject = null)
+    public function __construct(string $sObjectType, ?SObject $sObject = null, string $version = "44.0")
     {
-        parent::__construct();
+        parent::__construct($version);
 
         $this->sObjectType = $sObjectType;
-        $this->url         = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/';
+        $this->url         = 'v'.$version.'/sobjects/'.$this->sObjectType.'/';
         $this->setRichInput($sObject);
     }
 

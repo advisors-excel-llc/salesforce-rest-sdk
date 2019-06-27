@@ -32,6 +32,11 @@ abstract class AbstractClient
     protected $authProvider;
 
     /**
+     * @var string
+     */
+    protected $version = "44.0";
+
+    /**
      * @param RequestInterface $request
      * @param int $expectedStatusCode
      *
@@ -86,5 +91,13 @@ abstract class AbstractClient
                 );
             }
         }
+    }
+
+    /**
+     * @return string
+     */
+    public function getVersion(): string
+    {
+        return $this->version;
     }
 }

@@ -27,9 +27,13 @@ class DeleteSubRequest extends BaseSubRequest implements SObjectSubRequestInterf
      */
     private $sObjectId;
 
-    public function __construct(string $sObjectType, string $sObjectId, ?string $referenceId = null)
-    {
-        parent::__construct($referenceId);
+    public function __construct(
+        string $sObjectType,
+        string $sObjectId,
+        string $version = "44.0",
+        ?string $referenceId = null
+    ) {
+        parent::__construct($version, $referenceId);
 
         $this->sObjectType = $sObjectType;
         $this->sObjectId   = $sObjectId;
@@ -54,7 +58,7 @@ class DeleteSubRequest extends BaseSubRequest implements SObjectSubRequestInterf
             throw new \RuntimeException("DeleteSubRequest is incomplete.");
         }
 
-        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/'.$this->sObjectId;
+        $this->url = $this->getBasePath().$this->sObjectType.'/'.$this->sObjectId;
     }
 
     /**
@@ -71,5 +75,10 @@ class DeleteSubRequest extends BaseSubRequest implements SObjectSubRequestInterf
     public function getSObjectId(): string
     {
         return $this->sObjectId;
+    }
+
+    public function getBasePath(): string
+    {
+        return "/services/data/v".$this->getVersion()."/sobjects/";
     }
 }

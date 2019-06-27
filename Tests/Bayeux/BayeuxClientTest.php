@@ -38,7 +38,9 @@ class BayeuxClientTest extends TestCase
                 getenv("SF_LOGIN_URL"),
                 getenv("SF_USER"),
                 getenv("SF_PASS")
-            )
+            ),
+            null,
+            "45.0"
         );
     }
 

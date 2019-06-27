@@ -28,9 +28,14 @@ $client = new Client(
       "https://login.salesforce.com",
       "SF_USER",
       "SF_PASS"
-  )
+  ),
+  "46.0", // optional version number, defaults to 44.0
+  "MyAppName" // optional client app name, used when filtering out Change Data Events in the Streaming API
 );
 ```
+
+> For more information about using client app names with Change Data Capture, see
+> [https://developer.salesforce.com/docs/atlas.en-us.change_data_capture.meta/change_data_capture/cdc_event_fields_header.htm](https://developer.salesforce.com/docs/atlas.en-us.change_data_capture.meta/change_data_capture/cdc_event_fields_header.htm)
 
 If you have an authorization code returned to your redirectUrl and wish to use it, you can do so like this:
 
@@ -157,13 +162,21 @@ while (!$result->isDone()) {
 }
 
 // Query deleted and merged records, too
-$result = $sObjectClient->queryAll("SELECT Id, Name FROM Account");
+$result = $sObjectClient->queryAll(
+    "SELECT Id, Name FROM Account",
+     1000 // optional batch size, defaults to 2000, which is the max, min is 200
+     );
 
 // Search for something
 $result = $sObjectClient->search("FIND {Some Query} IN ALL FIELDS");
 
 var_dump($result->getSearchRecords()); // CompositeSObject[]
 ```
+
+> For more information on Batch Sizes and the Sforce-Query-Options header, see
+> [https://developer.salesforce.com/docs/atlas.en-us.220.0.api_rest.meta/api_rest/headers_queryoptions.htm](https://developer.salesforce.com/docs/atlas.en-us.220.0.api_rest.meta/api_rest/headers_queryoptions.htm).
+> 
+> *It should be noted that batch size may not be respected in Salesforce if it is not optimal for performance*
 
 ## Instantiate the Streaming Client
 [Reference](https://developer.salesforce.com/docs/atlas.en-us.api_streaming.meta/api_streaming/intro_stream.htm)
@@ -182,7 +195,8 @@ $client = new BayeuxClient(
           "https://login.salesforce.com",
           "SF_USER",
           "SF_PASS"
-      )
+      ),
+      "46.0" // optional version number, defaults to 44.0
  );
 
 ```

@@ -34,7 +34,7 @@ class SearchSubRequest extends QuerySubRequest
      */
     public function preSerialize()
     {
-        $this->url = 'v'.Client::VERSION.'/search?'
+        $this->url = 'v'.$this->getVersion().'/search?'
             .http_build_query(
                 [
                     'q' => $this->query
