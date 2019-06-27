@@ -27,15 +27,16 @@ use JMS\Serializer\SerializerInterface;
 
 class Client extends AbstractClient
 {
-    public const VERSION = "44.0";
-
-    public const BASE_PATH = "services/data/v".self::VERSION."/";
-
-    public function __construct(GuzzleClient $client, SerializerInterface $serializer, AuthProviderInterface $provider)
-    {
+    public function __construct(
+        GuzzleClient $client,
+        SerializerInterface $serializer,
+        AuthProviderInterface $provider,
+        string $version = "44.0"
+    ) {
         $this->client       = $client;
         $this->serializer   = $serializer;
         $this->authProvider = $provider;
+        $this->version      = $version;
     }
 
     /**
@@ -47,8 +48,9 @@ class Client extends AbstractClient
      */
     public function info(string $sObjectType): BasicInfo
     {
+        $basePath = $this->getBasePath();
         $response = $this->send(
-            new Request("GET", self::BASE_PATH.'sobjects/'.$sObjectType)
+            new Request("GET", "$basePath/sobjects/$sObjectType")
         );
 
         $body = (string)$response->getBody();
@@ -69,8 +71,9 @@ class Client extends AbstractClient
      */
     public function describe(string $sObjectType): DescribeSObject
     {
+        $basePath = $this->getBasePath();
         $response = $this->send(
-            new Request("GET", self::BASE_PATH.'sobjects/'.$sObjectType.'/describe')
+            new Request("GET", "$basePath/sobjects/$sObjectType/describe")
         );
 
         $body = (string)$response->getBody();
@@ -89,8 +92,9 @@ class Client extends AbstractClient
      */
     public function describeGlobal(): GlobalDescribe
     {
+        $basePath = $this->getBasePath();
         $response = $this->send(
-            new Request("GET", self::BASE_PATH.'sobjects/')
+            new Request("GET", "$basePath/sobjects/")
         );
 
         $body = (string)$response->getBody();
@@ -113,10 +117,11 @@ class Client extends AbstractClient
      */
     public function get(string $sObjectType, string $id, array $fields = ['Id']): SObject
     {
+        $basePath = $this->getBasePath();
         $response = $this->send(
             new Request(
                 "GET",
-                self::BASE_PATH.'sobjects/'.$sObjectType.'/'.$id.'?'.
+                "$basePath/sobjects/$sObjectType/$id?".
                 http_build_query(
                     [
                         'fields' => implode(",", $fields),
@@ -152,10 +157,11 @@ class Client extends AbstractClient
         $start->setTimezone(new \DateTimeZone("UTC"));
         $end->setTimezone(new \DateTimeZone("UTC"));
 
+        $basePath = $this->getBasePath();
         $response = $this->send(
             new Request(
                 "GET",
-                self::BASE_PATH.'sobjects/'.$sObjectType.'/updated/?'.
+                "$basePath/sobjects/$sObjectType/updated/?".
                 http_build_query(
                     [
                         'start' => $start->format('Y-m-d\TH:i:sP'),
@@ -195,10 +201,11 @@ class Client extends AbstractClient
         $start->setTimezone(new \DateTimeZone("UTC"));
         $end->setTimezone(new \DateTimeZone("UTC"));
 
+        $basePath = $this->getBasePath();
         $response = $this->send(
             new Request(
                 "GET",
-                self::BASE_PATH.'sobjects/'.$sObjectType.'/deleted/?'.
+                "$basePath/sobjects/$sObjectType/deleted/?".
                 http_build_query(
                     [
                         'start' => $start->format('Y-m-d\TH:i:sP'),
@@ -230,9 +237,10 @@ class Client extends AbstractClient
      */
     public function persist(string $SObjectType, SObject $SObject): bool
     {
+        $basePath    = $this->getBasePath();
         $method      = null !== $SObject->Id ? 'patch' : 'post';
         $id          = $SObject->Id;
-        $url         = self::BASE_PATH.'sobjects/'.$SObjectType.(null !== $id ? '/'.$id : '');
+        $url         = "$basePath/sobjects/$SObjectType".(null !== $id ? '/'.$id : '');
         $SObject->Id = null;
 
         $request = new Request(
@@ -284,23 +292,26 @@ class Client extends AbstractClient
             throw new \RuntimeException("The SObject provided does not have an ID set.");
         }
 
+        $basePath = $this->getBasePath();
+
         $this->send(
             new Request(
                 "DELETE",
-                self::BASE_PATH.'sobjects/'.$SObjectType.'/'.$SObject->Id
+                "$basePath/sobjects/$SObjectType/{$SObject->Id}"
             ),
             204
         );
     }
 
     /**
-     * @param $query
+     * @param QueryResult|null $query
+     * @param int $batchSize
      *
      * @return QueryResult
      * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function query($query): QueryResult
+    public function query($query, int $batchSize = 2000): QueryResult
     {
         if ($query instanceof QueryResult) {
             if ($query->isDone()) {
@@ -309,7 +320,8 @@ class Client extends AbstractClient
 
             $url = $query->getNextRecordsUrl();
         } else {
-            $url = self::BASE_PATH.'query/?'.
+            $basePath = $this->getBasePath();
+            $url      = "$basePath/query/?".
                 http_build_query(
                     [
                         'q' => $query,
@@ -318,7 +330,7 @@ class Client extends AbstractClient
         }
 
         $response = $this->send(
-            new Request("GET", $url)
+            new Request("GET", $url, ['Sforce-Query-Options' => $batchSize])
         );
 
         $body = (string)$response->getBody();
@@ -332,26 +344,31 @@ class Client extends AbstractClient
 
     /**
      * @param $query
+     * @param int $batchSize
      *
      * @return QueryResult
      * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function queryAll($query): QueryResult
+    public function queryAll($query, int $batchSize = 2000): QueryResult
     {
         if ($query instanceof QueryResult) {
             return $this->query($query);
         }
 
+        $basePath = $this->getBasePath();
         $response = $this->send(
             new Request(
                 "GET",
-                self::BASE_PATH.'queryAll/?'.
+                "$basePath/queryAll/?".
                 http_build_query(
                     [
                         'q' => $query,
                     ]
-                )
+                ),
+                [
+                    'Sforce-Query-Options' => "batchSize=$batchSize",
+                ]
             )
         );
 
@@ -366,22 +383,25 @@ class Client extends AbstractClient
 
     /**
      * @param string $query
+     * @param int $batchSize
      *
      * @return SearchResult
      * @throws \AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function search(string $query): SearchResult
+    public function search(string $query, int $batchSize = 2000): SearchResult
     {
+        $basePath = $this->getBasePath();
         $response = $this->send(
             new Request(
                 "GET",
-                self::BASE_PATH.'search/?'.
+                "$basePath/search/?".
                 http_build_query(
                     [
                         'q' => $query,
                     ]
-                )
+                ),
+                ['Sforce-Query-Options' => "batchSize=$batchSize"]
             )
         );
 
@@ -404,10 +424,11 @@ class Client extends AbstractClient
      */
     public function sendGenericEvents(string $channelId, GenericEvents $events)
     {
+        $basePath = $this->getBasePath();
         $response = $this->send(
             new Request(
                 "POST",
-                self::BASE_PATH."sobjects/StreamingChannel/$channelId/push",
+                "$basePath/sobjects/StreamingChannel/$channelId/push",
                 [],
                 $this->serializer->serialize($events, 'json')
             )
@@ -432,10 +453,11 @@ class Client extends AbstractClient
      */
     public function getStreamingChannelSubscribers(string $channelId): array
     {
+        $basePath = $this->getBasePath();
         $response = $this->send(
             new Request(
                 "GET",
-                self::BASE_PATH."sobjects/StreamingChannel/$channelId/push"
+                "$basePath/sobjects/StreamingChannel/$channelId/push"
             )
         );
 
@@ -447,5 +469,10 @@ class Client extends AbstractClient
         );
 
         return $body;
+    }
+
+    public function getBasePath(): string
+    {
+        return "services/data/v{$this->getVersion()}";
     }
 }

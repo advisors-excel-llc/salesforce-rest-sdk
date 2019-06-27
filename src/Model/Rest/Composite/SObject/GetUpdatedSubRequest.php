@@ -11,7 +11,6 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite\SObject;
 use AE\SalesforceRestSdk\Model\Rest\Composite\GetSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
 use AE\SalesforceRestSdk\Model\Rest\UpdatedResponse;
-use AE\SalesforceRestSdk\Rest\SObject\Client;
 use JMS\Serializer\Annotation as Serializer;
 
 class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequestInterface
@@ -38,9 +37,10 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
         string $sObjectType,
         \DateTime $start,
         ?\DateTime $end = null,
+        string $version = "44.0",
         ?string $referenceId = null
     ) {
-        parent::__construct($referenceId);
+        parent::__construct($version, $referenceId);
 
         $this->sObjectType = $sObjectType;
         $this->start       = $start;
@@ -110,7 +110,7 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
         $this->start->setTimezone(new \DateTimeZone("UTC"));
         $this->end->setTimezone(new \DateTimeZone("UTC"));
 
-        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/updated/?'
+        $this->url = $this->getBasePath().$this->sObjectType.'/updated/?'
             .http_build_query(
                 [
                     'start' => $this->start->format('Y-m-d\TH:i:sP'),
@@ -120,5 +120,10 @@ class GetUpdatedSubRequest extends GetSubRequest implements GetUpdatedSubRequest
                 '&',
                 PHP_QUERY_RFC3986
             );
+    }
+
+    public function getBasePath(): string
+    {
+        return "/services/data/v".$this->getVersion()."/sobjects/";
     }
 }

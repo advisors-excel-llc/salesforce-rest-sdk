@@ -38,9 +38,10 @@ class ReadSubRequest extends GetSubRequest implements CompositeCollectionSubRequ
         string $sObjectType,
         array $ids = [],
         array $fields = ["Id"],
+        string $version = "44.0",
         ?string $referenceId = null
     ) {
-        parent::__construct($referenceId);
+        parent::__construct($version, $referenceId);
 
         $this->sObjectType = $sObjectType;
         $this->ids         = $ids;
@@ -119,23 +120,29 @@ class ReadSubRequest extends GetSubRequest implements CompositeCollectionSubRequ
             throw new \RuntimeException("Cannot Get a Collection without any IDs");
         }
 
-        $this->url = CompositeClient::BASE_PATH.'/sobjects/'.$this->sObjectType;
-        $query = '?'.http_build_query(
-            [
-                'ids'    => implode(",", $this->ids),
-                'fields' => implode(",", $this->fields),
-            ]
-        );
+        $this->url = $this->getBasePath().'/'.$this->sObjectType;
+        $query     = '?'.
+            http_build_query(
+                [
+                    'ids'    => implode(",", $this->ids),
+                    'fields' => implode(",", $this->fields),
+                ]
+            );
         $uriLength = CompositeClient::MAX_HOSTNAME_SIZE + strlen($this->url.$query);
 
         if ($uriLength > CompositeClient::MAX_URI_LENGTH) {
             $this->method = "POST";
-            $this->body = [
-                'ids' => $this->ids,
+            $this->body   = [
+                'ids'    => $this->ids,
                 'fields' => $this->fields,
             ];
         } else {
             $this->url .= $query;
         }
+    }
+
+    public function getBasePath(): string
+    {
+        return '/services/data/v'.$this->getVersion().'/composite/sobjects';
     }
 }

@@ -33,24 +33,16 @@ use Psr\Http\Message\StreamInterface;
 class Client extends AbstractClient
 {
     /**
-     *
-     */
-    public const VERSION = "44.0";
-
-    /**
-     *
-     */
-    public const BASE_PATH = "/services/async/".self::VERSION."/job";
-
-    /**
      * Client constructor.
      *
      * @param AuthProviderInterface $authProvider
+     * @param string $version
      *
      * @throws SessionExpiredOrInvalidException
      */
-    public function __construct(AuthProviderInterface $authProvider)
+    public function __construct(AuthProviderInterface $authProvider, string $version = "44.0")
     {
+        $this->version      = $version;
         $this->authProvider = $authProvider;
         $this->client       = $this->createHttpClient();
         $this->serializer   = $this->createSerializer();
@@ -79,14 +71,16 @@ class Client extends AbstractClient
             $url = $this->authProvider->getInstanceUrl();
         }
 
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept'       => 'application/json',
+        ];
+
         return new \GuzzleHttp\Client(
             [
                 'base_uri' => $url,
                 'handler'  => $stack,
-                'headers'  => [
-                    'Content-Type' => 'application/json',
-                    'Accept'       => 'application/json',
-                ],
+                'headers'  => $headers,
             ]
         );
     }
@@ -153,7 +147,7 @@ class Client extends AbstractClient
             JobInfo::DELETE,
             JobInfo::HARD_DELETE,
             JobInfo::QUERY,
-            JobInfo::QUERY_ALL
+            JobInfo::QUERY_ALL,
         ];
         if (!in_array($operation, $ops)) {
             throw new \RuntimeException("Operation is not one of: ".implode(', ', $ops));
@@ -173,7 +167,7 @@ class Client extends AbstractClient
         $response = $this->send(
             new Request(
                 "POST",
-                self::BASE_PATH,
+                $this->getBasePath(),
                 [],
                 $this->serializer->serialize($jobInfo, 'json')
             ),
@@ -200,6 +194,7 @@ class Client extends AbstractClient
     public function addBatch(JobInfo $job, $batch): BatchInfo
     {
         $contentType = "application/json";
+        $basePath    = $this->getBasePath();
 
         if (JobInfo::TYPE_CSV === $job->getContentType()) {
             $contentType = "text/csv";
@@ -214,7 +209,7 @@ class Client extends AbstractClient
         $response = $this->send(
             new Request(
                 "POST",
-                self::BASE_PATH.'/'.$job->getId().'/batch',
+                "$basePath/{$job->getId()}/batch",
                 [
                     'Content-Type' => $contentType,
                 ],
@@ -242,8 +237,9 @@ class Client extends AbstractClient
      */
     public function getJobStatus(JobInfo $job): JobInfo
     {
+        $basePath = $this->getBasePath();
         $response = $this->send(
-            new Request("GET", self::BASE_PATH.'/'.$job->getId())
+            new Request("GET", "$basePath/{$job->getId()}")
         );
 
         $body = (string)$response->getBody();
@@ -265,10 +261,11 @@ class Client extends AbstractClient
      */
     public function getBatchStatus(JobInfo $job, string $batchId): BatchInfo
     {
+        $basePath = $this->getBasePath();
         $response = $this->send(
             new Request(
                 "GET",
-                self::BASE_PATH.'/'.$job->getId().'/batch/'.$batchId
+                "$basePath/{$job->getId()}/batch/$batchId"
             )
         );
 
@@ -291,8 +288,9 @@ class Client extends AbstractClient
      */
     public function getBatchResults(JobInfo $job, string $batchId): array
     {
+        $basePath = $this->getBasePath();
         $response = $this->send(
-            new Request("GET", self::BASE_PATH.'/'.$job->getId().'/batch/'.$batchId.'/result')
+            new Request("GET", "$basePath/{$job->getId()}/batch/$batchId/result")
         );
 
         $body = (string)$response->getBody();
@@ -324,12 +322,13 @@ class Client extends AbstractClient
      */
     public function getResult(JobInfo $job, string $batchId, string $resultId): StreamInterface
     {
+        $basePath = $this->getBasePath();
         $response = $this->send(
             new Request(
                 "GET",
-                self::BASE_PATH.'/'.$job->getId().'/batch/'.$batchId.'/result/'.$resultId,
+                "$basePath/{$job->getId()}/batch/$batchId/result/$resultId",
                 [
-                    'save_to' => stream_for(fopen('php://temp', 'w'))
+                    'save_to' => stream_for(fopen('php://temp', 'w')),
                 ]
             )
         );
@@ -350,13 +349,14 @@ class Client extends AbstractClient
      */
     public function closeJob(JobInfo $job): JobInfo
     {
-        $jobInfo = new JobInfo();
+        $basePath = $this->getBasePath();
+        $jobInfo  = new JobInfo();
         $jobInfo->setState(JobInfo::STATE_CLOSED);
 
         $response = $this->send(
             new Request(
                 "POST",
-                self::BASE_PATH.'/'.$job->getId(),
+                "$basePath/{$job->getId()}",
                 [],
                 $this->serializer->serialize($jobInfo, 'json')
             )
@@ -369,5 +369,10 @@ class Client extends AbstractClient
             JobInfo::class,
             'json'
         );
+    }
+
+    public function getBasePath(): string
+    {
+        return "/services/async/{$this->getVersion()}/job";
     }
 }

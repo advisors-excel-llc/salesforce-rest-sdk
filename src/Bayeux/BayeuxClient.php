@@ -61,7 +61,6 @@ class BayeuxClient
 
     public const VERSION            = '1.0';
     public const MINIMUM_VERSION    = '1.0';
-    public const SALESFORCE_VERSION = '44.0';
 
     /**
      * @var Client
@@ -119,17 +118,19 @@ class BayeuxClient
      * @param AbstractClientTransport $transport
      * @param AuthProviderInterface $authProvider
      * @param LoggerInterface|null $logger
+     * @param string $version
      *
      * @throws \Exception
      */
     public function __construct(
         AbstractClientTransport $transport,
         AuthProviderInterface $authProvider,
-        LoggerInterface $logger = null
+        LoggerInterface $logger = null,
+        string $version = "44.0"
     ) {
         $this->transport    = $transport;
         $this->authProvider = $authProvider;
-        $this->httpClient   = $this->createClient();
+        $this->httpClient   = $this->createClient($version);
         $this->channels     = new ArrayCollection();
         $this->extensions   = new ArrayCollection();
         $this->logger       = $logger ?: new NullLogger();
@@ -139,7 +140,7 @@ class BayeuxClient
         }
     }
 
-    protected function createClient()
+    protected function createClient(string $version = "44.0")
     {
         $url = $this->authProvider->getInstanceUrl();
 
@@ -150,7 +151,7 @@ class BayeuxClient
 
         return new Client(
             [
-                'base_uri' => $url.'/cometd/'.static::SALESFORCE_VERSION.'/',
+                'base_uri' => $url.'/cometd/'.$version.'/',
                 'cookies'  => true,
             ]
         );

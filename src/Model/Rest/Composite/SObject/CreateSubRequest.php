@@ -24,9 +24,9 @@ class CreateSubRequest extends PostSubRequest implements ReferenceableInterface,
      */
     private $sObjectType;
 
-    public function __construct(string $sObjectType, ?string $referenceId = null)
+    public function __construct(string $sObjectType, string $version = "44.0", ?string $referenceId = null)
     {
-        parent::__construct($referenceId);
+        parent::__construct($version, $referenceId);
 
         $this->sObjectType = $sObjectType;
     }
@@ -61,7 +61,7 @@ class CreateSubRequest extends PostSubRequest implements ReferenceableInterface,
             throw new \RuntimeException("No SObjectType has been set.");
         }
 
-        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/';
+        $this->url = $this->getBasePath().$this->sObjectType.'/';
     }
 
     public function reference(string $fieldName): ?string
@@ -81,5 +81,10 @@ class CreateSubRequest extends PostSubRequest implements ReferenceableInterface,
     public function getResultClass(): ?string
     {
         return CreateResponse::class;
+    }
+
+    public function getBasePath(): string
+    {
+        return "/services/data/v".$this->getVersion()."/sobjects/";
     }
 }

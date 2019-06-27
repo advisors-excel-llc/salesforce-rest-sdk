@@ -35,9 +35,9 @@ class GetDeletedSubRequest extends GetSubRequest implements GetDeletedSubRequest
      */
     private $end;
 
-    public function __construct(string $sObjectType, \DateTime $start, ?\DateTime $end)
+    public function __construct(string $sObjectType, \DateTime $start, ?\DateTime $end, string $version = "44.0")
     {
-        parent::__construct();
+        parent::__construct($version);
 
         $this->sObjectType = $sObjectType;
         $this->start       = $start;
@@ -110,7 +110,7 @@ class GetDeletedSubRequest extends GetSubRequest implements GetDeletedSubRequest
         $this->start->setTimezone(new \DateTimeZone("UTC"));
         $this->end->setTimezone(new \DateTimeZone("UTC"));
 
-        $this->url = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/deleted/?'
+        $this->url = 'v'.$this->getVersion().'/sobjects/'.$this->sObjectType.'/deleted/?'
             .http_build_query(
                 [
                     'start' => $this->start->format(\DATE_ISO8601),

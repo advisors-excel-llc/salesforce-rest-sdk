@@ -24,12 +24,13 @@ class DescribeSubRequest extends GetSubRequest implements DescribeSubRequestInte
     private $sObjectType;
 
     public function __construct(
-        string $sObjectType
+        string $sObjectType,
+        string $version = "44.0"
     ) {
-        parent::__construct();
+        parent::__construct($version);
 
         $this->sObjectType = $sObjectType;
-        $this->url         = 'v'.Client::VERSION.'/sobjects/'.$this->sObjectType.'/describe';
+        $this->url         = 'v'.$this->getVersion().'/sobjects/'.$this->sObjectType.'/describe';
     }
 
     /**

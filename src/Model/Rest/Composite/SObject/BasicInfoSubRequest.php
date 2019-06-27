@@ -11,7 +11,6 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite\SObject;
 use AE\SalesforceRestSdk\Model\Rest\Composite\GetSubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\SubRequest;
 use AE\SalesforceRestSdk\Model\Rest\Metadata\BasicInfo;
-use AE\SalesforceRestSdk\Rest\SObject\Client;
 use JMS\Serializer\Annotation as Serializer;
 
 class BasicInfoSubRequest extends GetSubRequest implements BasicInfoRequestInterface
@@ -22,12 +21,12 @@ class BasicInfoSubRequest extends GetSubRequest implements BasicInfoRequestInter
      */
     private $sObjectType;
 
-    public function __construct(string $sObjectType, ?string $referenceId = null)
+    public function __construct(string $sObjectType, string $version = "44.0", ?string $referenceId = null)
     {
-        parent::__construct($referenceId);
+        parent::__construct($version, $referenceId);
 
         $this->sObjectType = $sObjectType;
-        $this->url         = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType;
+        $this->url         = $this->getBasePath().$this->sObjectType;
     }
 
     /**
@@ -51,5 +50,10 @@ class BasicInfoSubRequest extends GetSubRequest implements BasicInfoRequestInter
     public function getResultClass(): ?string
     {
         return BasicInfo::class;
+    }
+
+    public function getBasePath(): string
+    {
+        return "/services/data/v".$this->getVersion()."/sobjects/";
     }
 }

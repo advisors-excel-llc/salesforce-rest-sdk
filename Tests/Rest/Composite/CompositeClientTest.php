@@ -14,8 +14,6 @@ use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeCollection;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use AE\SalesforceRestSdk\Model\SObject;
 use AE\SalesforceRestSdk\Rest\Client;
-use AE\SalesforceRestSdk\Rest\Composite\Builder\BatchRequestBuilder;
-use AE\SalesforceRestSdk\Rest\Composite\Builder\CompositeRequestBuilder;
 use AE\SalesforceRestSdk\Rest\Composite\CompositeClient;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequest;
 use PHPUnit\Framework\TestCase;
@@ -41,7 +39,9 @@ class CompositeClientTest extends TestCase
                 getenv("SF_LOGIN_URL"),
                 getenv("SF_USER"),
                 getenv("SF_PASS")
-            )
+            ),
+            "45.0",
+            2000
         );
 
         $this->client = $this->restClient->getCompositeClient();
@@ -167,7 +167,7 @@ class CompositeClientTest extends TestCase
     public function testCompositeRequest()
     {
         $now     = new \DateTime();
-        $builder = new CompositeRequestBuilder();
+        $builder = $this->client->compositeRequestBuilder();
 
         $builder
             ->info("BasicInfo", "Account")
@@ -281,7 +281,7 @@ class CompositeClientTest extends TestCase
     // It's not like this couldn't be rolled into the previous test, but that thing was getting huge
     public function testCompositeCollectionRequest()
     {
-        $builder = new CompositeRequestBuilder();
+        $builder = $this->client->compositeRequestBuilder();
 
         $builder
             ->createSObjectCollection(
@@ -340,7 +340,7 @@ class CompositeClientTest extends TestCase
 
         $response = $this->client->sendCompositeRequest($builder->build());
 
-        $this->assertCount(7, $response->getCompositeResponse());
+        $this->assertCount(6, $response->getCompositeResponse());
 
         $create = $response->findResultByReferenceId("create");
         $this->assertNotNull($create);
@@ -432,7 +432,7 @@ class CompositeClientTest extends TestCase
 
     public function testBatchSObject()
     {
-        $builder = new BatchRequestBuilder();
+        $builder = $this->client->batchRequestBuilder();
 
         $builder
             ->limits()
@@ -486,7 +486,7 @@ class CompositeClientTest extends TestCase
      */
     public function testBatchSObject2(string $id)
     {
-        $builder = new BatchRequestBuilder();
+        $builder = $this->client->batchRequestBuilder();
         $now     = new \DateTime();
 
         $builder
@@ -540,33 +540,33 @@ class CompositeClientTest extends TestCase
     {
         // Get 1000 Accounts
         $ids = [];
-        $query = $this->restClient->getSObjectClient()->query("SELECT Id FROM Account LIMIT 1000");
+        $query = $this->restClient->getSObjectClient()->query("SELECT Id FROM Account LIMIT 500");
         do {
             foreach ($query->getRecords() as $record) {
                 $ids[] = $record->Id;
             }
         } while (!($query = $this->restClient->getSObjectClient()->query($query))->isDone());
 
-        $this->assertCount(1000, $ids);
+        $this->assertCount(500, $ids);
 
         $result = $this->client->read('Account', $ids, ['Id', 'Name']);
-        $this->assertCount(1000, $result);
+        $this->assertCount(500, $result);
     }
 
     public function testBulkReadComposite()
     {
         // Get 1000 Accounts
         $ids = [];
-        $query = $this->restClient->getSObjectClient()->query("SELECT Id FROM Account LIMIT 1000");
+        $query = $this->restClient->getSObjectClient()->query("SELECT Id FROM Account LIMIT 500");
         do {
             foreach ($query->getRecords() as $record) {
                 $ids[] = $record->Id;
             }
         } while (!($query = $this->restClient->getSObjectClient()->query($query))->isDone());
 
-        $this->assertCount(1000, $ids);
+        $this->assertCount(500, $ids);
 
-        $builder = new CompositeRequestBuilder();
+        $builder = $this->client->compositeRequestBuilder();
         for ($i = 0; $i < 5; $i++) {
             $builder->getSObjectCollection('test_bulk_'.$i, 'Account', $ids, ['Id', 'Name']);
         }
@@ -576,12 +576,12 @@ class CompositeClientTest extends TestCase
         $this->assertEquals(200, $subResult->getHttpStatusCode());
         /** @var CompositeSObject[] $body */
         $body = $subResult->getBody();
-        $this->assertCount(1000, $body);
+        $this->assertCount(500, $body);
 
         $subResult = $result->findResultByReferenceId('test_bulk_4');
         $this->assertEquals(200, $subResult->getHttpStatusCode());
         /** @var CompositeSObject[] $body */
         $body = $subResult->getBody();
-        $this->assertCount(1000, $body);
+        $this->assertCount(500, $body);
     }
 }

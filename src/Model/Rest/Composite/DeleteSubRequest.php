@@ -10,8 +10,8 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite;
 
 class DeleteSubRequest extends SubRequest
 {
-    public function __construct(?string $referenceId = null)
+    public function __construct(string $version = "44.0", ?string $referenceId = null)
     {
-        parent::__construct("DELETE", $referenceId);
+        parent::__construct("DELETE", $version, $referenceId);
     }
 }

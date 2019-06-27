@@ -30,7 +30,9 @@ class SObjectClientTest extends TestCase
                 getenv("SF_LOGIN_URL"),
                 getenv("SF_USER"),
                 getenv("SF_PASS")
-            )
+            ),
+            "45.0",
+            "testing_sdk"
         );
 
         $this->client = $client->getSObjectClient();
@@ -77,7 +79,6 @@ class SObjectClientTest extends TestCase
 
         $this->assertTrue($saved);
         $this->assertNotNull($account->Id);
-        $this->assertEquals("Account", $account->Type);
 
         return $account;
     }
@@ -172,7 +173,6 @@ class SObjectClientTest extends TestCase
         try {
             $this->client->persist("Account", $SObject);
             $this->assertNotNull($SObject->Id);
-            $this->assertEquals("Account", $SObject->Type);
         } catch (\RuntimeException $e) {
             $this->assertTrue(false, $e->getMessage());
         }

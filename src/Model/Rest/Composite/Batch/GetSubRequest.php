@@ -10,8 +10,8 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite\Batch;
 
 class GetSubRequest extends SubRequest
 {
-    public function __construct()
+    public function __construct(string $version = "44.0")
     {
-        parent::__construct("GET");
+        parent::__construct("GET", $version);
     }
 }

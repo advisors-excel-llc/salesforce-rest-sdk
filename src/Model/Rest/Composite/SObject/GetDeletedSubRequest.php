@@ -34,9 +34,14 @@ class GetDeletedSubRequest extends GetSubRequest implements GetDeletedSubRequest
      */
     private $end;
 
-    public function __construct(string $sObjectType, \DateTime $start, ?\DateTime $end, ?string $referenceId = null)
-    {
-        parent::__construct($referenceId);
+    public function __construct(
+        string $sObjectType,
+        \DateTime $start,
+        ?\DateTime $end,
+        string $version = "44.0",
+        ?string $referenceId = null
+    ) {
+        parent::__construct($version, $referenceId);
 
         $this->sObjectType = $sObjectType;
         $this->start       = $start;
@@ -114,7 +119,7 @@ class GetDeletedSubRequest extends GetSubRequest implements GetDeletedSubRequest
         $this->start->setTimezone(new \DateTimeZone("UTC"));
         $this->end->setTimezone(new \DateTimeZone("UTC"));
 
-        $this->url = '/'.Client::BASE_PATH.'sobjects/'.$this->sObjectType.'/deleted/?'
+        $this->url = $this->getBasePath().$this->sObjectType.'/deleted/?'
             .http_build_query(
                 [
                     'start' => $this->start->format('Y-m-d\TH:i:sP'),
@@ -124,5 +129,10 @@ class GetDeletedSubRequest extends GetSubRequest implements GetDeletedSubRequest
                 '&',
                 PHP_QUERY_RFC3986
             );
+    }
+
+    public function getBasePath(): string
+    {
+        return "/services/data/v".$this->getVersion()."/sobjects/";
     }
 }

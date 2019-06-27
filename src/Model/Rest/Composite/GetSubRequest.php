@@ -10,8 +10,8 @@ namespace AE\SalesforceRestSdk\Model\Rest\Composite;
 
 class GetSubRequest extends SubRequest
 {
-    public function __construct(?string $referenceId = null)
+    public function __construct(string $version, ?string $referenceId = null)
     {
-        parent::__construct("GET", $referenceId);
+        parent::__construct("GET", $version, $referenceId);
     }
 }

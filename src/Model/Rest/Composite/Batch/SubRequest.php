@@ -34,9 +34,16 @@ abstract class SubRequest
      */
     protected $url;
 
-    public function __construct(string $method)
+    /**
+     * @var string
+     * @Serializer\Exclude()
+     */
+    protected $version = "44.0";
+
+    public function __construct(string $method, string $version = "44.0")
     {
-        $this->method = $method;
+        $this->method  = $method;
+        $this->version = $version;
     }
 
     /**
@@ -105,5 +112,13 @@ abstract class SubRequest
     public function getResultClass(): ?string
     {
         return null;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVersion(): string
+    {
+        return $this->version;
     }
 }
