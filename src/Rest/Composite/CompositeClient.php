@@ -8,7 +8,6 @@
 
 namespace AE\SalesforceRestSdk\Rest\Composite;
 
-use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\BatchRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\Batch\BatchResult;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CollectionRequestInterface;
@@ -18,14 +17,12 @@ use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeRequest;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeResponse;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeTreeResponse;
-use AE\SalesforceRestSdk\Rest\AbstractClient;
+use AE\SalesforceRestSdk\Rest\Client;
 use AE\SalesforceRestSdk\Rest\Composite\Builder\BatchRequestBuilder;
 use AE\SalesforceRestSdk\Rest\Composite\Builder\CompositeRequestBuilder;
-use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
-use JMS\Serializer\SerializerInterface;
 
-class CompositeClient extends AbstractClient
+class CompositeClient
 {
     // Derived from protocol + max subdomain size + "my.salesforce.com"
     // @See https://help.salesforce.com/articleView?id=faq_domain_name_is_there_a_limit.htm&type=5
@@ -35,26 +32,24 @@ class CompositeClient extends AbstractClient
     // @See https://salesforce.stackexchange.com/questions/195449/what-is-the-longest-uri-that-salesforce-will-accept-through-the-rest-api/195450
     public const MAX_URI_LENGTH = 16088;
 
-    public function __construct(
-        Client $client,
-        SerializerInterface $serializer,
-        AuthProviderInterface $provider,
-        string $version = "44.0"
-    ) {
-        $this->client       = $client;
-        $this->serializer   = $serializer;
-        $this->authProvider = $provider;
-        $this->version      = $version;
+    /**
+     * @var Client
+     */
+    private $client;
+
+    public function __construct(Client $client)
+    {
+        $this->client = $client;
     }
 
     public function compositeRequestBuilder(): CompositeRequestBuilder
     {
-        return new CompositeRequestBuilder($this->version);
+        return new CompositeRequestBuilder($this->client->getVersion());
     }
 
     public function batchRequestBuilder(): BatchRequestBuilder
     {
-        return new BatchRequestBuilder($this->version);
+        return new BatchRequestBuilder($this->client->getVersion());
     }
 
     /**
@@ -67,14 +62,15 @@ class CompositeClient extends AbstractClient
     public function create(CollectionRequestInterface $request): array
     {
         $basePath    = $this->getBasePath();
-        $requestBody = $this->serializer->serialize($request, 'json');
-        $response    = $this->send(
+        $serializer  = $this->client->getSerializer();
+        $requestBody = $serializer->serialize($request, 'json');
+        $response    = $this->client->send(
             new Request("POST", "$basePath/sobjects", [], $requestBody)
         );
 
         $body = (string)$response->getBody();
 
-        return $this->serializer->deserialize(
+        return $serializer->deserialize(
             $body,
             'array<'.CollectionResponse::class.'>',
             'json'
@@ -96,21 +92,22 @@ class CompositeClient extends AbstractClient
             return [];
         }
 
-        $basePath  = $this->getBasePath();
-        $url       = "$basePath/sobjects/$sObjectType";
-        $method    = "GET";
-        $body      = null;
-        $query     = http_build_query(
+        $serializer = $this->client->getSerializer();
+        $basePath   = $this->getBasePath();
+        $url        = "$basePath/sobjects/$sObjectType";
+        $method     = "GET";
+        $body       = null;
+        $query      = http_build_query(
             [
                 'ids'    => implode(",", $ids),
                 'fields' => implode(",", $fields),
             ]
         );
-        $uriLength = self::MAX_HOSTNAME_SIZE + strlen($url."?$query");
+        $uriLength  = self::MAX_HOSTNAME_SIZE + strlen($url."?$query");
 
         if ($uriLength > self::MAX_URI_LENGTH) {
             $method = "POST";
-            $body   = $this->serializer->serialize(
+            $body   = $serializer->serialize(
                 [
                     'ids'    => $ids,
                     'fields' => $fields,
@@ -121,7 +118,7 @@ class CompositeClient extends AbstractClient
             $url .= "?$query";
         }
 
-        $response = $this->send(
+        $response = $this->client->send(
             new Request(
                 $method,
                 $url,
@@ -130,7 +127,7 @@ class CompositeClient extends AbstractClient
             )
         );
 
-        return $this->serializer->deserialize(
+        return $serializer->deserialize(
             $response->getBody(),
             'array<'.CompositeSObject::class.'>',
             'json'
@@ -147,8 +144,9 @@ class CompositeClient extends AbstractClient
     public function update(CollectionRequestInterface $request): array
     {
         $basePath    = $this->getBasePath();
-        $requestBody = $this->serializer->serialize($request, 'json');
-        $response    = $this->send(
+        $serializer  = $this->client->getSerializer();
+        $requestBody = $serializer->serialize($request, 'json');
+        $response    = $this->client->send(
             new Request(
                 "PATCH",
                 "$basePath/sobjects",
@@ -159,7 +157,7 @@ class CompositeClient extends AbstractClient
 
         $body = (string)$response->getBody();
 
-        return $this->serializer->deserialize(
+        return $serializer->deserialize(
             $body,
             'array<'.CollectionResponse::class.'>',
             'json'
@@ -184,7 +182,7 @@ class CompositeClient extends AbstractClient
         }
 
         $basePath = $this->getBasePath();
-        $response = $this->send(
+        $response = $this->client->send(
             new Request(
                 "DELETE",
                 "$basePath/sobjects?".
@@ -197,11 +195,12 @@ class CompositeClient extends AbstractClient
             )
         );
 
-        return $this->serializer->deserialize(
+        return $this->client->getSerializer()->deserialize(
             $response->getBody(),
             'array<'.CollectionResponse::class.'>',
             'json'
-        );
+        )
+            ;
     }
 
     /**
@@ -213,18 +212,19 @@ class CompositeClient extends AbstractClient
      */
     public function sendCompositeRequest(CompositeRequest $request)
     {
-        $response = $this->send(
+        $serializer = $this->client->getSerializer();
+        $response   = $this->client->send(
             new Request(
                 "POST",
                 $this->getBasePath(),
                 [],
-                $this->serializer->serialize($request, 'json')
+                $serializer->serialize($request, 'json')
             )
         );
 
         $body = (string)$response->getBody();
         /** @var CompositeResponse $compositeResponse */
-        $compositeResponse = $this->serializer->deserialize(
+        $compositeResponse = $serializer->deserialize(
             $body,
             CompositeResponse::class,
             'json'
@@ -237,10 +237,10 @@ class CompositeClient extends AbstractClient
             $output = $result->getBody();
 
             if (null !== $type && null !== $output) {
-                $body = $this->serializer->serialize($output, 'json');
+                $body = $serializer->serialize($output, 'json');
 
                 $result->setBody(
-                    $this->serializer->deserialize(
+                    $serializer->deserialize(
                         $body,
                         $type,
                         'json'
@@ -262,20 +262,21 @@ class CompositeClient extends AbstractClient
      */
     public function tree(string $sObjectType, CompositeCollection $collection): CompositeTreeResponse
     {
-        $basePath = $this->getBasePath();
-        $response = $this->send(
+        $basePath   = $this->getBasePath();
+        $serializer = $this->client->getSerializer();
+        $response   = $this->client->send(
             new Request(
                 "POST",
                 "$basePath/tree/$sObjectType",
                 [],
-                $this->serializer->serialize($collection, 'json')
+                $serializer->serialize($collection, 'json')
             ),
             201
         );
 
         $body = (string)$response->getBody();
 
-        return $this->serializer->deserialize(
+        return $serializer->deserialize(
             $body,
             CompositeTreeResponse::class,
             'json'
@@ -291,19 +292,20 @@ class CompositeClient extends AbstractClient
      */
     public function batch(BatchRequest $request)
     {
-        $basePath = $this->getBasePath();
-        $response = $this->send(
+        $basePath   = $this->getBasePath();
+        $serializer = $this->client->getSerializer();
+        $response   = $this->client->send(
             new Request(
                 "POST",
                 "$basePath/batch",
                 [],
-                $this->serializer->serialize($request, 'json')
+                $serializer->serialize($request, 'json')
             )
         );
 
         $body = (string)$response->getBody();
         /** @var BatchResult $batchResult */
-        $batchResult = $this->serializer->deserialize(
+        $batchResult = $serializer->deserialize(
             $body,
             BatchResult::class,
             'json'
@@ -316,10 +318,10 @@ class CompositeClient extends AbstractClient
             $output = $result->getResult();
 
             if (null !== $type && null !== $output) {
-                $input = $this->serializer->serialize($output, 'json');
+                $input = $serializer->serialize($output, 'json');
 
                 $result->setResult(
-                    $this->serializer->deserialize(
+                    $serializer->deserialize(
                         $input,
                         $type,
                         'json'
@@ -333,6 +335,6 @@ class CompositeClient extends AbstractClient
 
     public function getBasePath(): string
     {
-        return "/services/data/v{$this->getVersion()}/composite";
+        return "/services/data/v{$this->client->getVersion()}/composite";
     }
 }

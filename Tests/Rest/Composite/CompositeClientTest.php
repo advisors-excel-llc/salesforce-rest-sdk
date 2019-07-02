@@ -41,7 +41,7 @@ class CompositeClientTest extends TestCase
                 getenv("SF_PASS")
             ),
             "45.0",
-            2000
+            "test_sdk"
         );
 
         $this->client = $this->restClient->getCompositeClient();
