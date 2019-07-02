@@ -8,7 +8,6 @@
 
 namespace AE\SalesforceRestSdk\Rest\SObject;
 
-use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
 use AE\SalesforceRestSdk\Model\Rest\CreateResponse;
 use AE\SalesforceRestSdk\Model\Rest\DeletedResponse;
 use AE\SalesforceRestSdk\Model\Rest\GenericEvents;
@@ -20,23 +19,19 @@ use AE\SalesforceRestSdk\Model\Rest\SearchResult;
 use AE\SalesforceRestSdk\Model\Rest\StreamingChannelResponse;
 use AE\SalesforceRestSdk\Model\Rest\UpdatedResponse;
 use AE\SalesforceRestSdk\Model\SObject;
-use AE\SalesforceRestSdk\Rest\AbstractClient;
-use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\Request;
-use JMS\Serializer\SerializerInterface;
+use AE\SalesforceRestSdk\Rest\Client as BaseClient;
 
-class Client extends AbstractClient
+class Client
 {
-    public function __construct(
-        GuzzleClient $client,
-        SerializerInterface $serializer,
-        AuthProviderInterface $provider,
-        string $version = "44.0"
-    ) {
-        $this->client       = $client;
-        $this->serializer   = $serializer;
-        $this->authProvider = $provider;
-        $this->version      = $version;
+    /**
+     * @var BaseClient
+     */
+    private $client;
+
+    public function __construct(BaseClient $client)
+    {
+        $this->client = $client;
     }
 
     /**
@@ -49,17 +44,18 @@ class Client extends AbstractClient
     public function info(string $sObjectType): BasicInfo
     {
         $basePath = $this->getBasePath();
-        $response = $this->send(
+        $response = $this->client->send(
             new Request("GET", "$basePath/sobjects/$sObjectType")
         );
 
         $body = (string)$response->getBody();
 
-        return $this->serializer->deserialize(
+        return $this->client->getSerializer()->deserialize(
             $body,
             BasicInfo::class,
             'json'
-        );
+        )
+            ;
     }
 
     /**
@@ -72,17 +68,18 @@ class Client extends AbstractClient
     public function describe(string $sObjectType): DescribeSObject
     {
         $basePath = $this->getBasePath();
-        $response = $this->send(
+        $response = $this->client->send(
             new Request("GET", "$basePath/sobjects/$sObjectType/describe")
         );
 
         $body = (string)$response->getBody();
 
-        return $this->serializer->deserialize(
+        return $this->client->getSerializer()->deserialize(
             $body,
             DescribeSObject::class,
             'json'
-        );
+        )
+            ;
     }
 
     /**
@@ -93,17 +90,18 @@ class Client extends AbstractClient
     public function describeGlobal(): GlobalDescribe
     {
         $basePath = $this->getBasePath();
-        $response = $this->send(
+        $response = $this->client->send(
             new Request("GET", "$basePath/sobjects/")
         );
 
         $body = (string)$response->getBody();
 
-        return $this->serializer->deserialize(
+        return $this->client->getSerializer()->deserialize(
             $body,
             GlobalDescribe::class,
             'json'
-        );
+        )
+            ;
     }
 
     /**
@@ -118,7 +116,7 @@ class Client extends AbstractClient
     public function get(string $sObjectType, string $id, array $fields = ['Id']): SObject
     {
         $basePath = $this->getBasePath();
-        $response = $this->send(
+        $response = $this->client->send(
             new Request(
                 "GET",
                 "$basePath/sobjects/$sObjectType/$id?".
@@ -132,11 +130,12 @@ class Client extends AbstractClient
 
         $body = (string)$response->getBody();
 
-        return $this->serializer->deserialize(
+        return $this->client->getSerializer()->deserialize(
             $body,
             SObject::class,
             'json'
-        );
+        )
+            ;
     }
 
     /**
@@ -158,7 +157,7 @@ class Client extends AbstractClient
         $end->setTimezone(new \DateTimeZone("UTC"));
 
         $basePath = $this->getBasePath();
-        $response = $this->send(
+        $response = $this->client->send(
             new Request(
                 "GET",
                 "$basePath/sobjects/$sObjectType/updated/?".
@@ -176,11 +175,12 @@ class Client extends AbstractClient
 
         $body = (string)$response->getBody();
 
-        return $this->serializer->deserialize(
+        return $this->client->getSerializer()->deserialize(
             $body,
             UpdatedResponse::class,
             'json'
-        );
+        )
+            ;
     }
 
     /**
@@ -202,7 +202,7 @@ class Client extends AbstractClient
         $end->setTimezone(new \DateTimeZone("UTC"));
 
         $basePath = $this->getBasePath();
-        $response = $this->send(
+        $response = $this->client->send(
             new Request(
                 "GET",
                 "$basePath/sobjects/$sObjectType/deleted/?".
@@ -220,11 +220,12 @@ class Client extends AbstractClient
 
         $body = (string)$response->getBody();
 
-        return $this->serializer->deserialize(
+        return $this->client->getSerializer()->deserialize(
             $body,
             DeletedResponse::class,
             'json'
-        );
+        )
+            ;
     }
 
     /**
@@ -242,19 +243,18 @@ class Client extends AbstractClient
         $id          = $SObject->Id;
         $url         = "$basePath/sobjects/$SObjectType".(null !== $id ? '/'.$id : '');
         $SObject->Id = null;
-
-        $request = new Request(
+        $serializer  = $this->client->getSerializer();
+        $request     = new Request(
             $method,
             $url,
             [],
-            $this->serializer->serialize($SObject, 'json')
+            $serializer->serialize($SObject, 'json')
         );
-
-        $response = $this->send($request, $method === "patch" ? 204 : 201);
+        $response    = $this->client->send($request, $method === "patch" ? 204 : 201);
 
         if ($method === 'post') {
             /** @var CreateResponse $body */
-            $body = $this->serializer->deserialize(
+            $body = $serializer->deserialize(
                 $response->getBody(),
                 CreateResponse::class,
                 'json'
@@ -294,7 +294,7 @@ class Client extends AbstractClient
 
         $basePath = $this->getBasePath();
 
-        $this->send(
+        $this->client->send(
             new Request(
                 "DELETE",
                 "$basePath/sobjects/$SObjectType/{$SObject->Id}"
@@ -329,13 +329,13 @@ class Client extends AbstractClient
                 );
         }
 
-        $response = $this->send(
+        $response = $this->client->send(
             new Request("GET", $url, ['Sforce-Query-Options' => $batchSize])
         );
 
         $body = (string)$response->getBody();
 
-        return $this->serializer->deserialize(
+        return $this->client->getSerializer()->deserialize(
             $body,
             QueryResult::class,
             'json'
@@ -357,7 +357,7 @@ class Client extends AbstractClient
         }
 
         $basePath = $this->getBasePath();
-        $response = $this->send(
+        $response = $this->client->send(
             new Request(
                 "GET",
                 "$basePath/queryAll/?".
@@ -374,7 +374,7 @@ class Client extends AbstractClient
 
         $body = (string)$response->getBody();
 
-        return $this->serializer->deserialize(
+        return $this->client->getSerializer()->deserialize(
             $body,
             QueryResult::class,
             'json'
@@ -392,7 +392,7 @@ class Client extends AbstractClient
     public function search(string $query, int $batchSize = 2000): SearchResult
     {
         $basePath = $this->getBasePath();
-        $response = $this->send(
+        $response = $this->client->send(
             new Request(
                 "GET",
                 "$basePath/search/?".
@@ -407,7 +407,7 @@ class Client extends AbstractClient
 
         $body = (string)$response->getBody();
 
-        return $this->serializer->deserialize(
+        return $this->client->getSerializer()->deserialize(
             $body,
             SearchResult::class,
             'json'
@@ -424,18 +424,19 @@ class Client extends AbstractClient
      */
     public function sendGenericEvents(string $channelId, GenericEvents $events)
     {
-        $basePath = $this->getBasePath();
-        $response = $this->send(
+        $basePath   = $this->getBasePath();
+        $serializer = $this->client->getSerializer();
+        $response   = $this->client->send(
             new Request(
                 "POST",
                 "$basePath/sobjects/StreamingChannel/$channelId/push",
                 [],
-                $this->serializer->serialize($events, 'json')
+                $serializer->serialize($events, 'json')
             )
         );
 
         /** @var StreamingChannelResponse $body */
-        $body = $this->serializer->deserialize(
+        $body = $serializer->deserialize(
             $response->getBody(),
             StreamingChannelResponse::class,
             'json'
@@ -454,7 +455,7 @@ class Client extends AbstractClient
     public function getStreamingChannelSubscribers(string $channelId): array
     {
         $basePath = $this->getBasePath();
-        $response = $this->send(
+        $response = $this->client->send(
             new Request(
                 "GET",
                 "$basePath/sobjects/StreamingChannel/$channelId/push"
@@ -462,7 +463,7 @@ class Client extends AbstractClient
         );
 
         /** @var array|SObject[] $body */
-        $body = $this->serializer->deserialize(
+        $body = $this->client->getSerializer()->deserialize(
             $response->getBody(),
             "array<".SObject::class.">",
             'json'
@@ -473,6 +474,6 @@ class Client extends AbstractClient
 
     public function getBasePath(): string
     {
-        return "services/data/v{$this->getVersion()}";
+        return "services/data/v{$this->client->getVersion()}";
     }
 }

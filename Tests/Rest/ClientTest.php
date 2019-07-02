@@ -77,4 +77,25 @@ class ClientTest extends TestCase
 
         $this->assertNotNull($limits);
     }
+
+    public function testApexGet()
+    {
+        $res = $this->client->apex("GET", "/S3F/v1/test");
+
+        $this->assertEquals(['myTest' => 'is good'], $res);
+    }
+
+    public function testApexPost()
+    {
+        $payload = [
+            'test' => [
+                'name' => 'Jiminy',
+                'value' => 'Cricket'
+            ]
+        ];
+
+        $res = $this->client->apex("POST", "/S3F/v1/test", $payload);
+
+        $this->assertEquals(['name' => 'Jiminy', 'value' => 'Cricket'], $res);
+    }
 }

@@ -109,6 +109,75 @@ class BayeuxClientTest extends TestCase
         $this->client->start();
     }
 
+    public function testCdc()
+    {
+        $rand = rand(100, 1000);
+        $name = 'Test Account '.$rand;
+
+        $consumer = Consumer::create(
+            function (ChannelInterface $channel, Message $message) use ($name, &$consumer) {
+                $this->assertTrue($message->isSuccessful());
+                $this->assertFalse($this->client->isDisconnected());
+                $client   = new Client(['base_uri' => $this->client->getAuthProvider()->getInstanceUrl()]);
+                $response = $client->post(
+                    'services/data/v43.0/sobjects/Account',
+                    [
+                        'headers' => [
+                            'Content-Type'        => 'application/json',
+                            'Accept'              => 'application/json',
+                            'Authorization'       => $this->client->getAuthProvider()->authorize(),
+                            'Sforce-Call-Options' => 'client=testing_sdk',
+                        ],
+                        'json'    => ['Name' => $name],
+                    ]
+                );
+
+                $this->assertEquals(201, $response->getStatusCode());
+                $channel->unsubscribe($consumer);
+            }
+        );
+
+        $this->client->getChannel(ChannelInterface::META_CONNECT)->subscribe($consumer);
+
+        $channel = $this->client->getChannel('/data/AccountChangeEvent');
+        $channel->subscribe(
+            Consumer::create(
+                function (ChannelInterface $channel, Message $message) use ($name) {
+                    $this->assertEquals("/data/AccountChangeEvent", $channel->getChannelId());
+                    $data = $message->getData();
+                    $this->assertNotNull($data);
+                    $payload = $data->getPayload();
+                    $this->assertNotNull($payload);
+                    $this->assertArrayHasKey('ChangeEventHeader', $payload);
+                    $cdcHeader = $payload['ChangeEventHeader'];
+                    $this->assertNotNull($cdcHeader['recordIds'][0]);
+                    $this->assertEquals($name, $payload['Name']);
+                    $this->assertEquals(';client=testing_sdk', substr($cdcHeader['changeOrigin'], -19));
+
+                    if (!$this->client->isDisconnected()) {
+                        $this->client->disconnect();
+                    }
+
+                    $client   = new Client(['base_uri' => $this->client->getAuthProvider()->getInstanceUrl()]);
+                    $response = $client->delete(
+                        'services/data/v43.0/sobjects/Account/'.$cdcHeader['recordIds'][0],
+                        [
+                            'headers' => [
+                                'Content-Type'  => 'application/json',
+                                'Accept'        => 'application/json',
+                                'Authorization' => $this->client->getAuthProvider()->authorize(),
+                            ],
+                        ]
+                    );
+
+                    $this->assertEquals(204, $response->getStatusCode());
+                }
+            )
+        );
+
+        $this->client->start();
+    }
+
     public function testHandshakeReauth()
     {
         if (!$this->client->isDisconnected()) {

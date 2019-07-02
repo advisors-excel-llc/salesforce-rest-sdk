@@ -27,6 +27,8 @@ use Psr\Http\Message\RequestInterface;
 
 class Client extends AbstractClient
 {
+    use CallOptionsTrait;
+
     /**
      * @var string
      */
@@ -42,11 +44,6 @@ class Client extends AbstractClient
      */
     protected $sObjectClient;
 
-    /**
-     * @var array
-     */
-    protected $callOptions = [];
-
     public function __construct(AuthProviderInterface $provider, string $version = "44.0", ?string $appName = null)
     {
         if (null !== $appName) {
@@ -57,18 +54,8 @@ class Client extends AbstractClient
         $this->authProvider    = $provider;
         $this->client          = $this->createHttpClient();
         $this->serializer      = $this->createSerializer();
-        $this->compositeClient = new CompositeClient(
-            $this->client,
-            $this->serializer,
-            $this->authProvider,
-            $this->version
-        );
-        $this->sObjectClient   = new SObject\Client(
-            $this->client,
-            $this->serializer,
-            $this->authProvider,
-            $this->version
-        );
+        $this->compositeClient = new CompositeClient($this);
+        $this->sObjectClient   = new SObject\Client($this);
     }
 
     /**
@@ -138,6 +125,18 @@ class Client extends AbstractClient
         );
     }
 
+    /**
+     * @param string $method
+     * @param string $path
+     * @param null $payload
+     * @param string $responseType
+     * @param array $headers
+     * @param int $expectedResponseCode
+     *
+     * @return array|\JMS\Serializer\scalar|null|object
+     * @throws SessionExpiredOrInvalidException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function apex(
         string $method,
         string $path,
@@ -152,22 +151,8 @@ class Client extends AbstractClient
         $body    = null !== $payload ? $this->serializer->serialize($payload, 'json') : null;
         $request = new Request($method, '/services/apexrest'.$path, $headers, $body);
 
-        $response = $this->client->request($request);
-
-        try {
-            $this->throwErrorIfInvalidResponseCode($response, $expectedResponseCode);
-        } catch (SessionExpiredOrInvalidException $e) {
-            return $this->apex(
-                $method,
-                $path,
-                $payload,
-                $responseType,
-                $headers,
-                $expectedResponseCode
-            );
-        }
-
-        $resBody = (string)$response->getBody();
+        $response = $this->send($request, $expectedResponseCode);
+        $resBody  = (string)$response->getBody();
 
         if (null !== $resBody) {
             return $this->serializer->deserialize(
@@ -265,12 +250,12 @@ class Client extends AbstractClient
         return $builder->build();
     }
 
-    protected function authorize(RequestInterface $request): RequestInterface
+    public function authorize(RequestInterface $request): RequestInterface
     {
         return $request->withAddedHeader('Authorization', $this->authProvider->authorize());
     }
 
-    protected function appendSforceCallOptions(RequestInterface $request): RequestInterface
+    public function appendSforceCallOptions(RequestInterface $request): RequestInterface
     {
         $callOptions = array_reduce(
             array_keys($this->callOptions),
@@ -292,7 +277,7 @@ class Client extends AbstractClient
         return $request;
     }
 
-    protected function send(RequestInterface $request, $expectedStatusCode = 200)
+    public function send(RequestInterface $request, $expectedStatusCode = 200)
     {
         return parent::send($this->appendSforceCallOptions($request), $expectedStatusCode);
     }
