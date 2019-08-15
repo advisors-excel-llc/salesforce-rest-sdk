@@ -77,7 +77,7 @@ class ReplayExtension implements ExtensionInterface
         if ($message->getChannel() === ChannelInterface::META_SUBSCRIBE) {
             $ext = $message->getExt() ?: [];
             $ext[static::NAME] = [
-                $message->getSubscription() => $this->getReplayIdForChannel($message->getChannel()),
+                $message->getSubscription() => $this->getReplayIdForChannel($message->getSubscription()),
             ];
 
             $message->setExt($ext);
