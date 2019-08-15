@@ -69,8 +69,34 @@ class CsvStream implements StreamInterface
         return $this->stream->isWritable();
     }
 
-    public function write($string)
+    /**
+     * @param string|array $string
+     * @param string $delimiter
+     * @param string $enclosure
+     * @param string $escapeChar
+     *
+     * @return int
+     */
+    public function write($string, $delimiter = ',', $enclosure = '"', $escapeChar = "\\")
     {
+        if (!$this->isWritable()) {
+            throw new \RuntimeException("The stream is not writable.");
+        }
+
+        if (is_array($string)) {
+            $arr = array_values($string);
+            $res = tmpfile();
+
+            if (!$res) {
+                throw new \RuntimeException("The stream is not writable.");
+            }
+
+            fputcsv($res, $arr, $delimiter, $enclosure, $escapeChar);
+            rewind($res);
+            $string = stream_get_contents($res);
+            fclose($res);
+        }
+
         return $this->stream->write($string);
     }
 
@@ -122,7 +148,13 @@ class CsvStream implements StreamInterface
             $escFlag = $byte === $escape && !$escFlag;
         }
 
-        return rtrim($buffer, "\n");
+        $buffer = rtrim($buffer, "\n");
+
+        if (strlen($buffer) === 0) {
+            return false;
+        }
+
+        return $buffer;
     }
 
     public function read($length = 0, string $delimiter = ",", string $enclosure = '"', string $escape = "\\")
@@ -132,6 +164,10 @@ class CsvStream implements StreamInterface
         }
 
         $line = self::readline($this->stream, $length > 0 ? $length : null, $enclosure, $escape);
+
+        if (!$line) {
+            return false;
+        }
 
         return str_getcsv($line, $delimiter, $enclosure, $escape);
     }
@@ -154,19 +190,15 @@ class CsvStream implements StreamInterface
         string $escape = "\\"
     ) {
         $headers = [];
-        $row     = $this->read(0, $delimiter, $enclosure, $escape);
 
-        if (false === $row) {
-            return;
-        } else {
-            if ($hasHeaders && empty($headers)) {
-                $headers = $row;
-                $row     = $this->read(0, $delimiter, $enclosure, $escape);
-                if (false === $row) {
-                    return;
-                }
-            }
+        if ($hasHeaders) {
+            $headers = $this->read(0, $delimiter, $enclosure, $escape);
+        }
 
+        while (false !== ($row = $this->read(0, $delimiter, $enclosure, $escape))
+            && (count($row) > 0
+                && (count($row) > 1 || null !== $row[0]))
+        ) {
             yield $hasHeaders ? array_combine($headers, $row) : $row;
         }
     }
