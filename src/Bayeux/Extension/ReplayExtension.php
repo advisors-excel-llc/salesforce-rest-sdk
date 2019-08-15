@@ -77,7 +77,7 @@ class ReplayExtension implements ExtensionInterface
         if ($message->getChannel() === ChannelInterface::META_SUBSCRIBE) {
             $ext = $message->getExt() ?: [];
             $ext[static::NAME] = [
-                $message->getSubscription() => $this->getReplayIdForChannel($message->getSubscription()),
+                $message->getSubscription() => $this->getReplayIdForChannel($message->getChannel()),
             ];
 
             $message->setExt($ext);
@@ -108,6 +108,6 @@ class ReplayExtension implements ExtensionInterface
     protected function persistReplayId(Message $message)
     {
         $event = $message->getData()->getEvent();
-        $this->dataMap[$message->getChannel()] = $event->getReplayId();
+        $this->setReplayIdForChannel($message->getChannel(), $event->getReplayId());
     }
 }
