@@ -57,6 +57,19 @@ class ReplayExtension implements ExtensionInterface
     }
 
     /**
+     * @param string $channelName
+     * @param int $replayId
+     *
+     * @return ReplayExtension
+     */
+    public function setReplayIdForChannel(string $channelName, int $replayId = self::REPLAY_NEWEST): self
+    {
+        $this->dataMap[$channelName] = $replayId;
+
+        return $this;
+    }
+
+    /**
      * @param Message $message
      */
     public function prepareSend(Message $message): void
