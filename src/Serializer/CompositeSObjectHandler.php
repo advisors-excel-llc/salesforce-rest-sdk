@@ -76,7 +76,7 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
                         } else {
                             $object[$field] = $visitor->getNavigator()->accept(
                                 $value,
-                                ['name' => $className],
+                                ['name' => $className, 'params' => []],
                                 $context
                             )
                             ;
