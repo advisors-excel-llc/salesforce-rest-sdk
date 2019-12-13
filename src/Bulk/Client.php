@@ -326,10 +326,7 @@ class Client extends AbstractClient
         $response = $this->send(
             new Request(
                 "GET",
-                "$basePath/{$job->getId()}/batch/$batchId/result/$resultId",
-                [
-                    'save_to' => stream_for(fopen('php://temp', 'w')),
-                ]
+                "$basePath/{$job->getId()}/batch/$batchId/result/$resultId"
             )
         );
 
