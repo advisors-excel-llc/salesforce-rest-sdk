@@ -15,7 +15,7 @@ This API supports the following areas of the Salesforce API:
 
 ## Installation
 
-composer require ae/salesforce-rest-sdk
+``` composer require ae/salesforce-rest-sdk ```
 
 
 ## Instantiate a Rest Client
