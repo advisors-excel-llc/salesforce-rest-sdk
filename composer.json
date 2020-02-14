@@ -1,5 +1,5 @@
 {
-    "name": "ae/salesforce-rest-sdk",
+    "name": "alexboyce/salesforce-rest-sdk",
     "description": "An SDK for the Salesforce Rest API",
     "type": "library",
     "require": {
