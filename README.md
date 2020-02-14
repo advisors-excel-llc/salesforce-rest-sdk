@@ -13,6 +13,11 @@ This API supports the following areas of the Salesforce API:
 * Bulk API
 * Streaming API
 
+## Installation
+
+composer require ae/salesforce-rest-sdk
+
+
 ## Instantiate a Rest Client
 
 ```php
