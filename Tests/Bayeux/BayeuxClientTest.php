@@ -82,7 +82,7 @@ class BayeuxClientTest extends TestCase
         $channel->subscribe(
             Consumer::create(
                 function (ChannelInterface $channel, Message $message) use ($name) {
-                    $this->assertEquals("/topic/AccountTopic", $channel->getChannelId());
+                    $this->assertEquals(getenv('AccountPushTopic'), $channel->getChannelId());
                     $data = $message->getData();
                     $this->assertNotNull($data);
                     $sobject = $data->getSobject();
