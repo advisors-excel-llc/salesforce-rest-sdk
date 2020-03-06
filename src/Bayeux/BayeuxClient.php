@@ -10,6 +10,7 @@ namespace AE\SalesforceRestSdk\Bayeux;
 
 use AE\SalesforceRestSdk\AuthProvider\AuthProviderInterface;
 use AE\SalesforceRestSdk\AuthProvider\SessionExpiredOrInvalidException;
+use AE\SalesforceRestSdk\Bayeux\BayeuxClientState as State;
 use AE\SalesforceRestSdk\Bayeux\Extension\ExtensionInterface;
 use AE\SalesforceRestSdk\Bayeux\Transport\AbstractClientTransport;
 use AE\SalesforceRestSdk\Bayeux\Transport\HttpClientTransport;
@@ -83,9 +84,12 @@ class BayeuxClient
     private $clientId;
 
     /**
-     * @var string
+     * @var State\ClientState
      */
-    private $state = self::DISCONNECTED;
+    private $state;
+
+    /** @var array|string[] */
+    private $previousStates = [];
 
     /**
      * @var ArrayCollection|ChannelInterface[]
@@ -157,6 +161,23 @@ class BayeuxClient
         );
     }
 
+    public function start()
+    {
+        $this->setState(new State\HandshakeState($this, $this->logger));
+        do {
+            $this->state->handle();
+        } while (!$this->state instanceof State\DisconnectState);
+    }
+
+    public function setState(State\ClientState $state)
+    {
+        if (array_search(get_class($state), $this->previousStates) === false) {
+            $state->init();
+            $this->previousStates[] = get_class($state);
+        }
+        $this->state = $state;
+    }
+
     /**
      * @param string $channelId
      *
@@ -170,290 +191,45 @@ class BayeuxClient
 
         $channel = new Channel($channelId);
 
-        // If you wanna listen to meta messages, be my guest but we don't need to subscribe to them
-        if ($channel->isMeta()) {
-            $this->channels->set($channelId, $channel);
-
-            return $channel;
-        }
-
-        $this->getChannel(ChannelInterface::META_SUBSCRIBE)->subscribe(
-            Consumer::create(
-                function (ChannelInterface $c, Message $message) {
-                    if (!$message->isSuccessful()) {
-                        $this->logger->error(
-                            "Failed to subscribe to channel {channel}",
-                            [
-                                'channel' => $c->getChannelId(),
-                            ]
-                        );
-
-                        $c->unsubscribeAll();
-                        $this->channels->remove($c->getChannelId());
-                    }
-                }
-            )
-        )
-        ;
-
         $this->channels->set($channelId, $channel);
-
-        if (null !== $this->clientId) {
-            $message = new Message();
-            $message->setChannel(ChannelInterface::META_SUBSCRIBE);
-            $message->setSubscription($channelId);
-            $this->sendMessages([$message]);
-        } else {
-            // If the handshake hasn't taken place, wait for it and connect in bulk
-            $this->getChannel(ChannelInterface::META_HANDSHAKE)->subscribe(
-                Consumer::create(
-                    function (ChannelInterface $c, Message $m) use ($channel) {
-                        if ($m->isSuccessful() && !$channel->isMeta()) {
-                            $message = new Message();
-                            $message->setChannel(ChannelInterface::META_SUBSCRIBE);
-                            $message->setSubscription($channel->getChannelId());
-
-                            $this->sendMessages([$message]);
-                        }
-                    }
-                )
-            )
-            ;
-        }
 
         return $channel;
     }
 
-    /**
-     * Start the Bayeux Client
-     *
-     * @code <?php
-     *      $client = new BayeuxClient(...);
-     *      $channel = $client->getChannel('/topic/mytopic');
-     *      $channel->subscribe(function(ChannelInterface $c, StreamingData $data) {
-     *          ///...
-     *      });
-     *      $client->start();
-     */
-    public function start(): void
-    {
-        if (!$this->isDisconnected()) {
-            throw new \RuntimeException("The client must be disconnected before starting.");
-        }
-
-        $this->getChannel(ChannelInterface::META_HANDSHAKE)->subscribe(
-            Consumer::create(
-                function (
-                    ChannelInterface $c,
-                    Message $message
-                ) {
-                    if ($message->isSuccessful()) {
-                        $this->listen();
-                    } else {
-                        $this->logger->critical("Handshake authentication failed with the server.");
-                        throw new \RuntimeException("Handshake authentication failed with the server.");
-                    }
-                },
-                1000000
-            )
-        )
-        ;
-
-        $this->handshake();
-    }
-
     public function isDisconnected(): bool
     {
-        return in_array(
-            $this->state,
-            [static::DISCONNECTED, static::DISCONNECTING, static::UNCONNECTED, static::TERMINATING]
-        );
+        return $this->state instanceof State\DisconnectState;
     }
 
     public function handshake(): void
     {
-        if (in_array(
-            $this->state,
-            [
-                static::CONNECTING,
-                static::CONNECTED,
-                static::HANDSHAKING,
-                static::HANDSHAKEN,
-                static::TERMINATING,
-            ]
-        )) {
-            $this->logger->critical("The client must be fully disconnected before handshaking.");
-            throw new \RuntimeException("The client must be fully disconnected before handshaking.");
-        }
-
-        if ($this->state !== static::REHANDSHAKING) {
-            $this->state = static::HANDSHAKING;
-        }
-
-        $consumer = Consumer::create(
-            function (ChannelInterface $c, Message $message) use (&$consumer) {
-                $c->unsubscribe($consumer);
-
-                if ($message->isSuccessful()) {
-                    $this->state = static::HANDSHAKEN;
-
-                    return true;
-                } else {
-                    $advice         = $message->getAdvice();
-                    $this->clientId = null;
-
-                    if (null !== $advice && $advice->getReconnect() === 'retry') {
-                        $this->state = static::REHANDSHAKING;
-                        sleep($advice->getInterval() ?: 0);
-
-                        $this->handshake();
-                    } else {
-                        $this->state = static::UNCONNECTED;
-                    }
-
-                    return false;
-                }
-            },
-            -1000
-        );
-        $this->getChannel(ChannelInterface::META_HANDSHAKE)->subscribe($consumer);
-
-        $message = new Message();
-        $message->setChannel(ChannelInterface::META_HANDSHAKE);
-        $message->setSupportedConnectionTypes([$this->transport->getName()]);
-        $message->setVersion(static::VERSION);
-        $message->setMinimumVersion(static::MINIMUM_VERSION);
-
-        $this->sendMessages([$message]);
+        $this->setState(new State\HandshakeState($this, $this->logger));
+        $this->state->handle();
     }
 
     public function connect(): void
     {
-        if ($this->state !== static::HANDSHAKEN && $this->state !== static::CONNECTED) {
-            $this->logger->critical("Cannot connect to the server without first handshaking with it.");
-            throw new \RuntimeException("Cannot connect to the server without first handshaking with it.");
-        }
-
-        $this->state = static::CONNECTING;
-
-        $message = new Message();
-        $message->setChannel(ChannelInterface::META_CONNECT);
-        $message->setConnectionType($this->transport->getName());
-
-        $consumer = Consumer::create(
-            function (ChannelInterface $c, Message $message) use (&$consumer) {
-                $c->unsubscribe($consumer);
-
-                if ($message->isSuccessful()) {
-                    $this->state = static::CONNECTED;
-                } else {
-                    $this->logger->critical(
-                        'Failed to connect with Salesforce: {error}',
-                        [
-                            'error' => $message->getError(),
-                        ]
-                    );
-
-                    $advice = $message->getAdvice();
-
-                    if (null !== $advice && in_array($advice->getReconnect(), ['retry', 'handshake'])) {
-                        $interval = $advice->getInterval() ?: 0;
-                        sleep($interval);
-
-                        if ($advice->getReconnect() === 'retry') {
-                            $this->connect();
-                        } else {
-                            $this->state = static::REHANDSHAKING;
-                            $this->handshake();
-                        }
-                    } else {
-                        $this->disconnect();
-                    }
-                }
-            },
-            -1000
-        );
-        $channel  = $this->getChannel(ChannelInterface::META_CONNECT);
-        $channel->subscribe($consumer);
-
-        $this->sendMessages([$message]);
+        $this->setState(new State\ConnectState($this, $this->logger));
+        $this->state->handle();
     }
 
+    /**
+     * @deprecated use connect instead.
+     */
     public function listen(): void
     {
-        if ($this->state !== static::HANDSHAKEN) {
-            $this->logger->critical("A handshake connection with the streaming service must occur before listening.");
-            throw new \RuntimeException(
-                "A handshake connection with the streaming service must occur before listening."
-            );
-        }
-
-        $channel = $this->getChannel(ChannelInterface::META_CONNECT);
-        $channel->subscribe(
-            Consumer::create(
-                function (ChannelInterface $c, Message $message) {
-                    if ($message->isSuccessful()) {
-                        $advice = $message->getAdvice();
-                        if (null !== $advice && $advice->getInterval() > 0) {
-                            sleep($advice->getInterval());
-                        }
-
-                        $this->connect();
-                    }
-                },
-                1000000
-            )
-        );
-
         $this->connect();
     }
 
     public function disconnect(): void
     {
-        if (!in_array($this->state, [static::CONNECTING, static::CONNECTED, static::TERMINATING])) {
-            $this->logger->notice("The server must be connected before disconnecting.");
-            throw new \RuntimeException("The server must be connected before disconnecting.");
-        }
-
-        if ($this->state !== static::TERMINATING) {
-            $this->state = static::DISCONNECTING;
-        }
-
-        $unsubscribes = [];
-
-        foreach ($this->channels as $channel) {
-            if ($channel->isMeta()) {
-                continue;
-            }
-
-            $message = new Message();
-            $message->setChannel(ChannelInterface::META_UNSUBSCRIBE);
-            $message->setSubscription($channel->getChannelId());
-            $unsubscribes[] = $message;
-        }
-
-        // Unsubscribe channels
-        if (count($unsubscribes) > 0) {
-            $this->sendMessages($unsubscribes);
-        }
-
-        $message = new Message();
-        $message->setChannel(ChannelInterface::META_DISCONNECT);
-
-        $this->sendMessages([$message]);
-        $this->authProvider->revoke();
-        $this->clientId = null;
-        // Clear all the channels to make room for new subscriptions
-        $this->channels->clear();
-
-        $this->state = static::DISCONNECTED;
+        $this->setState(new State\DisconnectState($this, $this->logger));
+        $this->state->handle();
     }
 
     public function terminate(): void
     {
-        $this->state = static::TERMINATING;
         $this->transport->terminate();
-
         $this->disconnect();
     }
 
@@ -600,6 +376,11 @@ class BayeuxClient
     public function getClientId(): string
     {
         return $this->clientId;
+    }
+
+    public function clearClientId()
+    {
+        $this->clientId = null;
     }
 
     /**
