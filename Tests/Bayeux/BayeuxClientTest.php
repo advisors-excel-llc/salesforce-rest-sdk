@@ -46,6 +46,11 @@ class BayeuxClientTest extends TestCase
 
     public function testStream()
     {
+        if (getenv('AccountPushTopic') == '') {
+            $this->fail('Account push topic not named in .env.');
+            return;
+        }
+
         $rand = rand(100, 1000);
         $name = 'Test Account '.$rand;
 
@@ -73,11 +78,11 @@ class BayeuxClientTest extends TestCase
 
         $this->client->getChannel(ChannelInterface::META_CONNECT)->subscribe($consumer);
 
-        $channel = $this->client->getChannel('/topic/Accounts');
+        $channel = $this->client->getChannel(getenv('AccountPushTopic'));
         $channel->subscribe(
             Consumer::create(
                 function (ChannelInterface $channel, Message $message) use ($name) {
-                    $this->assertEquals("/topic/Accounts", $channel->getChannelId());
+                    $this->assertEquals("/topic/AccountTopic", $channel->getChannelId());
                     $data = $message->getData();
                     $this->assertNotNull($data);
                     $sobject = $data->getSobject();
@@ -111,6 +116,11 @@ class BayeuxClientTest extends TestCase
 
     public function testCdc()
     {
+        if (getenv('AccountChangeEvent') == '') {
+            $this->fail('Account push topic not named in .env.');
+            return;
+        }
+
         $rand = rand(100, 1000);
         $name = 'Test Account '.$rand;
 
@@ -139,11 +149,11 @@ class BayeuxClientTest extends TestCase
 
         $this->client->getChannel(ChannelInterface::META_CONNECT)->subscribe($consumer);
 
-        $channel = $this->client->getChannel('/data/AccountChangeEvent');
+        $channel = $this->client->getChannel(getenv('AccountChangeEvent'));
         $channel->subscribe(
             Consumer::create(
                 function (ChannelInterface $channel, Message $message) use ($name) {
-                    $this->assertEquals("/data/AccountChangeEvent", $channel->getChannelId());
+                    $this->assertEquals(getenv('AccountChangeEvent'), $channel->getChannelId());
                     $data = $message->getData();
                     $this->assertNotNull($data);
                     $payload = $data->getPayload();

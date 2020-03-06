@@ -15,6 +15,10 @@
         -->
         <env name="SF_AUTH_CODE" value="AN_AUTH_CODE" />
         <env name="SF_REDIRECT_URI" value="http://localhost" />
+
+        <!-- Whatever you named your push topic and change event topic in SF has to match the test, so name them here correctly so they match! -->
+        <env name="AccountPushTopic" value="" />
+        <env name="AccountChangeEvent" value="" />
     </php>
     <testsuites>
         <testsuite name="Test Suite">
