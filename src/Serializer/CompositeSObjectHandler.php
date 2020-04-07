@@ -12,9 +12,13 @@ use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeCollection;
 use AE\SalesforceRestSdk\Model\Rest\Composite\CompositeSObject;
 use JMS\Serializer\Context;
 use JMS\Serializer\DeserializationContext;
+use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Handler\SubscribingHandlerInterface;
 use JMS\Serializer\JsonDeserializationVisitor;
 use JMS\Serializer\JsonSerializationVisitor;
+use JMS\Serializer\Metadata\ClassMetadata;
+use JMS\Serializer\Metadata\PropertyMetadata;
+use JMS\Serializer\Metadata\StaticPropertyMetadata;
 use JMS\Serializer\SerializationContext;
 
 class CompositeSObjectHandler implements SubscribingHandlerInterface
@@ -23,9 +27,17 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
     {
         return [
             [
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
                 'type' => CompositeSObject::class,
                 'format' => 'json',
+                'method' => 'serializeCompositeSObjectTojson'
             ],
+            [
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'type' => CompositeSObject::class,
+                'format' => 'json',
+                'method' => 'deserializeCompositeSObjectFromjson'
+            ]
         ];
     }
 
@@ -39,65 +51,48 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
             'attributes' => $sobject->getAttributes(),
         ];
 
-        // This is important for deep serialization
-        if (null === $visitor->getRoot()) {
-            $visitor->setRoot($object);
-        }
-
         foreach ($sobject->getFields() as $field => $value) {
             if (null === $value) {
                 continue;
             }
-            if ($value instanceof CompositeCollection) {
-                $object[$field] = $visitor->getNavigator()->accept(
+            if (is_object($value)) {
+                $class = get_class($value);
+                $classMetadata = new ClassMetadata($class);
+                $visitor->startVisitingObject(
+                    $classMetadata,
                     $value,
-                    ['name' => CompositeCollection::class],
-                    $context
-                )
-                ;
-            } else {
-                if (is_object($value)) {
-                    $className = get_class($value);
-                    if (false !== $className) {
-                        if (\DateTime::class === $className) {
-                            $object[$field] = $visitor->getNavigator()->accept(
-                                $value,
-                                ['name' => 'DateTime', 'params' => [\DATE_ISO8601, 'UTC']],
-                                $context
-                            )
-                            ;
-                        } elseif (\DateTimeImmutable::class === $className) {
-                            $object[$field] = $visitor->getNavigator()->accept(
-                                $value,
-                                ['name' => 'DateTimeImmutable', 'params' => [\DATE_ISO8601, 'UTC']],
-                                $context
-                            )
-                            ;
-                        } else {
-                            $object[$field] = $visitor->getNavigator()->accept(
-                                $value,
-                                ['name' => $className, 'params' => []],
-                                $context
-                            )
-                            ;
-                        }
-                    } else {
-                        $object[$field] = $value;
-                    }
-                } else {
-                    $object[$field] = $value;
+                    []
+                );
+                switch ($class) {
+                    case CompositeCollection::class:
+                        $compositeMeta = new PropertyMetadata(CompositeCollection::class, $field);
+                        $compositeMeta->setType(['name' => CompositeCollection::class]);
+                        $visitor->visitProperty($compositeMeta, $value);
+                        break;
+                    case \DateTime::class:
+                    case \DateTimeImmutable::class:
+                        $dateMeta = new StaticPropertyMetadata(\DateTime::class, $field, $value);
+                        $dateMeta->setType(['name' => 'DateTime', 'params' => [\DATE_ISO8601, 'UTC']]);
+                        $visitor->visitProperty($dateMeta, $value);
+                        break;
+                    default:
+                        $visitor->visitProperty(
+                            new StaticPropertyMetadata($class, $field, $value),
+                            $value
+                        );
+                        break;
                 }
-            }
-        }
 
-        if (is_array($visitor->getRoot())) {
-            if (array_key_exists('attributes', $visitor->getRoot())) {
-                $visitor->setRoot($object);
+                $resultArray = $visitor->endVisitingObject(
+                    $classMetadata,
+                    $value,
+                    []
+                );
+                $object[$field] = array_pop($resultArray);
             } else {
-                $data = $visitor->getRoot();
-                $data[] = $object;
-                $visitor->setRoot($data);
+                $object[$field] = $value;
             }
+
         }
 
         return $object;
@@ -112,7 +107,7 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
         $sobject = new CompositeSObject();
 
         $metadata = $context->getMetadataFactory()->getMetadataForClass(CompositeSObject::class);
-        $visitor->startVisitingObject($metadata, $sobject, $type, $context);
+        $visitor->startVisitingObject($metadata, $sobject, $type);
 
         if (array_key_exists('attributes', $data)) {
             if (array_key_exists('type', $data['attributes'])) {
@@ -135,25 +130,23 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
 
             if (is_array($value) && array_key_exists('hasErrors', $value) && array_key_exists('records', $value)
                 && is_array($value['records'])) {
-                $sobject->$field = $visitor->getNavigator()->accept(
+                $sobject->$field = $context->getNavigator()->accept(
                     $value,
-                    ['name' => CompositeCollection::class],
-                    $context
+                    ['name' => CompositeCollection::class]
                 )
                 ;
             } elseif (is_string($value)
                 && preg_match('/^\d{4}-\d{2}-\d{2}\T\d{2}:\d{2}:\d{2}(\.\d{4})?(\+\d{4}|\Z)$/', $value) != false) {
                 $sobject->$field = $context->getNavigator()->accept(
                     $value,
-                    ['name' => 'DateTime', 'params' => [\DATE_ISO8601, 'UTC']],
-                    $context
+                    ['name' => 'DateTime', 'params' => [\DATE_ISO8601, 'UTC']]
                 );
             } else {
                 $sobject->$field = $value;
             }
         }
 
-        $visitor->endVisitingObject($metadata, $sobject, $type, $context);
+        $visitor->endVisitingObject($metadata, $sobject, $type);
 
         return $sobject;
     }
