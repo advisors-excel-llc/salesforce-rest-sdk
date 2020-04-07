@@ -5,12 +5,13 @@
     "require": {
         "php": "^7.1",
         "guzzlehttp/guzzle": "^6.3",
-        "jms/serializer": "^1.13",
+        "jms/serializer": "^3.0",
         "ramsey/uuid": "^3.8",
         "doctrine/collections": "^1.5",
         "symfony/cache": "~3.4|~4.0",
         "psr/log": "^1.1",
-        "symfony/expression-language": "^4.2"
+        "symfony/expression-language": "^4.2",
+        "jms/metadata": "^1.0|^2.0"
     },
     "license": "proprietary",
     "authors": [
