@@ -65,8 +65,9 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
                 );
                 switch ($class) {
                     case CompositeCollection::class:
-                        $composite = $context->getMetadataFactory()->getMetadataForClass(CompositeCollection::class);
-                        $visitor->visitProperty($composite->propertyMetadata['records'], $value->getRecords());
+                        $compositeMeta = new PropertyMetadata(CompositeCollection::class, $field);
+                        $compositeMeta->setType(['name' => CompositeCollection::class]);
+                        $visitor->visitProperty($compositeMeta, $value);
                         break;
                     case \DateTime::class:
                     case \DateTimeImmutable::class:
@@ -81,6 +82,7 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
                         );
                         break;
                 }
+
                 $resultArray = $visitor->endVisitingObject(
                     $classMetadata,
                     $value,
