@@ -130,7 +130,7 @@ class CompositeSObjectHandler implements SubscribingHandlerInterface
 
             if (is_array($value) && array_key_exists('hasErrors', $value) && array_key_exists('records', $value)
                 && is_array($value['records'])) {
-                $sobject->$field = $visitor->getNavigator()->accept(
+                $sobject->$field = $context->getNavigator()->accept(
                     $value,
                     ['name' => CompositeCollection::class]
                 )
