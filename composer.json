@@ -3,14 +3,14 @@
     "description": "An SDK for the Salesforce Rest API",
     "type": "library",
     "require": {
-        "php": "^7.1",
+        "php": "^7.2",
         "guzzlehttp/guzzle": "^6.3",
         "jms/serializer": "^3.0",
         "ramsey/uuid": "^3.8",
         "doctrine/collections": "^1.5",
-        "symfony/cache": "~3.4|~4.0",
+        "symfony/cache": "^4.0|^5.0",
         "psr/log": "^1.1",
-        "symfony/expression-language": "^4.2",
+        "symfony/expression-language": "^4.2|^5.0",
         "jms/metadata": "^1.0|^2.0"
     },
     "license": "proprietary",
