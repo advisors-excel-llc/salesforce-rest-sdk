@@ -13,7 +13,9 @@ use AE\SalesforceRestSdk\AuthProvider\SoapProvider;
 use AE\SalesforceRestSdk\Bayeux\BayeuxClient;
 use AE\SalesforceRestSdk\Bayeux\ChannelInterface;
 use AE\SalesforceRestSdk\Bayeux\Consumer;
+use AE\SalesforceRestSdk\Bayeux\Extension\ReplayExtension;
 use AE\SalesforceRestSdk\Bayeux\Message;
+use AE\SalesforceRestSdk\Bayeux\Transport\AbstractClientTransport;
 use AE\SalesforceRestSdk\Bayeux\Transport\LongPollingTransport;
 use GuzzleHttp\Client;
 use PHPUnit\Framework\TestCase;
@@ -220,5 +222,35 @@ class BayeuxClientTest extends TestCase
         if (!$this->client->isDisconnected()) {
             $this->client->terminate();
         }
+    }
+
+    public function testProcessQueueExecutesExtensionsOnChannelsDuringSubscribe()
+    {
+        $xport = $this->createMock(AbstractClientTransport::class);
+        $mockClient = new BayeuxClient(
+            $xport,
+            new OAuthProvider(
+                getenv("SF_CLIENT_ID"),
+                getenv("SF_CLIENT_SECRET"),
+                getenv("SF_LOGIN_URL"),
+                getenv("SF_USER"),
+                getenv("SF_PASS")
+            ),
+            null,
+            "45.0"
+        );
+
+        $channel = $mockClient->getChannel('/topic/CoolTopic');
+
+        $channel->addExtension(new ReplayExtension(500));
+        $message = new Message();
+        $message->setChannel(ChannelInterface::META_SUBSCRIBE);
+        $message->setSubscription('/topic/CoolTopic');
+
+        $mockClient->sendMessages([$message]);
+        print_r($message->getExt());
+
+        $this->assertEquals(['replay' => ['/topic/CoolTopic' => 500]], $message->getExt());
+
     }
 }

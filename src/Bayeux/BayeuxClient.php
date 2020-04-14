@@ -284,6 +284,9 @@ class BayeuxClient
 
         foreach ($messages as $message) {
             $this->getChannel($message->getChannel())->prepareOutgoingMessage($message);
+            if ($message->getSubscription() && isset($this->channels[$message->getSubscription()])) {
+                $this->getChannel($message->getSubscription())->prepareOutgoingMessage($message);
+            }
         }
 
         try {
