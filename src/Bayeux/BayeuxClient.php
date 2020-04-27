@@ -163,6 +163,7 @@ class BayeuxClient
 
     public function start()
     {
+        $this->previousStates = [];
         $this->setState(new State\HandshakeState($this, $this->logger));
         do {
             $this->state->handle();
