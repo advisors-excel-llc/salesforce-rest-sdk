@@ -4,7 +4,7 @@
     "type": "library",
     "require": {
         "php": "^7.2",
-        "guzzlehttp/guzzle": "^6.3",
+        "guzzlehttp/guzzle": "^7.0",
         "jms/serializer": "^3.0",
         "ramsey/uuid": "^3.8",
         "doctrine/collections": "^1.5",
