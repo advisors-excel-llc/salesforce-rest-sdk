@@ -3,8 +3,8 @@
     "description": "An SDK for the Salesforce Rest API",
     "type": "library",
     "require": {
-        "php": "^7.2",
-        "guzzlehttp/guzzle": "^6.3",
+        "php": "^7.3",
+        "guzzlehttp/guzzle": "^7.0",
         "jms/serializer": "^3.0",
         "ramsey/uuid": "^3.8",
         "doctrine/collections": "^1.5",
@@ -13,7 +13,7 @@
         "symfony/expression-language": "^4.2|^5.0",
         "jms/metadata": "^1.0|^2.0"
     },
-    "license": "proprietary",
+    "license": "MIT",
     "authors": [
         {
             "name": "Alex Boyce",
