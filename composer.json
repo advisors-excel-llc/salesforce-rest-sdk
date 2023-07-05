@@ -3,7 +3,7 @@
     "description": "An SDK for the Salesforce Rest API",
     "type": "library",
     "require": {
-        "php": "^7.2",
+        "php": ">=7.2",
         "guzzlehttp/guzzle": "^6.3",
         "jms/serializer": "^3.0",
         "ramsey/uuid": "^3.8",
