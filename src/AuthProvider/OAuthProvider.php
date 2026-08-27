@@ -83,6 +83,11 @@ class OAuthProvider implements AuthProviderInterface
     /**
      * @var string|null
      */
+    protected $codeVerifier;
+
+    /**
+     * @var string|null
+     */
     protected $identityUrl;
 
     public function __construct(
@@ -93,7 +98,8 @@ class OAuthProvider implements AuthProviderInterface
         ?string $password,
         string $grantType = self::GRANT_PASSWORD,
         ?string $redirectUri = null,
-        ?string $code = null
+        ?string $code = null,
+        ?string $codeVerifier = null
     ) {
         $this->clientId     = $clientId;
         $this->clientSecret = $clientSecret;
@@ -102,6 +108,7 @@ class OAuthProvider implements AuthProviderInterface
         $this->grantType    = $grantType;
         $this->redirectUri  = $redirectUri;
         $this->code         = $code;
+        $this->codeVerifier = $codeVerifier;
 
         if (self::GRANT_PASSWORD === $this->grantType && (null === $this->username || null === $this->password)) {
             throw new \InvalidArgumentException(
@@ -174,16 +181,22 @@ class OAuthProvider implements AuthProviderInterface
                 ]
             );
         } else {
+            $formParams = [
+                'grant_type'    => self::GRANT_CODE,
+                'client_id'     => $this->clientId,
+                'client_secret' => $this->clientSecret,
+                'redirect_uri'  => $this->redirectUri,
+                'code'          => $this->code,
+            ];
+
+            if (null !== $this->codeVerifier) {
+                $formParams['code_verifier'] = $this->codeVerifier;
+            }
+
             $response = $this->httpClient->post(
                 '/services/oauth2/token',
                 [
-                    'form_params' => [
-                        'grant_type'    => self::GRANT_CODE,
-                        'client_id'     => $this->clientId,
-                        'client_secret' => $this->clientSecret,
-                        'redirect_uri'  => $this->redirectUri,
-                        'code'          => $this->code,
-                    ],
+                    'form_params' => $formParams,
                     'headers'     => [
                         'Content-Type' => 'application/x-www-form-urlencoded',
                         'Accept'       => 'application/json',
