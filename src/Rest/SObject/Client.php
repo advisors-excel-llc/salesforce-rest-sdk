@@ -304,7 +304,7 @@ class Client
     }
 
     /**
-     * @param QueryResult|null $query
+     * @param QueryResult|string|null $query
      * @param int $batchSize
      *
      * @return QueryResult
@@ -343,7 +343,7 @@ class Client
     }
 
     /**
-     * @param $query
+     * @param QueryResult|string|null $query
      * @param int $batchSize
      *
      * @return QueryResult
