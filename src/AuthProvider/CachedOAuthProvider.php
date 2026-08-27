@@ -31,9 +31,20 @@ class CachedOAuthProvider extends OAuthProvider
         ?string $password,
         string $grantType = self::GRANT_PASSWORD,
         ?string $redirectUri = null,
-        ?string $code = null
+        ?string $code = null,
+        ?string $codeVerifier = null
     ) {
-        parent::__construct($clientId, $clientSecret, $url, $username, $password, $grantType, $redirectUri, $code);
+        parent::__construct(
+            $clientId,
+            $clientSecret,
+            $url,
+            $username,
+            $password,
+            $grantType,
+            $redirectUri,
+            $code,
+            $codeVerifier
+        );
         $this->adapter = $adapter;
         $this->logger  = new NullLogger();
     }
